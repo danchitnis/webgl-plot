@@ -1,7 +1,7 @@
 "use strict";
 exports.__esModule = true;
-/*======= Creating a canvas =========*/
 var ndarray = require("ndarray");
+/*======= Creating a canvas =========*/
 var canv = document.getElementById("my_canvas");
 var devicePixelRatio = window.devicePixelRatio || 1;
 // set the size of the drawingBuffer based on the size it's displayed.
