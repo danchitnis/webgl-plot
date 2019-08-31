@@ -1,6 +1,15 @@
 /*======= Creating a canvas =========*/
 
-const canvas = document.getElementById("my_canvas");
+
+let canvas = document.getElementById("my_canvas");
+let devicePixelRatio = window.devicePixelRatio || 1;
+
+// set the size of the drawingBuffer based on the size it's displayed.
+canvas.width = canvas.clientWidth * devicePixelRatio;
+canvas.height = canvas.clientHeight * devicePixelRatio;
+
+
+
 
 
 const gl = canvas.getContext("webgl", {
@@ -35,11 +44,11 @@ gl.bufferData(gl.ARRAY_BUFFER, vert.data, gl.DYNAMIC_DRAW);
 /*=================== Shaders ====================*/
 
 // Vertex shader source code
-var vertCode =
-   'attribute vec2 coordinates;' +
-   'void main(void) {' +
-      ' gl_Position = vec4(coordinates, 0.0, 1.0);' +
-   '}';
+var vertCode = `
+    attribute vec2 coordinates;
+    void main(void) {
+        gl_Position = vec4(coordinates, 0.0, 1.0);
+    }`;
 
 // Create a vertex shader object
 var vertShader = gl.createShader(gl.VERTEX_SHADER);
@@ -51,10 +60,10 @@ gl.shaderSource(vertShader, vertCode);
 gl.compileShader(vertShader);
 
 // Fragment shader source code
-var fragCode =
-   'void main(void) {' +
-      'gl_FragColor = vec4(1, 1.0, 0.0, 1);' +
-   '}';
+var fragCode = `
+   void main(void) {
+      gl_FragColor = vec4(1, 1.0, 0.0, 1);
+   }`;
 
 // Create fragment shader object
 var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
