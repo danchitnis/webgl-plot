@@ -1,7 +1,14 @@
 "use strict";
+/**
+ * Author Danial Chitnis 2019
+ *
+ * inspired by:
+ * https://codepen.io/AzazelN28
+ * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
+ */
 exports.__esModule = true;
 /**
- * hello
+ *
  */
 var webGLplot = /** @class */ (function () {
     /**
