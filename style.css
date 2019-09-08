@@ -5,6 +5,21 @@ body {
 }
 
 .canvas {
-    width: 1000px;
-    height: 800px;
+    width: 100%;
+    height: 70vh;
 }
+
+.items {
+    display: flex;
+    margin: auto;
+    width: 80%;
+    flex-direction: column;
+    align-items: center;
+
+}
+
+@media only screen and (max-width: 800px) {
+    .canvas {
+        width: 95%;
+    }
+  }
