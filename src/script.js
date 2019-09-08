@@ -7,13 +7,17 @@ var ndarray = require("ndarray");
 var webGLplot_1 = require("./webGLplot");
 var webGLplot_2 = require("./webGLplot");
 var noUiSlider = require("nouislider");
-var num = 1000;
-var vert = ndarray(new Float32Array(num * 2), [num, 2]);
 var canv = document.getElementById("my_canvas");
+//let num = 1000;
+var devicePixelRatio = window.devicePixelRatio || 1;
+var num = Math.round(canv.clientWidth * devicePixelRatio);
+var vert = ndarray(new Float32Array(num * 2), [num, 2]);
 var line_color = new webGLplot_2.color_rgba(1, 1, 0, 1);
 var wglp = new webGLplot_1.webGLplot(canv, vert, line_color);
+console.log(num);
 //amplitude
-var amp = 1;
+var Samp = 1;
+var Namp = 1;
 var freq = 1;
 var phi_delta = 1;
 for (var i = 0; i < num; i++) {
@@ -22,10 +26,20 @@ for (var i = 0; i < num; i++) {
 }
 var phi = 0;
 //sliders
-var slider_amp = document.getElementById('slider_amp');
+var slider_Samp = document.getElementById('slider_Samp');
+var slider_Namp = document.getElementById('slider_Namp');
 var slider_freq = document.getElementById('slider_freq');
 var slider_phid = document.getElementById('slider_phid');
-noUiSlider.create(slider_amp, {
+noUiSlider.create(slider_Samp, {
+    start: [0.5],
+    connect: [true, false],
+    //tooltips: [false, wNumb({decimals: 1}), true],
+    range: {
+        min: 0.0,
+        max: 1
+    }
+});
+noUiSlider.create(slider_Namp, {
     start: [0.5],
     connect: [true, false],
     //tooltips: [false, wNumb({decimals: 1}), true],
@@ -52,9 +66,13 @@ noUiSlider.create(slider_phid, {
         max: 1
     }
 });
-slider_amp.noUiSlider.on("update", function (values, handle) {
-    amp = parseFloat(values[handle]);
-    document.getElementById("display_amp").innerHTML = amp.toString();
+slider_Samp.noUiSlider.on("update", function (values, handle) {
+    Samp = parseFloat(values[handle]);
+    document.getElementById("display_Samp").innerHTML = Samp.toString();
+});
+slider_Namp.noUiSlider.on("update", function (values, handle) {
+    Namp = parseFloat(values[handle]);
+    document.getElementById("display_Namp").innerHTML = Namp.toString();
 });
 slider_freq.noUiSlider.on("update", function (values, handle) {
     freq = parseFloat(values[handle]);
@@ -66,8 +84,8 @@ slider_phid.noUiSlider.on("update", function (values, handle) {
 });
 setInterval(function () {
     for (var i = 0; i < num; i++) {
-        var y = Math.sin(i * freq * Math.PI / 100 + phi) + Math.random() / 10;
-        vert.set(i, 1, 0.9 * amp * y);
+        var y = Math.sin(i * freq * Math.PI / 100 + phi) + Math.random() * Namp / 1;
+        vert.set(i, 1, 0.9 * Samp * y);
     }
     phi = phi + phi_delta * 0.1;
     wglp.update();
