@@ -9,6 +9,23 @@
 import ndarray = require("ndarray");
 
 
+export class color_rgba {
+   r: number;
+   g: number;
+   b: number;
+   a: number;
+
+   constructor(r:number, g:number, b:number, a:number) {
+      this.r = r;
+      this.g = g;
+      this.b = b;
+      this.a = a;
+   }
+}
+
+
+
+
 /**
  * 
  */
@@ -16,6 +33,8 @@ export class webGLplot {
     num_points:number;
     array:ndarray;
     gl:WebGLRenderingContext;
+    color: color_rgba;
+
 
 
     /**
@@ -23,7 +42,7 @@ export class webGLplot {
      * @param canv 
      * @param array 
      */
-    constructor(canv:HTMLCanvasElement, array:ndarray) {
+    constructor(canv:HTMLCanvasElement, array:ndarray, color:color_rgba) {
        
        let devicePixelRatio = window.devicePixelRatio || 1;
  
@@ -39,6 +58,7 @@ export class webGLplot {
        this.array = array;
        this.gl = gl;
        this.num_points = array.shape[0];
+       this.color = color;
  
        // Create an empty buffer object
        let vertex_buffer = gl.createBuffer();
@@ -74,7 +94,7 @@ export class webGLplot {
        // Fragment shader source code
        let fragCode = `
           void main(void) {
-             gl_FragColor = vec4(1, 1.0, 0.0, 1);
+             gl_FragColor = vec4(${color.r}, ${color.g}, ${color.b}, ${color.a});
           }`;
  
        // Create fragment shader object
@@ -146,3 +166,6 @@ export class webGLplot {
        gl.drawArrays(gl.LINE_STRIP, 0, this.num_points);
     }
  }
+
+
+ 

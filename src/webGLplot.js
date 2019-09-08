@@ -7,6 +7,16 @@
  * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
  */
 exports.__esModule = true;
+var color_rgba = /** @class */ (function () {
+    function color_rgba(r, g, b, a) {
+        this.r = r;
+        this.g = g;
+        this.b = b;
+        this.a = a;
+    }
+    return color_rgba;
+}());
+exports.color_rgba = color_rgba;
 /**
  *
  */
@@ -16,7 +26,7 @@ var webGLplot = /** @class */ (function () {
      * @param canv
      * @param array
      */
-    function webGLplot(canv, array) {
+    function webGLplot(canv, array, color) {
         var devicePixelRatio = window.devicePixelRatio || 1;
         // set the size of the drawingBuffer based on the size it's displayed.
         canv.width = canv.clientWidth * devicePixelRatio;
@@ -28,6 +38,7 @@ var webGLplot = /** @class */ (function () {
         this.array = array;
         this.gl = gl;
         this.num_points = array.shape[0];
+        this.color = color;
         // Create an empty buffer object
         var vertex_buffer = gl.createBuffer();
         // Bind appropriate array buffer to it
@@ -47,7 +58,7 @@ var webGLplot = /** @class */ (function () {
         // Compile the vertex shader
         gl.compileShader(vertShader);
         // Fragment shader source code
-        var fragCode = "\n          void main(void) {\n             gl_FragColor = vec4(1, 1.0, 0.0, 1);\n          }";
+        var fragCode = "\n          void main(void) {\n             gl_FragColor = vec4(" + color.r + ", " + color.g + ", " + color.b + ", " + color.a + ");\n          }";
         // Create fragment shader object
         var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
         // Attach fragment shader source code

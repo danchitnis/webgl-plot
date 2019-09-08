@@ -3,7 +3,8 @@
  */
 
 import ndarray = require("ndarray");
-import { webGLplot } from "./webGLplot"
+import { webGLplot} from "./webGLplot"
+import { color_rgba} from "./webGLplot"
 import * as noUiSlider from 'nouislider';
 
 
@@ -14,7 +15,9 @@ let vert = ndarray(new Float32Array(num*2), [num, 2]);
 
 let canv = <HTMLCanvasElement>document.getElementById("my_canvas");
 
-let wglp = new webGLplot(canv, vert);
+let line_color = new color_rgba(1,1,0,1);
+
+let wglp = new webGLplot(canv, vert, line_color);
 
 //amplitude
 let amp = 1; 

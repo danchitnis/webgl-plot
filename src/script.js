@@ -5,11 +5,13 @@
 exports.__esModule = true;
 var ndarray = require("ndarray");
 var webGLplot_1 = require("./webGLplot");
+var webGLplot_2 = require("./webGLplot");
 var noUiSlider = require("nouislider");
 var num = 1000;
 var vert = ndarray(new Float32Array(num * 2), [num, 2]);
 var canv = document.getElementById("my_canvas");
-var wglp = new webGLplot_1.webGLplot(canv, vert);
+var line_color = new webGLplot_2.color_rgba(1, 1, 0, 1);
+var wglp = new webGLplot_1.webGLplot(canv, vert, line_color);
 //amplitude
 var amp = 1;
 var freq = 1;
