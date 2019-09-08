@@ -1,0 +1,24 @@
+{
+  "name": "webgl-plot",
+  "version": "0.1.0",
+  "description": "realtime plot using native WebGL",
+  "main": "./src/index.js",
+  "dependencies": {
+    "ndarray": "^1.0.18",
+    "nouislider": "^14.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danchitnis/webgl-plot.git"
+  },
+  "author": "Danial Chitnis",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/danchitnis/webgl-plot/issues"
+  },
+  "homepage": "https://github.com/danchitnis/webgl-plot"
+}

@@ -1,8 +1,9 @@
 body {
-    background-color: rgb(0.1, 0.1,0.1)
+    background-color: rgb(0.1, 0.1,0.1);
+    color: white;
 }
 
-body > canvas {
+.canvas {
     width: 1000px;
     height: 800px;
 }

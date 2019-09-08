@@ -5,16 +5,30 @@
       <meta name="viewport" content="width=device-width,initial-scale=1">
       <title>title</title>
       <link rel="stylesheet" href="style.css" type="text/css">
+      <link rel="stylesheet" href="./node_modules/nouislider/distribute/nouislider.min.css" type="text/css">
+      
+      <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/13.1.5/nouislider.min.js"></script>-->
    </head>
   
    <body>
-      <canvas id = "my_canvas"></canvas>
+      <div>
+         <canvas class="canvas" id="my_canvas"></canvas>
 
-      <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>-->
-      <!--<script src="https://cdn.jsdelivr.net/npm/ndarray@1.0.18/ndarray.min.js"></script>-->
-      <script src="./dist/index.js"></script>
+         <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/numjs/0.16.0/numjs.min.js"></script>-->
+         <!--<script src="https://cdn.jsdelivr.net/npm/ndarray@1.0.18/ndarray.min.js"></script>-->
+         
+
+         <div style="width: 80%">
+            <div id="slider1"></div>
+            <span id="display_amp"></span>
+         </div>
+      </div>
+
   
    </body>
+
+   <script src="./dist/index.js"></script>
+   
 
 
   </html>
