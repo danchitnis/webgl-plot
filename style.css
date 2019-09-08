@@ -1,6 +1,7 @@
 body {
     background-color: rgb(0.1, 0.1,0.1);
     color: white;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .canvas {

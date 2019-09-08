@@ -9,7 +9,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build": "webpack"
+    "build": "tsc ./src/script.ts && webpack"
   },
   "repository": {
     "type": "git",
