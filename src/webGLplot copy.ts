@@ -32,11 +32,8 @@ export class color_rgba {
 export class webGLplot {
     num_points:number;
     array:ndarray;
-    array2:ndarray;
     gl:WebGLRenderingContext;
     color: color_rgba;
-    prog1: WebGLProgram;
-    prog2: WebGLProgram;
 
 
 
@@ -57,32 +54,21 @@ export class webGLplot {
           antialias: true,
           transparent: false
        });
-
+ 
+       this.array = array;
        this.gl = gl;
        this.num_points = array.shape[0];
        this.color = color;
-
-       let array2 = ndarray(new Float32Array(this.num_points*2), [this.num_points, 2]);
-       for (let i=0; i<this.num_points; i++) {
-         array2.set(i, 0, 2*i/this.num_points-1);
-         array2.set(i, 1, 2*i/this.num_points-1);
-      }
- 
-       this.array = array;
-       this.array2 = array2;
-       
  
        // Create an empty buffer object
-       let vertex_buffer1 = gl.createBuffer();
-       let vertex_buffer2 = gl.createBuffer();
+       let vertex_buffer = gl.createBuffer();
  
        // Bind appropriate array buffer to it
-       gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer1);
-       gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer2);
+       gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
  
        // Pass the vertex data to the buffer
+       //gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
        gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>array.data, gl.DYNAMIC_DRAW);
-       gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>array2.data, gl.DYNAMIC_DRAW);
  
        // Unbind the buffer
        //gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -110,43 +96,28 @@ export class webGLplot {
           void main(void) {
              gl_FragColor = vec4(${color.r}, ${color.g}, ${color.b}, ${color.a});
           }`;
-
-      let fragCode2 = `
-      void main(void) {
-         gl_FragColor = vec4(0, 0, 1, ${color.a});
-      }`;
  
        // Create fragment shader object
        let fragShader = gl.createShader(gl.FRAGMENT_SHADER);
-       let fragShader2 = gl.createShader(gl.FRAGMENT_SHADER);
  
        // Attach fragment shader source code
        gl.shaderSource(fragShader, fragCode);
-       gl.shaderSource(fragShader2, fragCode2);
  
        // Compile the fragmentt shader
        gl.compileShader(fragShader);
-       gl.compileShader(fragShader2);
  
        // Create a shader program object to store
        // the combined shader program
        let shaderProgram = gl.createProgram();
-       let shaderProgram2 = gl.createProgram();
  
        // Attach a vertex shader
        gl.attachShader(shaderProgram, vertShader);
-       gl.attachShader(shaderProgram2, vertShader);
  
        // Attach a fragment shader
        gl.attachShader(shaderProgram, fragShader);
-       gl.attachShader(shaderProgram2, fragShader2);
  
        // Link both the programs
        gl.linkProgram(shaderProgram);
-       gl.linkProgram(shaderProgram2);
-
-       this.prog1 = shaderProgram;
-       this.prog2 = shaderProgram2;
  
        // Use the combined shader program object
        gl.useProgram(shaderProgram);
@@ -154,8 +125,7 @@ export class webGLplot {
        /*======= Associating shaders to buffer objects ======*/
  
        // Bind vertex buffer object
-       gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer1);
-       gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer2);
+       gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
  
        // Get the attribute location
        let coord = gl.getAttribLocation(shaderProgram, "coordinates");
@@ -192,12 +162,7 @@ export class webGLplot {
      */
     update() {
        let gl = this.gl;
-       gl.useProgram(this.prog1);
        gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>this.array.data, gl.DYNAMIC_DRAW);
-       gl.drawArrays(gl.LINE_STRIP, 0, this.num_points);
-
-       gl.useProgram(this.prog2);
-       gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>this.array2.data, gl.DYNAMIC_DRAW);
        gl.drawArrays(gl.LINE_STRIP, 0, this.num_points);
     }
  }
