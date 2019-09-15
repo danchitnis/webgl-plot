@@ -5,22 +5,27 @@
 import ndarray = require("ndarray");
 import { webGLplot} from "./webGLplot"
 import { color_rgba} from "./webGLplot"
+import { lineGroup } from "./webGLplot"
 import * as noUiSlider from 'nouislider';
 
 
 let canv = <HTMLCanvasElement>document.getElementById("my_canvas");
 
-//let num = 1000;
+
 let devicePixelRatio = window.devicePixelRatio || 1;
 let num = Math.round(canv.clientWidth * devicePixelRatio);
 
-let vert = ndarray(new Float32Array(num*2), [num, 2]);
 
+let line_color1 = new color_rgba(1,1,0,1);
+let line_color2 = new color_rgba(1,0,0,1);
 
+let lg1 = new lineGroup(line_color1);
+let lg2 = new lineGroup(line_color2);
 
-let line_color = new color_rgba(1,1,0,1);
+lg1.xy = ndarray(new Float32Array(num*2), [num, 2]);
+lg2.xy = ndarray(new Float32Array(num*2), [num, 2]);
 
-let wglp = new webGLplot(canv, vert, line_color);
+let wglp = new webGLplot(canv, [lg1, lg2]);
 
 
 
@@ -34,8 +39,11 @@ let phi_delta=1;
 
 for (let i=0; i<num; i++) {
    //set x to -num/2:1:+num/2
-   vert.set(i, 0, 2*i/num-1);
+   lg1.xy.set(i, 0, 2*i/num-1);
+   lg2.xy.set(i, 0, 2*i/num-1);
 }
+
+
 
 let phi = 0;
 
@@ -111,13 +119,18 @@ slider_Samp.noUiSlider.on("update", function(values, handle) {
 
 
 
+
+
 setInterval(function () {
-   for (let i=0; i<num; i++) {
-      let y = Math.sin(i*freq*Math.PI/100 + phi) + Math.random()*Namp/1;
-      vert.set(i,1, 0.9*Samp*y);
-   }
-   phi = phi + phi_delta*0.1;
-   
-   wglp.update();
+  for (let i=0; i<num; i++) {
+    let y1= Math.sin(i*freq*Math.PI/100 + phi) + Math.random()*Namp/1;
+    lg1.xy.set(i,1, 0.9*0.5*Samp*y1+0.25);
+  
+    let y2= Math.sin(i*freq*Math.PI/100 + phi) + Math.random()*Namp/1;
+    lg2.xy.set(i,1, 0.9*0.5*Samp*y2-0.25);
+  }
+  phi = phi + phi_delta*0.5;
+  
+  wglp.update();
    
 }, 16.67*3);

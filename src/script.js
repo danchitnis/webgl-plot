@@ -6,14 +6,18 @@ exports.__esModule = true;
 var ndarray = require("ndarray");
 var webGLplot_1 = require("./webGLplot");
 var webGLplot_2 = require("./webGLplot");
+var webGLplot_3 = require("./webGLplot");
 var noUiSlider = require("nouislider");
 var canv = document.getElementById("my_canvas");
-//let num = 1000;
 var devicePixelRatio = window.devicePixelRatio || 1;
 var num = Math.round(canv.clientWidth * devicePixelRatio);
-var vert = ndarray(new Float32Array(num * 2), [num, 2]);
-var line_color = new webGLplot_2.color_rgba(1, 1, 0, 1);
-var wglp = new webGLplot_1.webGLplot(canv, vert, line_color);
+var line_color1 = new webGLplot_2.color_rgba(1, 1, 0, 1);
+var line_color2 = new webGLplot_2.color_rgba(1, 0, 0, 1);
+var lg1 = new webGLplot_3.lineGroup(line_color1);
+var lg2 = new webGLplot_3.lineGroup(line_color2);
+lg1.xy = ndarray(new Float32Array(num * 2), [num, 2]);
+lg2.xy = ndarray(new Float32Array(num * 2), [num, 2]);
+var wglp = new webGLplot_1.webGLplot(canv, [lg1, lg2]);
 console.log(num);
 //amplitude
 var Samp = 1;
@@ -22,7 +26,8 @@ var freq = 1;
 var phi_delta = 1;
 for (var i = 0; i < num; i++) {
     //set x to -num/2:1:+num/2
-    vert.set(i, 0, 2 * i / num - 1);
+    lg1.xy.set(i, 0, 2 * i / num - 1);
+    lg2.xy.set(i, 0, 2 * i / num - 1);
 }
 var phi = 0;
 //sliders
@@ -84,9 +89,11 @@ slider_phid.noUiSlider.on("update", function (values, handle) {
 });
 setInterval(function () {
     for (var i = 0; i < num; i++) {
-        var y = Math.sin(i * freq * Math.PI / 100 + phi) + Math.random() * Namp / 1;
-        vert.set(i, 1, 0.9 * Samp * y);
+        var y1 = Math.sin(i * freq * Math.PI / 100 + phi) + Math.random() * Namp / 1;
+        lg1.xy.set(i, 1, 0.9 * 0.5 * Samp * y1 + 0.25);
+        var y2 = Math.sin(i * freq * Math.PI / 100 + phi) + Math.random() * Namp / 1;
+        lg2.xy.set(i, 1, 0.9 * 0.5 * Samp * y2 - 0.25);
     }
-    phi = phi + phi_delta * 0.1;
+    phi = phi + phi_delta * 0.5;
     wglp.update();
 }, 16.67 * 3);
