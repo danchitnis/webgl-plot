@@ -90,10 +90,19 @@ slider_phid.noUiSlider.on("update", function (values, handle) {
     phi_delta = parseFloat(values[handle]);
     document.getElementById("display_phid").innerHTML = phi_delta.toString();
 });
-setInterval(function () {
+/*setInterval(function () {
+
+  random_walk();
+  
+  wglp.update();
+   
+}, 16.67*1);*/
+function new_frame() {
     random_walk();
     wglp.update();
-}, 16.67 * 1);
+    window.requestAnimationFrame(new_frame);
+}
+window.requestAnimationFrame(new_frame);
 function random_walk() {
     for (var i = 0; i < num - 1; i++) {
         lg1.xy.set(i, 1, lg1.xy.get(i + 1, 1));

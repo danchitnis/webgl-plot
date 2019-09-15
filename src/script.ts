@@ -123,13 +123,23 @@ slider_Samp.noUiSlider.on("update", function(values, handle) {
 
 
 
-setInterval(function () {
+/*setInterval(function () {
 
   random_walk();
   
   wglp.update();
    
-}, 16.67*1);
+}, 16.67*1);*/
+
+
+function new_frame() {
+  random_walk();
+  wglp.update();
+  window.requestAnimationFrame(new_frame);
+}
+
+window.requestAnimationFrame(new_frame);
+
 
 
 function random_walk() {
