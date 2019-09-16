@@ -26,7 +26,7 @@ line_colors = [];
 lines = [];
 
 for(let i = 0; i < line_num; i++) {
-  line_colors.push(new color_rgba(Math.random(), Math.random(), Math.random(), 0.5));
+  line_colors.push(new color_rgba(Math.random(), Math.random(), Math.random(), 1.0));
   lines.push(new lineGroup(line_colors[i]));
 }
 
@@ -64,73 +64,70 @@ let phi = 0;
 
 
 //sliders
-let slider_lines = document.getElementById('slider_lines') as noUiSlider.Instance;
-let slider_yscale = document.getElementById('slider_yscale') as noUiSlider.Instance;
-let slider_new_data = document.getElementById('slider_new_data') as noUiSlider.Instance;
-let slider_fps = document.getElementById('slider_fps') as noUiSlider.Instance;
+let slider_Samp = document.getElementById('slider_Samp') as noUiSlider.Instance;
+let slider_Namp = document.getElementById('slider_Namp') as noUiSlider.Instance;
+let slider_freq = document.getElementById('slider_freq') as noUiSlider.Instance;
+let slider_phid = document.getElementById('slider_phid') as noUiSlider.Instance;
 
-noUiSlider.create(slider_lines, {
-   start: [1],
-   step: 1,
+noUiSlider.create(slider_Samp, {
+   start: [0.5],
    connect: [true, false],
    //tooltips: [false, wNumb({decimals: 1}), true],
    range: {
-     min: 1,
-     max: 10000
-   }
-});
-
-noUiSlider.create(slider_yscale, {
-   start: [1],
-   connect: [true, false],
-   //tooltips: [false, wNumb({decimals: 1}), true],
-   range: {
-     min: 0.01,
+     min: 0.0,
      max: 1
    }
 });
 
-noUiSlider.create(slider_new_data, {
-   start: [1],
-   step: 1,
+noUiSlider.create(slider_Namp, {
+   start: [0.5],
    connect: [true, false],
    //tooltips: [false, wNumb({decimals: 1}), true],
    range: {
-     min: 0,
-     max: 1000
+     min: 0.0,
+     max: 1
    }
 });
 
-noUiSlider.create(slider_fps, {
-   start: [1],
-   step: 0.1,
+noUiSlider.create(slider_freq, {
+   start: [0.5],
    connect: [true, false],
    //tooltips: [false, wNumb({decimals: 1}), true],
    range: {
-     min: 0.1,
+     min: 0.0,
+     max: 1
+   }
+});
+
+noUiSlider.create(slider_phid, {
+   start: [0.5],
+   connect: [true, false],
+   //tooltips: [false, wNumb({decimals: 1}), true],
+   range: {
+     min: 0.0,
      max: 1
    }
 });
 
 
-slider_lines.noUiSlider.on("update", function(values, handle) {
+slider_Samp.noUiSlider.on("update", function(values, handle) {
    Samp = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_lines")).innerHTML = Samp.toString();
+   (<HTMLParagraphElement>document.getElementById("display_Samp")).innerHTML = Samp.toString();
  });
 
- slider_yscale.noUiSlider.on("update", function(values, handle) {
+ slider_Namp.noUiSlider.on("update", function(values, handle) {
    Namp = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_yscale")).innerHTML = Namp.toString();
+   (<HTMLParagraphElement>document.getElementById("display_Namp")).innerHTML = Namp.toString();
  });
 
- slider_new_data.noUiSlider.on("update", function(values, handle) {
+ slider_freq.noUiSlider.on("update", function(values, handle) {
    freq = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_new_data_size")).innerHTML = freq.toString();
+   (<HTMLParagraphElement>document.getElementById("display_freq")).innerHTML = freq.toString();
  });
 
- slider_fps.noUiSlider.on("update", function(values, handle) {
+ slider_phid.noUiSlider.on("update", function(values, handle) {
    phi_delta = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = phi_delta.toString();
+   (<HTMLParagraphElement>document.getElementById("display_phid")).innerHTML = phi_delta.toString();
  });
 
 
@@ -138,7 +135,6 @@ slider_lines.noUiSlider.on("update", function(values, handle) {
 
 
 function new_frame() {
-  random_walk();
   wglp.update();
   window.requestAnimationFrame(new_frame);
 }
@@ -147,17 +143,14 @@ window.requestAnimationFrame(new_frame);
 
 
 
-function random_walk() {
-  for (let i=0; i<num-1; i++) {
-    
-    lines.forEach(line => {
-      line.xy.set(i,1, line.xy.get(i+1,1))
-    });
-    
-  }
-  lines.forEach(line => {
-    let y = line.xy.get(num-1,1) + 0.01 * (Math.round(Math.random()) -0.5);
-    line.xy.set(num-1,1,y);
-  });
+
+/*function sinwave() {
+  for (let i=0; i<num; i++) {
+    let y1= Math.sin(i*freq*Math.PI/100 + phi) + Math.random()*Namp/1;
+    lg1.xy.set(i,1, 0.9*0.5*Samp*y1+0.25);
   
-}
+    let y2= Math.sin(i*freq*Math.PI/100 + phi) + Math.random()*Namp/1;
+    lg2.xy.set(i,1, 0.9*0.5*Samp*y2-0.25);
+  }
+  phi = phi + phi_delta*0.5;
+}*/
