@@ -17,16 +17,26 @@ let num = Math.round(canv.clientWidth * devicePixelRatio);
 //let num=1000;
 
 
-let line_color1 = new color_rgba(1,1,0,1);
-let line_color2 = new color_rgba(1,0,0,1);
 
-let lg1 = new lineGroup(line_color1);
-let lg2 = new lineGroup(line_color2);
+let line_num = 100;
+let line_colors : Array<color_rgba>;
+let lines : Array<lineGroup>;
 
-lg1.xy = ndarray(new Float32Array(num*2), [num, 2]);
-lg2.xy = ndarray(new Float32Array(num*2), [num, 2]);
+line_colors = [];
+lines = [];
 
-let wglp = new webGLplot(canv, [lg1, lg2]);
+for(let i = 0; i < line_num; i++) {
+  line_colors.push(new color_rgba(Math.random(), Math.random(), Math.random(), 1.0));
+  lines.push(new lineGroup(line_colors[i]));
+}
+
+lines.forEach(line => {
+  line.xy = ndarray(new Float32Array(num*2), [num, 2]);
+});
+
+
+
+let wglp = new webGLplot(canv, lines);
 
 
 
@@ -39,11 +49,11 @@ let freq = 1;
 let phi_delta=1;
 
 for (let i=0; i<num; i++) {
-   //set x to -num/2:1:+num/2
-   lg1.xy.set(i, 0, 2*i/num-1);
-   lg1.xy.set(i, 1, 0);
-   lg2.xy.set(i, 0, 2*i/num-1);
-   lg2.xy.set(i, 1, 0);
+  //set x to -num/2:1:+num/2
+  lines.forEach(line => {
+    line.xy.set(i, 0, 2*i/num-1);
+    line.xy.set(i, 1, 0);
+  });
 }
 
 
@@ -123,14 +133,6 @@ slider_Samp.noUiSlider.on("update", function(values, handle) {
 
 
 
-/*setInterval(function () {
-
-  random_walk();
-  
-  wglp.update();
-   
-}, 16.67*1);*/
-
 
 function new_frame() {
   random_walk();
@@ -144,16 +146,17 @@ window.requestAnimationFrame(new_frame);
 
 function random_walk() {
   for (let i=0; i<num-1; i++) {
-    lg1.xy.set(i,1, lg1.xy.get(i+1,1));
-    lg2.xy.set(i,1, lg2.xy.get(i+1,1));
+    
+    lines.forEach(line => {
+      line.xy.set(i,1, line.xy.get(i+1,1))
+    });
     
   }
-  let y1 = lg1.xy.get(num-1,1) + 0.02 * (Math.round(Math.random()) -0.5);
-  let y2 = lg2.xy.get(num-1,1) + 0.02 * (Math.round(Math.random()) -0.5);
-
-  lg1.xy.set(num-1,1,y1);
-  lg2.xy.set(num-1,1,y2);
-
+  lines.forEach(line => {
+    let y = line.xy.get(num-1,1) + 0.01 * (Math.round(Math.random()) -0.5);
+    line.xy.set(num-1,1,y);
+  });
+  
 }
 
 /*function sinwave() {

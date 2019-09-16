@@ -76,7 +76,7 @@ export class webGLplot {
          lg.num_points = lg.xy.shape[0];
          lg.vbuffer = gl.createBuffer();
          gl.bindBuffer(gl.ARRAY_BUFFER, lg.vbuffer);
-         gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>lg.xy, gl.DYNAMIC_DRAW);
+         gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>lg.xy, gl.STREAM_DRAW);
 
          let vertCode = `
          attribute vec2 coordinates;

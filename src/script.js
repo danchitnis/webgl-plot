@@ -12,25 +12,34 @@ var canv = document.getElementById("my_canvas");
 var devicePixelRatio = window.devicePixelRatio || 1;
 var num = Math.round(canv.clientWidth * devicePixelRatio);
 //let num=1000;
-var line_color1 = new webGLplot_2.color_rgba(1, 1, 0, 1);
-var line_color2 = new webGLplot_2.color_rgba(1, 0, 0, 1);
-var lg1 = new webGLplot_3.lineGroup(line_color1);
-var lg2 = new webGLplot_3.lineGroup(line_color2);
-lg1.xy = ndarray(new Float32Array(num * 2), [num, 2]);
-lg2.xy = ndarray(new Float32Array(num * 2), [num, 2]);
-var wglp = new webGLplot_1.webGLplot(canv, [lg1, lg2]);
+var line_num = 100;
+var line_colors;
+var lines;
+line_colors = [];
+lines = [];
+for (var i = 0; i < line_num; i++) {
+    line_colors.push(new webGLplot_2.color_rgba(Math.random(), Math.random(), Math.random(), 1.0));
+    lines.push(new webGLplot_3.lineGroup(line_colors[i]));
+}
+lines.forEach(function (line) {
+    line.xy = ndarray(new Float32Array(num * 2), [num, 2]);
+});
+var wglp = new webGLplot_1.webGLplot(canv, lines);
 console.log(num);
 //amplitude
 var Samp = 1;
 var Namp = 1;
 var freq = 1;
 var phi_delta = 1;
-for (var i = 0; i < num; i++) {
+var _loop_1 = function (i) {
     //set x to -num/2:1:+num/2
-    lg1.xy.set(i, 0, 2 * i / num - 1);
-    lg1.xy.set(i, 1, 0);
-    lg2.xy.set(i, 0, 2 * i / num - 1);
-    lg2.xy.set(i, 1, 0);
+    lines.forEach(function (line) {
+        line.xy.set(i, 0, 2 * i / num - 1);
+        line.xy.set(i, 1, 0);
+    });
+};
+for (var i = 0; i < num; i++) {
+    _loop_1(i);
 }
 var phi = 0;
 //sliders
@@ -90,13 +99,6 @@ slider_phid.noUiSlider.on("update", function (values, handle) {
     phi_delta = parseFloat(values[handle]);
     document.getElementById("display_phid").innerHTML = phi_delta.toString();
 });
-/*setInterval(function () {
-
-  random_walk();
-  
-  wglp.update();
-   
-}, 16.67*1);*/
 function new_frame() {
     random_walk();
     wglp.update();
@@ -104,14 +106,18 @@ function new_frame() {
 }
 window.requestAnimationFrame(new_frame);
 function random_walk() {
+    var _loop_2 = function (i) {
+        lines.forEach(function (line) {
+            line.xy.set(i, 1, line.xy.get(i + 1, 1));
+        });
+    };
     for (var i = 0; i < num - 1; i++) {
-        lg1.xy.set(i, 1, lg1.xy.get(i + 1, 1));
-        lg2.xy.set(i, 1, lg2.xy.get(i + 1, 1));
+        _loop_2(i);
     }
-    var y1 = lg1.xy.get(num - 1, 1) + 0.02 * (Math.round(Math.random()) - 0.5);
-    var y2 = lg2.xy.get(num - 1, 1) + 0.02 * (Math.round(Math.random()) - 0.5);
-    lg1.xy.set(num - 1, 1, y1);
-    lg2.xy.set(num - 1, 1, y2);
+    lines.forEach(function (line) {
+        var y = line.xy.get(num - 1, 1) + 0.01 * (Math.round(Math.random()) - 0.5);
+        line.xy.set(num - 1, 1, y);
+    });
 }
 /*function sinwave() {
   for (let i=0; i<num; i++) {
