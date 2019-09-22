@@ -92,6 +92,9 @@ var webGLplot = /** @class */ (function () {
             gl.drawArrays(gl.LINE_STRIP, 0, lg.num_points);
         });
     };
+    webGLplot.prototype.viewport = function (a, b, c, d) {
+        this.gl.viewport(a, b, c, d);
+    };
     return webGLplot;
 }());
 exports.webGLplot = webGLplot;

@@ -155,6 +155,10 @@ export class webGLplot {
       });
 
    }
+
+   viewport(a:number, b:number, c:number, d:number) {
+      this.gl.viewport(a, b, c, d);
+   }
  }
 
 

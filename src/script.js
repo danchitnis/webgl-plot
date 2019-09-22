@@ -81,6 +81,11 @@ slider_fps.noUiSlider.on("update", function (values, handle) {
     //phi_delta = parseFloat(values[handle]);
     //(<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = phi_delta.toString();
 });
+var resizeId;
+window.addEventListener('resize', function () {
+    clearTimeout(resizeId);
+    resizeId = setTimeout(doneResizing, 500);
+});
 init();
 function new_frame() {
     random_walk();
@@ -125,4 +130,8 @@ function init() {
     for (var i = 0; i < num; i++) {
         _loop_2(i);
     }
+}
+function doneResizing() {
+    wglp.viewport(0, 0, canv.width, canv.height);
+    console.log(window.innerWidth);
 }

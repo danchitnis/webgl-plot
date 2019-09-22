@@ -107,6 +107,11 @@ slider_lines.noUiSlider.on("update", function(values, handle) {
    //(<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = phi_delta.toString();
  });
 
+let resizeId;
+ window.addEventListener('resize', function() {
+     clearTimeout(resizeId);
+     resizeId = setTimeout(doneResizing, 500);
+ });
 
  init();
 
@@ -169,4 +174,9 @@ function init() {
     });
   }
 
+}
+
+function doneResizing() {
+  wglp.viewport(0, 0, canv.width, canv.height);
+  console.log(window.innerWidth);
 }
