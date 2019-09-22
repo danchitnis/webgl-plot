@@ -4,12 +4,13 @@
   "description": "realtime plot using native WebGL",
   "main": "./src/index.js",
   "dependencies": {
+    "cwise": "^1.0.10",
     "ndarray": "^1.0.18",
     "nouislider": "^14.0.2"
   },
   "devDependencies": {},
   "scripts": {
-    "build": "tsc ./src/script.ts && webpack"
+    "build": "tsc ./src/script.ts ./src/webGLplot.ts && webpack"
   },
   "repository": {
     "type": "git",
