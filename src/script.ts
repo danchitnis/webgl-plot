@@ -25,6 +25,9 @@ let lines : Array<lineGroup>;
 
 let wglp;
 
+let fps_divder = 1; 
+let fps_counter = 0;
+
 
 let line_num_list = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
 
@@ -73,12 +76,12 @@ noUiSlider.create(slider_new_data, {
 
 noUiSlider.create(slider_fps, {
    start: [1],
-   step: 0.1,
+   step: 1,
    connect: [true, false],
    //tooltips: [false, wNumb({decimals: 1}), true],
    range: {
-     min: 0.1,
-     max: 1
+     min: 1,
+     max: 10
    }
 });
 
@@ -103,8 +106,8 @@ slider_lines.noUiSlider.on("update", function(values, handle) {
  });
 
  slider_fps.noUiSlider.on("update", function(values, handle) {
-   //phi_delta = parseFloat(values[handle]);
-   //(<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = phi_delta.toString();
+   fps_divder = parseFloat(values[handle]);
+   (<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = (60/fps_divder).toString();
  });
 
 let resizeId;
@@ -118,9 +121,19 @@ let resizeId;
 
 
 function new_frame() {
-  random_walk();
-  wglp.scaleY = yscale;
-  wglp.update();
+  
+  if (fps_counter==0) {
+    random_walk();
+    wglp.scaleY = yscale;
+    wglp.update();
+  }
+
+  fps_counter++;
+
+  if (fps_counter >= fps_divder) {
+    fps_counter = 0;
+  }
+  
   window.requestAnimationFrame(new_frame);
 }
 

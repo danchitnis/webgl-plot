@@ -17,6 +17,8 @@ var yscale = 1;
 var line_colors;
 var lines;
 var wglp;
+var fps_divder = 1;
+var fps_counter = 0;
 var line_num_list = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
 //sliders
 var slider_lines = document.getElementById('slider_lines');
@@ -54,12 +56,12 @@ noUiSlider.create(slider_new_data, {
 });
 noUiSlider.create(slider_fps, {
     start: [1],
-    step: 0.1,
+    step: 1,
     connect: [true, false],
     //tooltips: [false, wNumb({decimals: 1}), true],
     range: {
-        min: 0.1,
-        max: 1
+        min: 1,
+        max: 10
     }
 });
 slider_lines.noUiSlider.on("update", function (values, handle) {
@@ -78,8 +80,8 @@ slider_new_data.noUiSlider.on("update", function (values, handle) {
     //(<HTMLParagraphElement>document.getElementById("display_new_data_size")).innerHTML = freq.toString();
 });
 slider_fps.noUiSlider.on("update", function (values, handle) {
-    //phi_delta = parseFloat(values[handle]);
-    //(<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = phi_delta.toString();
+    fps_divder = parseFloat(values[handle]);
+    document.getElementById("display_fps").innerHTML = (60 / fps_divder).toString();
 });
 var resizeId;
 window.addEventListener('resize', function () {
@@ -88,9 +90,15 @@ window.addEventListener('resize', function () {
 });
 init();
 function new_frame() {
-    random_walk();
-    wglp.scaleY = yscale;
-    wglp.update();
+    if (fps_counter == 0) {
+        random_walk();
+        wglp.scaleY = yscale;
+        wglp.update();
+    }
+    fps_counter++;
+    if (fps_counter >= fps_divder) {
+        fps_counter = 0;
+    }
     window.requestAnimationFrame(new_frame);
 }
 window.requestAnimationFrame(new_frame);
