@@ -41,12 +41,14 @@ var webGLplot = /** @class */ (function () {
         });
         this.gl = gl;
         this.linegroups = linegroups;
+        this.scaleX = 1;
+        this.scaleY = 1;
         linegroups.forEach(function (lg) {
             lg.num_points = lg.xy.shape[0];
             lg.vbuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, lg.vbuffer);
             gl.bufferData(gl.ARRAY_BUFFER, lg.xy, gl.STREAM_DRAW);
-            var vertCode = "\n         attribute vec2 coordinates;\n         void main(void) {\n            gl_Position = vec4(coordinates, 0.0, 1.0);\n         }";
+            var vertCode = "\n         attribute vec2 coordinates;\n         uniform mat2 uscale;\n         void main(void) {\n            gl_Position = vec4(uscale*coordinates, 0.0, 1.0);\n         }";
             // Create a vertex shader object
             var vertShader = gl.createShader(gl.VERTEX_SHADER);
             // Attach vertex shader source code
@@ -80,10 +82,13 @@ var webGLplot = /** @class */ (function () {
     * update
     */
     webGLplot.prototype.update = function () {
+        var _this = this;
         var gl = this.gl;
         this.linegroups.forEach(function (lg) {
             gl.useProgram(lg.prog);
-            gl.bufferData(gl.ARRAY_BUFFER, lg.xy.data, gl.DYNAMIC_DRAW);
+            var uscale = gl.getUniformLocation(lg.prog, 'uscale');
+            gl.uniformMatrix2fv(uscale, false, new Float32Array([_this.scaleX, 0, 0, _this.scaleY]));
+            gl.bufferData(gl.ARRAY_BUFFER, lg.xy.data, gl.STREAM_DRAW);
             gl.drawArrays(gl.LINE_STRIP, 0, lg.num_points);
         });
     };

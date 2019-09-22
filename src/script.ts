@@ -19,46 +19,16 @@ let num = Math.round(canv.clientWidth * devicePixelRatio);
 
 
 let line_num = 100;
+let yscale = 1;
 let line_colors : Array<color_rgba>;
 let lines : Array<lineGroup>;
 
-line_colors = [];
-lines = [];
-
-for(let i = 0; i < line_num; i++) {
-  line_colors.push(new color_rgba(Math.random(), Math.random(), Math.random(), 0.5));
-  lines.push(new lineGroup(line_colors[i]));
-}
-
-lines.forEach(line => {
-  line.xy = ndarray(new Float32Array(num*2), [num, 2]);
-});
+let wglp;
 
 
-
-let wglp = new webGLplot(canv, lines);
-
+let line_num_list = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
 
 
-console.log(num);
-
-//amplitude
-let Samp = 1; 
-let Namp = 1;
-let freq = 1;
-let phi_delta=1;
-
-for (let i=0; i<num; i++) {
-  //set x to -num/2:1:+num/2
-  lines.forEach(line => {
-    line.xy.set(i, 0, 2*i/num-1);
-    line.xy.set(i, 1, 0);
-  });
-}
-
-
-
-let phi = 0;
 
 
 
@@ -70,13 +40,13 @@ let slider_new_data = document.getElementById('slider_new_data') as noUiSlider.I
 let slider_fps = document.getElementById('slider_fps') as noUiSlider.Instance;
 
 noUiSlider.create(slider_lines, {
-   start: [1],
+   start: [0],
    step: 1,
    connect: [true, false],
    //tooltips: [false, wNumb({decimals: 1}), true],
    range: {
-     min: 1,
-     max: 10000
+     min: 0,
+     max: 11
    }
 });
 
@@ -86,7 +56,7 @@ noUiSlider.create(slider_yscale, {
    //tooltips: [false, wNumb({decimals: 1}), true],
    range: {
      min: 0.01,
-     max: 1
+     max: 10
    }
 });
 
@@ -114,31 +84,37 @@ noUiSlider.create(slider_fps, {
 
 
 slider_lines.noUiSlider.on("update", function(values, handle) {
-   Samp = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_lines")).innerHTML = Samp.toString();
+   line_num = line_num_list[parseFloat(values[handle])];
+   (<HTMLParagraphElement>document.getElementById("display_lines")).innerHTML = line_num.toString();
  });
 
+ slider_lines.noUiSlider.on("set", function(values, handle) {
+  init();
+});
+
  slider_yscale.noUiSlider.on("update", function(values, handle) {
-   Namp = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_yscale")).innerHTML = Namp.toString();
+   yscale = parseFloat(values[handle]);
+   (<HTMLParagraphElement>document.getElementById("display_yscale")).innerHTML = yscale.toString();
  });
 
  slider_new_data.noUiSlider.on("update", function(values, handle) {
-   freq = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_new_data_size")).innerHTML = freq.toString();
+   //freq = parseFloat(values[handle]);
+   //(<HTMLParagraphElement>document.getElementById("display_new_data_size")).innerHTML = freq.toString();
  });
 
  slider_fps.noUiSlider.on("update", function(values, handle) {
-   phi_delta = parseFloat(values[handle]);
-   (<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = phi_delta.toString();
+   //phi_delta = parseFloat(values[handle]);
+   //(<HTMLParagraphElement>document.getElementById("display_fps")).innerHTML = phi_delta.toString();
  });
 
 
+ init();
 
 
 
 function new_frame() {
   random_walk();
+  wglp.scaleY = yscale;
   wglp.update();
   window.requestAnimationFrame(new_frame);
 }
@@ -160,4 +136,37 @@ function random_walk() {
     line.xy.set(num-1,1,y);
   });
   
+}
+
+
+function init() {
+  line_colors = [];
+  lines = [];
+
+  for(let i = 0; i < line_num; i++) {
+    line_colors.push(new color_rgba(Math.random(), Math.random(), Math.random(), 0.5));
+    lines.push(new lineGroup(line_colors[i]));
+  }
+
+  lines.forEach(line => {
+    line.xy = ndarray(new Float32Array(num*2), [num, 2]);
+  });
+
+
+
+  wglp = new webGLplot(canv, lines);
+
+
+
+  console.log(num);
+
+
+  for (let i=0; i<num; i++) {
+    //set x to -num/2:1:+num/2
+    lines.forEach(line => {
+      line.xy.set(i, 0, 2*i/num-1);
+      line.xy.set(i, 1, 0);
+    });
+  }
+
 }

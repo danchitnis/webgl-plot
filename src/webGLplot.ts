@@ -43,8 +43,8 @@ export class webGLplot {
     array2:ndarray;
     gl:WebGLRenderingContext;
     color: color_rgba;
-    prog1: WebGLProgram;
-    prog2: WebGLProgram;
+    scaleX: number;
+    scaleY: number;
 
     linegroups: lineGroup[];
 
@@ -70,6 +70,8 @@ export class webGLplot {
 
       this.gl = gl;
       this.linegroups = linegroups;
+      this.scaleX = 1;
+      this.scaleY = 1;
       
  
       linegroups.forEach(lg => {
@@ -80,8 +82,9 @@ export class webGLplot {
 
          let vertCode = `
          attribute vec2 coordinates;
+         uniform mat2 uscale;
          void main(void) {
-            gl_Position = vec4(coordinates, 0.0, 1.0);
+            gl_Position = vec4(uscale*coordinates, 0.0, 1.0);
          }`;
 
          // Create a vertex shader object
@@ -140,7 +143,13 @@ export class webGLplot {
 
       this.linegroups.forEach(lg => {
          gl.useProgram(lg.prog);
-         gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>lg.xy.data, gl.DYNAMIC_DRAW);
+
+         let uscale = gl.getUniformLocation(lg.prog, 'uscale');
+         gl.uniformMatrix2fv(uscale, false, new Float32Array([this.scaleX,0, 0,this.scaleY]));
+
+         gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>lg.xy.data, gl.STREAM_DRAW);
+
+
          gl.drawArrays(gl.LINE_STRIP, 0, lg.num_points);
 
       });
