@@ -3,8 +3,7 @@
 
 ### Build
 ```sh
-$ tsc ./src/script.ts
-$ npx webpack
+$ npm rub build
 ```
 
 
