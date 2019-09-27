@@ -4,9 +4,11 @@
   "description": "realtime plot using native WebGL",
   "main": "./src/index.js",
   "dependencies": {
+    "@types/stats": "^0.16.30",
     "cwise": "^1.0.10",
     "ndarray": "^1.0.18",
-    "nouislider": "^14.0.2"
+    "nouislider": "^14.0.2",
+    "stats.js": "^0.17.0"
   },
   "devDependencies": {},
   "scripts": {

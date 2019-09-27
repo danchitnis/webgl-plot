@@ -8,6 +8,10 @@ import { color_rgba} from "./webGLplot"
 import { lineGroup } from "./webGLplot"
 import * as noUiSlider from 'nouislider';
 
+import Stats = require("stats.js");
+
+
+
 
 let canv = <HTMLCanvasElement>document.getElementById("my_canvas");
 
@@ -15,6 +19,10 @@ let canv = <HTMLCanvasElement>document.getElementById("my_canvas");
 let devicePixelRatio = window.devicePixelRatio || 1;
 let num = Math.round(canv.clientWidth * devicePixelRatio);
 //let num=1000;
+
+let stats = new Stats();
+stats.showPanel(0);
+document.body.appendChild( stats.dom );
 
 
 
@@ -121,7 +129,8 @@ let resizeId;
 
 
 function new_frame() {
-  
+  stats.begin();
+
   if (fps_counter==0) {
     random_walk();
     wglp.scaleY = yscale;
@@ -134,6 +143,7 @@ function new_frame() {
     fps_counter = 0;
   }
   
+  stats.end();
   window.requestAnimationFrame(new_frame);
 }
 

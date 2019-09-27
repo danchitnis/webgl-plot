@@ -8,10 +8,14 @@ var webGLplot_1 = require("./webGLplot");
 var webGLplot_2 = require("./webGLplot");
 var webGLplot_3 = require("./webGLplot");
 var noUiSlider = require("nouislider");
+var Stats = require("stats.js");
 var canv = document.getElementById("my_canvas");
 var devicePixelRatio = window.devicePixelRatio || 1;
 var num = Math.round(canv.clientWidth * devicePixelRatio);
 //let num=1000;
+var stats = new Stats();
+stats.showPanel(0);
+document.body.appendChild(stats.dom);
 var line_num = 100;
 var yscale = 1;
 var line_colors;
@@ -90,6 +94,7 @@ window.addEventListener('resize', function () {
 });
 init();
 function new_frame() {
+    stats.begin();
     if (fps_counter == 0) {
         random_walk();
         wglp.scaleY = yscale;
@@ -99,6 +104,7 @@ function new_frame() {
     if (fps_counter >= fps_divder) {
         fps_counter = 0;
     }
+    stats.end();
     window.requestAnimationFrame(new_frame);
 }
 window.requestAnimationFrame(new_frame);

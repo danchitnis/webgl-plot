@@ -1,0 +1,25 @@
+{
+    "authors": "Gregory Dalton <https://github.com/gregolai>, Harm Berntsen <https://github.com/hberntsen>",
+    "definitionFilename": "index.d.ts",
+    "libraryDependencies": [],
+    "moduleDependencies": [],
+    "libraryMajorVersion": "0",
+    "libraryMinorVersion": "16",
+    "libraryName": "Stats.js 0.16.0",
+    "typingsPackageName": "stats",
+    "projectName": "http://github.com/mrdoob/stats.js",
+    "sourceRepoURL": "https://www.github.com/DefinitelyTyped/DefinitelyTyped",
+    "sourceBranch": "types-2.0",
+    "kind": "OldUMD",
+    "globals": [
+        "Stats"
+    ],
+    "declaredModules": [
+        "stats.js"
+    ],
+    "files": [
+        "index.d.ts"
+    ],
+    "hasPackageJson": false,
+    "contentHash": "0c369592106e0c0c3a362e7b11758e0510fa90bdfdad73538c2df3b52d319f78"
+}
