@@ -8,6 +8,7 @@
     "cwise": "^1.0.10",
     "ndarray": "^1.0.18",
     "nouislider": "^14.0.2",
+    "static-eval": "^2.0.2",
     "stats.js": "^0.17.0"
   },
   "devDependencies": {},
