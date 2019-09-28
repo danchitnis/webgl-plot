@@ -129,12 +129,16 @@ let resizeId;
 
 
 function new_frame() {
-  stats.begin();
+  
 
   if (fps_counter==0) {
+    stats.begin();
+
     random_walk();
     wglp.scaleY = yscale;
     wglp.update();
+
+    stats.end();
   }
 
   fps_counter++;
@@ -143,7 +147,7 @@ function new_frame() {
     fps_counter = 0;
   }
   
-  stats.end();
+  
   window.requestAnimationFrame(new_frame);
 }
 

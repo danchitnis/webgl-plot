@@ -94,17 +94,17 @@ window.addEventListener('resize', function () {
 });
 init();
 function new_frame() {
-    stats.begin();
     if (fps_counter == 0) {
+        stats.begin();
         random_walk();
         wglp.scaleY = yscale;
         wglp.update();
+        stats.end();
     }
     fps_counter++;
     if (fps_counter >= fps_divder) {
         fps_counter = 0;
     }
-    stats.end();
     window.requestAnimationFrame(new_frame);
 }
 window.requestAnimationFrame(new_frame);
