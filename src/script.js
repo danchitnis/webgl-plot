@@ -23,6 +23,7 @@ var lines;
 var wglp;
 var fps_divder = 1;
 var fps_counter = 0;
+var new_num = 10;
 var line_num_list = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
 //sliders
 var slider_lines = document.getElementById('slider_lines');
@@ -54,8 +55,8 @@ noUiSlider.create(slider_new_data, {
     connect: [true, false],
     //tooltips: [false, wNumb({decimals: 1}), true],
     range: {
-        min: 0,
-        max: 1000
+        min: 1,
+        max: 100
     }
 });
 noUiSlider.create(slider_fps, {
@@ -80,8 +81,8 @@ slider_yscale.noUiSlider.on("update", function (values, handle) {
     document.getElementById("display_yscale").innerHTML = yscale.toString();
 });
 slider_new_data.noUiSlider.on("update", function (values, handle) {
-    //freq = parseFloat(values[handle]);
-    //(<HTMLParagraphElement>document.getElementById("display_new_data_size")).innerHTML = freq.toString();
+    new_num = parseFloat(values[handle]);
+    document.getElementById("display_new_data_size").innerHTML = new_num.toString();
 });
 slider_fps.noUiSlider.on("update", function (values, handle) {
     fps_divder = parseFloat(values[handle]);
@@ -96,7 +97,9 @@ init();
 function new_frame() {
     if (fps_counter == 0) {
         stats.begin();
-        random_walk();
+        for (var i = 0; i < new_num; i++) {
+            random_walk();
+        }
         wglp.scaleY = yscale;
         wglp.update();
         stats.end();

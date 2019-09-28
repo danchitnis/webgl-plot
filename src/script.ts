@@ -36,6 +36,8 @@ let wglp;
 let fps_divder = 1; 
 let fps_counter = 0;
 
+let new_num = 10;
+
 
 let line_num_list = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
 
@@ -77,8 +79,8 @@ noUiSlider.create(slider_new_data, {
    connect: [true, false],
    //tooltips: [false, wNumb({decimals: 1}), true],
    range: {
-     min: 0,
-     max: 1000
+     min: 1,
+     max: 100
    }
 });
 
@@ -109,8 +111,8 @@ slider_lines.noUiSlider.on("update", function(values, handle) {
  });
 
  slider_new_data.noUiSlider.on("update", function(values, handle) {
-   //freq = parseFloat(values[handle]);
-   //(<HTMLParagraphElement>document.getElementById("display_new_data_size")).innerHTML = freq.toString();
+   new_num = parseFloat(values[handle]);
+   (<HTMLParagraphElement>document.getElementById("display_new_data_size")).innerHTML = new_num.toString();
  });
 
  slider_fps.noUiSlider.on("update", function(values, handle) {
@@ -134,7 +136,10 @@ function new_frame() {
   if (fps_counter==0) {
     stats.begin();
 
-    random_walk();
+    for (let i=0;i<new_num;i++) {
+      random_walk();
+    }
+    
     wglp.scaleY = yscale;
     wglp.update();
 
@@ -163,10 +168,12 @@ function random_walk() {
     });
     
   }
+  
   lines.forEach(line => {
     let y = line.xy.get(num-1,1) + 0.01 * (Math.round(Math.random()) -0.5);
     line.xy.set(num-1,1,y);
   });
+  
   
 }
 
