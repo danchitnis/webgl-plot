@@ -39,8 +39,6 @@ export class lineGroup {
 
 export class webGLplot {
     num_points:number;
-    array:ndarray;
-    array2:ndarray;
     gl:WebGLRenderingContext;
     color: color_rgba;
     scaleX: number;

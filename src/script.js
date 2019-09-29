@@ -97,9 +97,7 @@ init();
 function new_frame() {
     if (fps_counter == 0) {
         stats.begin();
-        for (var i = 0; i < new_num; i++) {
-            random_walk();
-        }
+        plot(new_num);
         wglp.scaleY = yscale;
         wglp.update();
         stats.end();
@@ -111,19 +109,30 @@ function new_frame() {
     window.requestAnimationFrame(new_frame);
 }
 window.requestAnimationFrame(new_frame);
-function random_walk() {
+function plot(walk_size) {
     var _loop_1 = function (i) {
         lines.forEach(function (line) {
-            line.xy.set(i, 1, line.xy.get(i + 1, 1));
+            line.xy.set(i, 1, line.xy.get(i + walk_size, 1));
         });
     };
-    for (var i = 0; i < num - 1; i++) {
+    for (var i = 0; i < num - walk_size; i++) {
         _loop_1(i);
     }
     lines.forEach(function (line) {
-        var y = line.xy.get(num - 1, 1) + 0.01 * (Math.round(Math.random()) - 0.5);
-        line.xy.set(num - 1, 1, y);
+        var y = random_walk(line.xy.get(num - 1, 1), walk_size);
+        //console.log(y);
+        for (var i = 0; i < walk_size; i++) {
+            line.xy.set(i + num - walk_size, 1, y[i]);
+        }
     });
+}
+function random_walk(init, walk_size) {
+    var y = new Float32Array(walk_size);
+    y[0] = init + 0.01 * (Math.round(Math.random()) - 0.5);
+    for (var i = 1; i < walk_size; i++) {
+        y[i] = y[i - 1] + 0.01 * (Math.round(Math.random()) - 0.5);
+    }
+    return y;
 }
 function init() {
     line_colors = [];
