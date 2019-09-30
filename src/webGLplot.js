@@ -47,7 +47,7 @@ var webGLplot = /** @class */ (function () {
             lg.num_points = lg.xy.shape[0];
             lg.vbuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, lg.vbuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, lg.xy, gl.STREAM_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, lg.xy.data, gl.STREAM_DRAW);
             var vertCode = "\n         attribute vec2 coordinates;\n         uniform mat2 uscale;\n         void main(void) {\n            gl_Position = vec4(uscale*coordinates, 0.0, 1.0);\n         }";
             // Create a vertex shader object
             var vertShader = gl.createShader(gl.VERTEX_SHADER);

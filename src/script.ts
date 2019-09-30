@@ -8,7 +8,7 @@ import { color_rgba} from "./webGLplot"
 import { lineGroup } from "./webGLplot"
 import * as noUiSlider from 'nouislider';
 
-import Stats = require("stats.js");
+import Statsjs = require("stats.js");
 
 
 
@@ -20,7 +20,7 @@ let devicePixelRatio = window.devicePixelRatio || 1;
 let num = Math.round(canv.clientWidth * devicePixelRatio);
 //let num=1000;
 
-let stats = new Stats();
+let stats = new Statsjs();
 stats.showPanel(0);
 document.body.appendChild( stats.dom );
 
@@ -136,10 +136,8 @@ function new_frame() {
   if (fps_counter==0) {
     stats.begin();
 
-
     plot(new_num);
 
-    
     wglp.scaleY = yscale;
     wglp.update();
 
@@ -152,7 +150,6 @@ function new_frame() {
     fps_counter = 0;
   }
   
-  
   window.requestAnimationFrame(new_frame);
 }
 
@@ -160,22 +157,19 @@ window.requestAnimationFrame(new_frame);
 
 
 
-function plot(walk_size:number) {
+function plot(shift_size:number) {
 
-  for (let i=0; i<num-walk_size; i++) {
+  for (let i=0; i<num-shift_size; i++) {
     lines.forEach(line => {
-      line.xy.set(i,1, line.xy.get(i+walk_size,1));
+      line.xy.set(i,1, line.xy.get(i+shift_size,1));
     });
-    
   }
   
   lines.forEach(line => {
-    let y = random_walk(line.xy.get(num-1,1), walk_size);
-    //console.log(y);
-    for (let i=0;i<walk_size;i++) {
-      line.xy.set(i+num-walk_size,1,y[i]);
+    let y = random_walk(line.xy.get(num-1,1), shift_size);
+    for (let i=0;i<shift_size;i++) {
+      line.xy.set(i+num-shift_size,1,y[i]);
     }
-
   });
   
   

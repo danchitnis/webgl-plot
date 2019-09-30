@@ -8,12 +8,12 @@ var webGLplot_1 = require("./webGLplot");
 var webGLplot_2 = require("./webGLplot");
 var webGLplot_3 = require("./webGLplot");
 var noUiSlider = require("nouislider");
-var Stats = require("stats.js");
+var Statsjs = require("stats.js");
 var canv = document.getElementById("my_canvas");
 var devicePixelRatio = window.devicePixelRatio || 1;
 var num = Math.round(canv.clientWidth * devicePixelRatio);
 //let num=1000;
-var stats = new Stats();
+var stats = new Statsjs();
 stats.showPanel(0);
 document.body.appendChild(stats.dom);
 var line_num = 100;
@@ -109,20 +109,19 @@ function new_frame() {
     window.requestAnimationFrame(new_frame);
 }
 window.requestAnimationFrame(new_frame);
-function plot(walk_size) {
+function plot(shift_size) {
     var _loop_1 = function (i) {
         lines.forEach(function (line) {
-            line.xy.set(i, 1, line.xy.get(i + walk_size, 1));
+            line.xy.set(i, 1, line.xy.get(i + shift_size, 1));
         });
     };
-    for (var i = 0; i < num - walk_size; i++) {
+    for (var i = 0; i < num - shift_size; i++) {
         _loop_1(i);
     }
     lines.forEach(function (line) {
-        var y = random_walk(line.xy.get(num - 1, 1), walk_size);
-        //console.log(y);
-        for (var i = 0; i < walk_size; i++) {
-            line.xy.set(i + num - walk_size, 1, y[i]);
+        var y = random_walk(line.xy.get(num - 1, 1), shift_size);
+        for (var i = 0; i < shift_size; i++) {
+            line.xy.set(i + num - shift_size, 1, y[i]);
         }
     });
 }
