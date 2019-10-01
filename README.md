@@ -2,7 +2,7 @@
 
 
 # webgl-plot
-multi-line 1D graphs using native WebGL
+multi-line high-performance 2D graphs using native WebGL
 
 ### Build
 ```sh
