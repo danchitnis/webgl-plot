@@ -3,7 +3,6 @@
  * Author Danial Chitnis 2019
  */
 exports.__esModule = true;
-var ndarray = require("ndarray");
 var webGLplot_1 = require("./webGLplot");
 var webGLplot_2 = require("./webGLplot");
 var webGLplot_3 = require("./webGLplot");
@@ -138,12 +137,12 @@ function init() {
     lines = [];
     for (var i = 0; i < line_num; i++) {
         line_colors.push(new webGLplot_2.color_rgba(Math.random(), Math.random(), Math.random(), 0.5));
-        lines.push(new webGLplot_3.lineGroup(line_colors[i]));
+        lines.push(new webGLplot_3.lineGroup(line_colors[i], num));
     }
+    wglp = new webGLplot_1.webGLplot(canv);
     lines.forEach(function (line) {
-        line.xy = ndarray(new Float32Array(num * 2), [num, 2]);
+        wglp.add_line(line);
     });
-    wglp = new webGLplot_1.webGLplot(canv, lines);
     console.log(num);
     var _loop_2 = function (i) {
         //set x to -num/2:1:+num/2

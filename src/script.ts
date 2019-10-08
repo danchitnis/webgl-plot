@@ -191,14 +191,17 @@ function init() {
 
   for(let i = 0; i < line_num; i++) {
     line_colors.push(new color_rgba(Math.random(), Math.random(), Math.random(), 0.5));
-    lines.push(new lineGroup(line_colors[i]));
+    lines.push(new lineGroup(line_colors[i], num));
   }
 
+  wglp = new webGLplot(canv);
+
+  
   lines.forEach(line => {
-    line.xy = ndarray(new Float32Array(num*2), [num, 2]);
+    wglp.add_line(line);
   });
 
-  wglp = new webGLplot(canv, lines);
+
 
   console.log(num);
 

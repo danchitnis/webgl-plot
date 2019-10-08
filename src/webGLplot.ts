@@ -202,6 +202,10 @@ export class webGLplot {
       this.linegroups.push(line);
    }
 
+   viewport(a:number, b:number, c:number, d:number) {
+      this.gl.viewport(a, b, c, d);
+   }
+
 
 
  }
