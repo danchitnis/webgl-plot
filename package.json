@@ -2,6 +2,7 @@
   "name": "webgl-plot",
   "version": "0.1.0",
   "description": "realtime plot using native WebGL",
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" },
   "main": "./src/index.js",
   "dependencies": {
     "@types/ndarray": "^1.0.7",
@@ -15,7 +16,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "build": "tsc ./src/script.ts ./src/webGLplot.ts && webpack"
+    "build": "tsc ./src/index.ts"
   },
   "repository": {
     "type": "git",
