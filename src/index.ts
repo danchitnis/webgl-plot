@@ -6,7 +6,6 @@
  * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
  */
 
-import * as ndarray from "ndarray";
 
 
 export class color_rgba {
@@ -26,7 +25,7 @@ export class color_rgba {
 
 export class lineGroup {
    num_points: number;
-   xy: ndarray;
+   xy: Float32Array;
    color: color_rgba;
    intenisty: number;
    vbuffer: WebGLBuffer;
@@ -40,25 +39,54 @@ export class lineGroup {
       this.num_points = num;
       this.color = c;
       this.intenisty = 1;
-      this.xy = ndarray(new Float32Array(this.num_points*2), [this.num_points, 2]);
+      this.xy = new Float32Array(2*this.num_points);
       this.vbuffer = 0;
       this.prog = 0;
       this.coord = 0;
       this.visible = true;
    }
+
+   setX(index:number, x:number) {
+      this.xy[index*2] = x;
+   }
+
+   setY(index:number, y:number) {
+      this.xy[index*2 + 1] = y;
+   }
+
+   getX(index:number):number {
+      return this.xy[index*2];
+   }
+
+   getY(index:number):number {
+      return this.xy[index*2 + 1];
+   }
    
    linespaceX() {
       for (let i=0; i<this.num_points; i++) {
          //set x to -num/2:1:+num/2
-         this.xy.set(i, 0, 2*i/this.num_points-1);
+         this.setX(i, 2*i/this.num_points-1);
        }
    }
 
    constY(c:number) {
       for (let i=0; i<this.num_points; i++) {
          //set x to -num/2:1:+num/2
-         this.xy.set(i, 1, c);
+         this.setY(i, c);
        }
+   }
+
+   shift_add(data:Float32Array) {
+      let shift_size = data.length;
+
+      for (let i=0; i<this.num_points-shift_size; i++) {
+         this.setY(i, this.getY(i+shift_size));
+      }
+       
+      for (let i=0;i<shift_size;i++) {
+         this.setY(i+this.num_points-shift_size, data[i]);
+      }
+
    }
 
 
@@ -137,7 +165,7 @@ export class webGLplot {
             let uColor = gl.getUniformLocation(lg.prog,'uColor');
             gl.uniform4fv(uColor, [lg.present_color().r, lg.present_color().g, lg.present_color().b, lg.present_color().a]);
 
-            gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>lg.xy.data, gl.STREAM_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, <ArrayBuffer>lg.xy, gl.STREAM_DRAW);
 
             gl.drawArrays(gl.LINE_STRIP, 0, lg.num_points);
          }
@@ -154,11 +182,9 @@ export class webGLplot {
 
    add_line(line:lineGroup) {
       
-
-      line.num_points = line.xy.shape[0];
       line.vbuffer = <WebGLBuffer>this.gl.createBuffer();
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, line.vbuffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, <ArrayBuffer>line.xy.data, this.gl.STREAM_DRAW);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, <ArrayBuffer>line.xy, this.gl.STREAM_DRAW);
 
       let vertCode = `
       attribute vec2 coordinates;
@@ -204,6 +230,17 @@ export class webGLplot {
 
    viewport(a:number, b:number, c:number, d:number) {
       this.gl.viewport(a, b, c, d);
+   }
+
+   private combine_xy(x:Float32Array, y:Float32Array):Float32Array {
+      let xy = new Float32Array(2*y.length);
+      let j=0;
+      for (let i=0;i<y.length;i++) {
+         xy[j] = x[i];
+         xy[j+1] = y[i];
+         j=j+2;
+      }
+      return xy;
    }
 
 
