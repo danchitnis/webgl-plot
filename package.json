@@ -1,12 +1,15 @@
 {
   "name": "webgl-plot",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "description": "High-performance 2D plotting framework based on native WebGL",
-  "main": "./src/index.js",
+  "main": "./dist/index",
+  "typings": "./src/index",
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^3.7.2"
+  },
   "scripts": {
-    "build": "tsc ./src/index.ts"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
