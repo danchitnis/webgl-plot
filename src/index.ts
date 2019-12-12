@@ -20,17 +20,20 @@ export class WebGLplot {
 
    public scaleX: number;
    public scaleY: number;
+   public offsetX: number;
+   public offsetY: number;
 
    public lines: WebglBaseLine[];
+   public backgroundColor: ColorRGBA;
 
 
 
-    /**
-     *
-     * @param canv
-     * @param array
-     */
-    constructor(canv: HTMLCanvasElement) {
+   /**
+    *
+    * @param canv
+    * @param array
+    */
+   constructor(canv: HTMLCanvasElement, backgroundColor: ColorRGBA) {
 
       const devicePixelRatio = window.devicePixelRatio || 1;
 
@@ -49,12 +52,15 @@ export class WebGLplot {
 
       this.scaleX = 1;
       this.scaleY = 1;
+      this.offsetX = 0;
+      this.offsetY = 0;
+
+      this.backgroundColor = backgroundColor;
 
 
 
-      // Clear the canvas  //??????????????????
-      // gl.clearColor(0.1, 0.1, 0.1, 1.0);
-      webgl.clearColor(0.1, 0.1, 0.1, 1.0);
+      // Clear the canvas
+      webgl.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, this.backgroundColor.a);
 
       // Enable the depth test
       webgl.enable(webgl.DEPTH_TEST);
@@ -65,7 +71,7 @@ export class WebGLplot {
       // Set the view port
       webgl.viewport(0, 0, canv.width, canv.height);
 
-    }
+   }
 
 
    public update() {
@@ -78,7 +84,10 @@ export class WebGLplot {
             const uscale = webgl.getUniformLocation(line.prog, "uscale");
             webgl.uniformMatrix2fv(uscale, false, new Float32Array([this.scaleX, 0, 0, this.scaleY]));
 
-            const uColor = webgl.getUniformLocation(line.prog,"uColor");
+            const uoffset = webgl.getUniformLocation(line.prog, "uoffset");
+            webgl.uniform2fv(uoffset, new Float32Array([this.offsetX, this.offsetY]));
+
+            const uColor = webgl.getUniformLocation(line.prog, "uColor");
             webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
 
             webgl.bufferData(webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, webgl.STREAM_DRAW);
@@ -105,8 +114,10 @@ export class WebGLplot {
       const vertCode = `
       attribute vec2 coordinates;
       uniform mat2 uscale;
+      uniform vec2 uoffset;
+
       void main(void) {
-         gl_Position = vec4(uscale*coordinates, 0.0, 1.0);
+         gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
       }`;
 
       // Create a vertex shader object
@@ -150,4 +161,4 @@ export class WebGLplot {
 
 
 
- }
+}

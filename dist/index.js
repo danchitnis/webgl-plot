@@ -19,7 +19,7 @@ var WebGLplot = /** @class */ (function () {
      * @param canv
      * @param array
      */
-    function WebGLplot(canv) {
+    function WebGLplot(canv, backgroundColor) {
         var devicePixelRatio = window.devicePixelRatio || 1;
         // set the size of the drawingBuffer based on the size it's displayed.
         canv.width = canv.clientWidth * devicePixelRatio;
@@ -32,9 +32,11 @@ var WebGLplot = /** @class */ (function () {
         this.webgl = webgl;
         this.scaleX = 1;
         this.scaleY = 1;
-        // Clear the canvas  //??????????????????
-        // gl.clearColor(0.1, 0.1, 0.1, 1.0);
-        webgl.clearColor(0.1, 0.1, 0.1, 1.0);
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.backgroundColor = backgroundColor;
+        // Clear the canvas
+        webgl.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, this.backgroundColor.a);
         // Enable the depth test
         webgl.enable(webgl.DEPTH_TEST);
         // Clear the color and depth buffer
@@ -50,6 +52,8 @@ var WebGLplot = /** @class */ (function () {
                 webgl.useProgram(line.prog);
                 var uscale = webgl.getUniformLocation(line.prog, "uscale");
                 webgl.uniformMatrix2fv(uscale, false, new Float32Array([_this.scaleX, 0, 0, _this.scaleY]));
+                var uoffset = webgl.getUniformLocation(line.prog, "uoffset");
+                webgl.uniform2fv(uoffset, new Float32Array([_this.offsetX, _this.offsetY]));
                 var uColor = webgl.getUniformLocation(line.prog, "uColor");
                 webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
                 webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
@@ -66,7 +70,7 @@ var WebGLplot = /** @class */ (function () {
         line.vbuffer = this.webgl.createBuffer();
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line.vbuffer);
         this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy, this.webgl.STREAM_DRAW);
-        var vertCode = "\n      attribute vec2 coordinates;\n      uniform mat2 uscale;\n      void main(void) {\n         gl_Position = vec4(uscale*coordinates, 0.0, 1.0);\n      }";
+        var vertCode = "\n      attribute vec2 coordinates;\n      uniform mat2 uscale;\n      uniform vec2 uoffset;\n\n      void main(void) {\n         gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);\n      }";
         // Create a vertex shader object
         var vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
         // Attach vertex shader source code
