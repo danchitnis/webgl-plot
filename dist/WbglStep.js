@@ -39,11 +39,11 @@ var WebglStep = /** @class */ (function (_super) {
     WebglStep.prototype.getY = function (index) {
         return this.xy[index * 4 + 1];
     };
-    WebglStep.prototype.linespaceX = function () {
+    WebglStep.prototype.linespaceX = function (start, stepsize) {
         for (var i = 0; i < this.numPoints; i++) {
             // set x to -num/2:1:+num/2
-            this.xy[i * 4] = 2 * (i / this.numPoints) - 1;
-            this.xy[i * 4 + 2] = 2 * ((i + 1) / this.numPoints) - 1;
+            this.xy[i * 4] = start + (i * stepsize);
+            this.xy[i * 4 + 2] = start + (i * stepsize + stepsize);
         }
     };
     WebglStep.prototype.constY = function (c) {

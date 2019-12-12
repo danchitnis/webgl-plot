@@ -16,10 +16,10 @@ exports.__esModule = true;
 var WebglBaseLine_1 = require("./WebglBaseLine");
 var WebglLine = /** @class */ (function (_super) {
     __extends(WebglLine, _super);
-    function WebglLine(c, num) {
+    function WebglLine(c, numPoints) {
         var _this = _super.call(this) || this;
-        _this.webglNumPoints = num;
-        _this.numPoints = num;
+        _this.webglNumPoints = numPoints;
+        _this.numPoints = numPoints;
         _this.color = c;
         _this.intenisty = 1;
         _this.xy = new Float32Array(2 * _this.webglNumPoints);
@@ -41,10 +41,10 @@ var WebglLine = /** @class */ (function (_super) {
     WebglLine.prototype.getY = function (index) {
         return this.xy[index * 2 + 1];
     };
-    WebglLine.prototype.linespaceX = function () {
+    WebglLine.prototype.linespaceX = function (start, stepsize) {
         for (var i = 0; i < this.numPoints; i++) {
             // set x to -num/2:1:+num/2
-            this.setX(i, 2 * i / this.numPoints - 1);
+            this.setX(i, start + stepsize * i);
         }
     };
     WebglLine.prototype.constY = function (c) {

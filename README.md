@@ -14,7 +14,7 @@ multi-line high-performance 2D graphs using native WebGL. The advantages are:
 ## What are the use cases?
 When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.
 
-## Limits
+## Limitations
 cannot change the line width due to the OpenGL implementation of Line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of data vector and take a hit on the performance.
 
 ## Getting started
