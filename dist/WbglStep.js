@@ -52,13 +52,13 @@ var WebglStep = /** @class */ (function (_super) {
             this.setY(i, c);
         }
     };
-    WebglStep.prototype.shift_add = function (data) {
-        var shift_size = data.length;
-        for (var i = 0; i < this.numPoints - shift_size; i++) {
-            this.setY(i, this.getY(i + shift_size));
+    WebglStep.prototype.shiftAdd = function (data) {
+        var shiftSize = data.length;
+        for (var i = 0; i < this.numPoints - shiftSize; i++) {
+            this.setY(i, this.getY(i + shiftSize));
         }
-        for (var i = 0; i < shift_size; i++) {
-            this.setY(i + this.numPoints - shift_size, data[i]);
+        for (var i = 0; i < shiftSize; i++) {
+            this.setY(i + this.numPoints - shiftSize, data[i]);
         }
     };
     return WebglStep;

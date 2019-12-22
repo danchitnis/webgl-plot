@@ -74,7 +74,7 @@ export class WebGLplot {
    }
 
 
-   public update() {
+   public update(): void {
       const webgl = this.webgl;
 
       this.lines.forEach((line) => {
@@ -99,13 +99,13 @@ export class WebGLplot {
 
    }
 
-   public clear() {
+   public clear(): void {
       // Clear the canvas  //??????????????????
       this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
       this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
    }
 
-   public add_line(line: WebglBaseLine) {
+   public addLine(line: WebglBaseLine): void {
 
       line.vbuffer = ( this.webgl.createBuffer() as WebGLBuffer);
       this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line.vbuffer);
@@ -155,7 +155,7 @@ export class WebGLplot {
       this.lines.push(line);
    }
 
-   public viewport(a: number, b: number, c: number, d: number) {
+   public viewport(a: number, b: number, c: number, d: number): void {
       this.webgl.viewport(a, b, c, d);
    }
 

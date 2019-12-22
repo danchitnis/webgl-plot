@@ -53,7 +53,7 @@ var WebglLine = /** @class */ (function (_super) {
             this.setY(i, c);
         }
     };
-    WebglLine.prototype.shift_add = function (data) {
+    WebglLine.prototype.shiftAdd = function (data) {
         var shiftSize = data.length;
         for (var i = 0; i < this.numPoints - shiftSize; i++) {
             this.setY(i, this.getY(i + shiftSize));

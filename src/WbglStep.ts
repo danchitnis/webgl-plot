@@ -21,7 +21,7 @@ export class WebglStep extends WebglBaseLine {
    }
 
 
-   public setY(index: number, y: number) {
+   public setY(index: number, y: number): void {
       this.xy[index * 4 + 1] = y;
       this.xy[index * 4 + 3] = y;
    }
@@ -34,7 +34,7 @@ export class WebglStep extends WebglBaseLine {
       return this.xy[index * 4 + 1];
    }
 
-   public linespaceX(start: number, stepsize: number) {
+   public linespaceX(start: number, stepsize: number): void {
       for (let i = 0; i < this.numPoints; i++) {
          // set x to -num/2:1:+num/2
          this.xy[i * 4] = start + (i *  stepsize);
@@ -42,22 +42,22 @@ export class WebglStep extends WebglBaseLine {
       }
    }
 
-   public constY(c: number) {
+   public constY(c: number): void {
       for (let i = 0; i < this.numPoints; i++) {
          // set x to -num/2:1:+num/2
          this.setY(i, c);
       }
    }
 
-   public shift_add(data: Float32Array) {
-      let shift_size = data.length;
+   public shiftAdd(data: Float32Array): void {
+      const shiftSize = data.length;
 
-      for (let i = 0; i < this.numPoints - shift_size; i++) {
-         this.setY(i, this.getY(i + shift_size));
+      for (let i = 0; i < this.numPoints - shiftSize; i++) {
+         this.setY(i, this.getY(i + shiftSize));
       }
 
-      for (let i = 0; i < shift_size; i++) {
-         this.setY(i + this.numPoints - shift_size, data[i]);
+      for (let i = 0; i < shiftSize; i++) {
+         this.setY(i + this.numPoints - shiftSize, data[i]);
       }
 
    }

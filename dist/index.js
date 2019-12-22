@@ -66,7 +66,7 @@ var WebGLplot = /** @class */ (function () {
         this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
         this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
     };
-    WebGLplot.prototype.add_line = function (line) {
+    WebGLplot.prototype.addLine = function (line) {
         line.vbuffer = this.webgl.createBuffer();
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line.vbuffer);
         this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy, this.webgl.STREAM_DRAW);

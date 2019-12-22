@@ -26,11 +26,11 @@ export class WebglLine extends WebglBaseLine {
       this.visible = true;
    }
 
-   public setX(index: number, x: number) {
+   public setX(index: number, x: number): void {
       this.xy[index * 2] = x;
    }
 
-   public setY(index: number, y: number) {
+   public setY(index: number, y: number): void {
       this.xy[index * 2 + 1] = y;
    }
 
@@ -42,21 +42,21 @@ export class WebglLine extends WebglBaseLine {
       return this.xy[index * 2 + 1];
    }
 
-   public linespaceX(start: number, stepsize: number) {
+   public linespaceX(start: number, stepsize: number): void {
       for (let i = 0; i < this.numPoints; i++) {
          // set x to -num/2:1:+num/2
          this.setX(i, start + stepsize * i);
       }
    }
 
-   public constY(c: number) {
+   public constY(c: number): void {
       for (let i = 0; i < this.numPoints; i++) {
          // set x to -num/2:1:+num/2
          this.setY(i, c);
       }
    }
 
-   public shift_add(data: Float32Array) {
+   public shiftAdd(data: Float32Array): void {
       const shiftSize = data.length;
 
       for (let i = 0; i < this.numPoints - shiftSize; i++) {
