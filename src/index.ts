@@ -18,10 +18,10 @@ export class WebGLplot {
 
    public webgl: WebGLRenderingContext;
 
-   public scaleX: number;
-   public scaleY: number;
-   public offsetX: number;
-   public offsetY: number;
+   public gScaleX: number;
+   public gScaleY: number;
+   public gOffsetX: number;
+   public gOffsetY: number;
 
    public lines: WebglBaseLine[];
    public backgroundColor: ColorRGBA;
@@ -50,10 +50,10 @@ export class WebGLplot {
 
       this.webgl = webgl;
 
-      this.scaleX = 1;
-      this.scaleY = 1;
-      this.offsetX = 0;
-      this.offsetY = 0;
+      this.gScaleX = 1;
+      this.gScaleY = 1;
+      this.gOffsetX = 0;
+      this.gOffsetY = 0;
 
       this.backgroundColor = backgroundColor;
 
@@ -82,10 +82,10 @@ export class WebGLplot {
             webgl.useProgram(line.prog);
 
             const uscale = webgl.getUniformLocation(line.prog, "uscale");
-            webgl.uniformMatrix2fv(uscale, false, new Float32Array([this.scaleX, 0, 0, this.scaleY]));
+            webgl.uniformMatrix2fv(uscale, false, new Float32Array([line.scaleX * this.gScaleX, 0, 0, line.scaleY * this.gScaleY]));
 
             const uoffset = webgl.getUniformLocation(line.prog, "uoffset");
-            webgl.uniform2fv(uoffset, new Float32Array([this.offsetX, this.offsetY]));
+            webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
 
             const uColor = webgl.getUniformLocation(line.prog, "uColor");
             webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);

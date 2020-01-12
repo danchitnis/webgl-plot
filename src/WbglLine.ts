@@ -24,6 +24,7 @@ export class WebglLine extends WebglBaseLine {
       this.prog = 0;
       this.coord = 0;
       this.visible = true;
+      
    }
 
    public setX(index: number, x: number): void {
