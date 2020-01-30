@@ -14,12 +14,20 @@ import {WebglBaseLine} from "./WebglBaseLine";
 export {WebglLine, ColorRGBA, WebglStep};
 
 
+
+/**
+ * The main class for Webgl-plot
+ */
 export class WebGLplot {
 
-   public webgl: WebGLRenderingContext;
+   private webgl: WebGLRenderingContext;
+   
+   /** Global X scale */
+   public gScaleX: number; 
+   
+   /** Global Y scale */
+   public gScaleY: number; 
 
-   public gScaleX: number;
-   public gScaleY: number;
    public gOffsetX: number;
    public gOffsetY: number;
 
@@ -29,9 +37,14 @@ export class WebGLplot {
 
 
    /**
-    *
-    * @param canv
-    * @param array
+    * The constructor when calling WebGLplot
+    * @param canv - The canvas which the plot is displayed
+    * @param backgroundColor - The background color for the plotting area
+    * @returns
+    * 
+    * @example
+    * ```ts
+    * const wglp = new WebGlplot( myCanv, new ColorRGBA(0.1,0.1,0.1,1) );
     */
    constructor(canv: HTMLCanvasElement, backgroundColor: ColorRGBA) {
 

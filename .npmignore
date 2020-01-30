@@ -1,3 +1,6 @@
 node_modules
+docs
 .github
 .vscode
+.gitignore
+tsconfig.json
