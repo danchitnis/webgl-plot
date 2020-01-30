@@ -1,5 +1,6 @@
 ![Build Action](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg "")
 
+Live demo [here 🚀](https://danchitnis.github.io/webgl-plot-examples/)
 
 # webgl-plot
 multi-line high-performance 2D graphs using native WebGL. The advantages are:
@@ -26,7 +27,7 @@ Because it is much more convenient to maintain and scale up. If you are not fami
 See examples at [webgl-plot-examples](https://github.com/danchitnis/webgl-plot-examples)
 
 ## API Documentation
-See [here 📑](https://github.com/danchitnis/webgl-plot-examples/docs)
+See [here 📑](https://danchitnis.github.io/webgl-plot/)
 
 ## How to use with embedded systems applications?
 You can use WebUSB, Web Bluetooth, and Serial API. Examples will be provided soon.
