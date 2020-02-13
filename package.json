@@ -6,11 +6,12 @@
   "typings": "./src/index",
   "dependencies": {},
   "devDependencies": {
+    "rollup": "^1.31.0",
     "typedoc": "^0.16.9",
     "typescript": "^3.7.5"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && rollup -c",
     "doc": "typedoc"
   },
   "repository": {

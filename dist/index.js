@@ -9,11 +9,19 @@ import { ColorRGBA } from "./ColorRGBA";
 import { WebglLine } from "./WbglLine";
 import { WebglStep } from "./WbglStep";
 export { WebglLine, ColorRGBA, WebglStep };
+/**
+ * The main class for Webgl-plot
+ */
 export class WebGLplot {
     /**
+     * The constructor when calling WebGLplot
+     * @param canv - The canvas which the plot is displayed
+     * @param backgroundColor - The background color for the plotting area
+     * @returns
      *
-     * @param canv
-     * @param array
+     * @example
+     * ```ts
+     * const wglp = new WebGlplot( myCanv, new ColorRGBA(0.1,0.1,0.1,1) );
      */
     constructor(canv, backgroundColor) {
         const devicePixelRatio = window.devicePixelRatio || 1;
