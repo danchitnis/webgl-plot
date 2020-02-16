@@ -22,7 +22,7 @@ cannot change the line width due to the OpenGL implementation of a line. The Ope
 
 ## Getting started
 Initialization:
-```typescript
+```javascript
 const canv = document.getElementById("my_canvas");
 const devicePixelRatio = window.devicePixelRatio || 1;
 const numX = Math.round(canv.clientWidth * devicePixelRatio);
@@ -32,13 +32,13 @@ const wglp = new webglplotBundle.WebGLplot(canv, new webglplotBundle.ColorRGBA(0
 ```
 
 Add the line to webgl canvas:
-```typescript
+```javascript
 line.linespaceX(-1, 2 / numX);
 wglp.addLine(line);
 ```
 
 Configure the requestAnimationFrame call:
-```typescript
+```javascript
 function newFrame() {
   update();
   wglp.update();
@@ -48,7 +48,7 @@ window.requestAnimationFrame(newFrame);
 ```
 
 Add the update function:
-```typescript
+```javascript
 function update() {
     const freq = 0.001;
     const amp = 0.5;

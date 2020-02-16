@@ -100,7 +100,7 @@
 				</a>
 				<p>multi-line high-performance 2D graphs using native WebGL. The advantages are:</p>
 				<ul>
-					<li>Simple and efficient 2D WebGL interface</li>
+					<li>Simple and efficient 2D WebGL framework</li>
 					<li>Using WebGL native line drawing </li>
 					<li>High update rate which matches the screen refresh rate</li>
 					<li>Full control over the color of each line in each frame</li>
@@ -108,20 +108,49 @@
 					<li>Works on any browser/platform that <a href="https://caniuse.com/#feat=webgl">supports WebGL</a></li>
 					<li>Ideal for embedded systems with low resources</li>
 				</ul>
-				<a href="#what-are-the-use-cases" id="what-are-the-use-cases" style="color: inherit; text-decoration: none;">
-					<h2>What are the use cases?</h2>
+				<a href="#use-cases" id="use-cases" style="color: inherit; text-decoration: none;">
+					<h2>Use cases</h2>
 				</a>
 				<p>When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.</p>
 				<a href="#limitations" id="limitations" style="color: inherit; text-decoration: none;">
 					<h2>Limitations</h2>
 				</a>
 				<p>cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of data vector and take a hit on the performance.</p>
-				<a href="#why-typescript" id="why-typescript" style="color: inherit; text-decoration: none;">
-					<h2>Why TypeScript?</h2>
-				</a>
-				<p>Because it is much more convenient to maintain and scale up. If you are not familiar with TS, then just use the examples as your template.</p>
 				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
 					<h2>Getting started</h2>
+				</a>
+				<p>Initialization:</p>
+				<pre><code class="language-javascript"><span class="hljs-keyword">const</span> canv = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">"my_canvas"</span>);
+<span class="hljs-keyword">const</span> devicePixelRatio = <span class="hljs-built_in">window</span>.devicePixelRatio || <span class="hljs-number">1</span>;
+<span class="hljs-keyword">const</span> numX = <span class="hljs-built_in">Math</span>.round(canv.clientWidth * devicePixelRatio);
+<span class="hljs-keyword">const</span> color = <span class="hljs-keyword">new</span> webglplotBundle.ColorRGBA(<span class="hljs-built_in">Math</span>.random(), <span class="hljs-built_in">Math</span>.random(), <span class="hljs-built_in">Math</span>.random(), <span class="hljs-number">1</span>);
+<span class="hljs-keyword">const</span> line = <span class="hljs-keyword">new</span> webglplotBundle.WebglLine(color, numX);
+<span class="hljs-keyword">const</span> wglp = <span class="hljs-keyword">new</span> webglplotBundle.WebGLplot(canv, <span class="hljs-keyword">new</span> webglplotBundle.ColorRGBA(<span class="hljs-number">0.1</span>,<span class="hljs-number">0.1</span>,<span class="hljs-number">0.1</span>,<span class="hljs-number">1</span>) );</code></pre>
+				<p>Add the line to webgl canvas:</p>
+				<pre><code class="language-javascript">line.linespaceX(<span class="hljs-number">-1</span>, <span class="hljs-number">2</span> / numX);
+wglp.addLine(line);</code></pre>
+				<p>Configure the requestAnimationFrame call:</p>
+				<pre><code class="language-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">newFrame</span>(<span class="hljs-params"></span>) </span>{
+  update();
+  wglp.update();
+  <span class="hljs-built_in">window</span>.requestAnimationFrame(newFrame);
+}
+<span class="hljs-built_in">window</span>.requestAnimationFrame(newFrame);</code></pre>
+				<p>Add the update function:</p>
+				<pre><code class="language-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">update</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">const</span> freq = <span class="hljs-number">0.001</span>;
+    <span class="hljs-keyword">const</span> amp = <span class="hljs-number">0.5</span>;
+    <span class="hljs-keyword">const</span> noise = <span class="hljs-number">0.1</span>;
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; line.numPoints; i++) {
+        <span class="hljs-keyword">const</span> ySin = <span class="hljs-built_in">Math</span>.sin(<span class="hljs-built_in">Math</span>.PI * i * freq  * <span class="hljs-built_in">Math</span>.PI * <span class="hljs-number">2</span>);
+        <span class="hljs-keyword">const</span> yNoise = <span class="hljs-built_in">Math</span>.random() - <span class="hljs-number">0.5</span>;
+        line.setY(i, ySin * amp + yNoise * noise);
+    }
+}</code></pre>
+				<p>See this example in <a href="https://codepen.io/danchitnis/pen/mdJVEYY">Codepen</a> and <a href="https://jsfiddle.net/danchitnis/mfcw73z2/">JSfiddle</a></p>
+				<a href="#demos-amp-examples" id="demos-amp-examples" style="color: inherit; text-decoration: none;">
+					<h2>Demos &amp; Examples</h2>
 				</a>
 				<p>See examples at <a href="https://github.com/danchitnis/webgl-plot-examples">webgl-plot-examples</a></p>
 				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
