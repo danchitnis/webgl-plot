@@ -5,7 +5,7 @@ Live demo [here 🚀](https://danchitnis.github.io/webgl-plot-examples/)
 # webgl-plot
 multi-line high-performance 2D graphs using native WebGL. The advantages are:
 
- * Simple and efficient 2D WebGL interface
+ * Simple and efficient 2D WebGL framework
  * Using WebGL native line drawing 
  * High update rate which matches the screen refresh rate
  * Full control over the color of each line in each frame
@@ -14,16 +14,58 @@ multi-line high-performance 2D graphs using native WebGL. The advantages are:
  * Ideal for embedded systems with low resources
  
 
-## What are the use cases?
+## Use cases
 When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.
 
 ## Limitations
 cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of data vector and take a hit on the performance.
 
-## Why TypeScript?
-Because it is much more convenient to maintain and scale up. If you are not familiar with TS, then just use the examples as your template.
-
 ## Getting started
+Initialization:
+```typescript
+const canv = document.getElementById("my_canvas");
+const devicePixelRatio = window.devicePixelRatio || 1;
+const numX = Math.round(canv.clientWidth * devicePixelRatio);
+const color = new webglplotBundle.ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
+const line = new webglplotBundle.WebglLine(color, numX);
+const wglp = new webglplotBundle.WebGLplot(canv, new webglplotBundle.ColorRGBA(0.1,0.1,0.1,1) );
+```
+
+Add the line to webgl canvas:
+```typescript
+line.linespaceX(-1, 2 / numX);
+wglp.addLine(line);
+```
+
+Configure the requestAnimationFrame call:
+```typescript
+function newFrame() {
+  update();
+  wglp.update();
+  window.requestAnimationFrame(newFrame);
+}
+window.requestAnimationFrame(newFrame);
+```
+
+Add the update function:
+```typescript
+function update() {
+    const freq = 0.001;
+    const amp = 0.5;
+    const noise = 0.1;
+
+    for (let i = 0; i < line.numPoints; i++) {
+        const ySin = Math.sin(Math.PI * i * freq  * Math.PI * 2);
+        const yNoise = Math.random() - 0.5;
+        line.setY(i, ySin * amp + yNoise * noise);
+    }
+}
+```
+
+See this example in [Codepen](https://codepen.io/danchitnis/pen/mdJVEYY) and [JSfiddle](https://jsfiddle.net/danchitnis/mfcw73z2/)
+
+
+## Demos & Examples
 See examples at [webgl-plot-examples](https://github.com/danchitnis/webgl-plot-examples)
 
 ## API Documentation

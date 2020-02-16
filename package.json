@@ -6,7 +6,8 @@
   "typings": "./src/index",
   "dependencies": {},
   "devDependencies": {
-    "rollup": "^1.31.0",
+    "eledoc": "^0.2.1",
+    "rollup": "^1.31.1",
     "typedoc": "^0.16.9",
     "typescript": "^3.7.5"
   },
