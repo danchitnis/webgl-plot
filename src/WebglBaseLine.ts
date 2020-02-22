@@ -7,7 +7,7 @@ export class WebglBaseLine {
 
     public webglNumPoints: number;
 
-    public intenisty: number;
+    public intensity: number;
     public visible: boolean;
     public coord: number;
 
@@ -20,11 +20,15 @@ export class WebglBaseLine {
     public offsetX: number;
     public offsetY: number;
 
+    public loop: boolean;
+
     constructor() {
         this.scaleX = 1;
         this.scaleY = 1;
         this.offsetX = 0;
         this.offsetY = 0;
+
+        this.loop = false;
     }
 
 }

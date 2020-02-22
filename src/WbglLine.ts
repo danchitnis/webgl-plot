@@ -4,21 +4,30 @@ import {WebglBaseLine} from "./WebglBaseLine";
 
 export class WebglLine extends WebglBaseLine {
 
-   public numPoints: number;
-   public xy: Float32Array;
-   public color: ColorRGBA;
-   public intenisty: number;
-   public visible: boolean;
-   public coord: number;
+   //public numPoints: number;
+   //public xy: Float32Array;
+   //public color: ColorRGBA;
+   //public intenisty: number;
+   //public visible: boolean;
+   //public coord: number;
 
 
-
+   /**
+    * Create a new line
+    * @param c :the color of the line
+    * @param numPoints : number of data pints
+    * @example 
+    * ```
+    * x= [0,1]
+    * y= [1,2]
+    * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
+    */
    constructor(c: ColorRGBA, numPoints: number) {
       super();
       this.webglNumPoints = numPoints;
       this.numPoints = numPoints;
       this.color = c;
-      this.intenisty = 1;
+      this.intensity = 1;
       this.xy = new Float32Array(2 * this.webglNumPoints);
       this.vbuffer = 0;
       this.prog = 0;
@@ -27,10 +36,20 @@ export class WebglLine extends WebglBaseLine {
       
    }
 
+   /**
+    * 
+    * @param index : the index of the data point 
+    * @param x : the horizontal value of the data point
+    */
    public setX(index: number, x: number): void {
       this.xy[index * 2] = x;
    }
 
+   /**
+    * 
+    * @param index : the index of the data point 
+    * @param y : the vertical value of the data point
+    */
    public setY(index: number, y: number): void {
       this.xy[index * 2 + 1] = y;
    }

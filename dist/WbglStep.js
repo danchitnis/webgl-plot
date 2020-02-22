@@ -5,7 +5,7 @@ export class WebglStep extends WebglBaseLine {
         this.webglNumPoints = num * 2;
         this.numPoints = num;
         this.color = c;
-        this.intenisty = 1;
+        this.intensity = 1;
         this.xy = new Float32Array(2 * this.webglNumPoints);
         this.vbuffer = 0;
         this.prog = 0;

@@ -7,7 +7,7 @@ const color = new webglplotBundle.ColorRGBA(Math.random(), Math.random(), Math.r
 
 const line = new webglplotBundle.WebglLine(color, numX);
 
-const wglp = new webglplotBundle.WebGLplot(canv, new webglplotBundle.ColorRGBA(0.1,0.1,0.1,1) );
+const wglp = new webglplotBundle.WebGLplot(canv);
 
 line.linespaceX(-1, 2 / numX);
 wglp.addLine(line);
@@ -15,7 +15,6 @@ wglp.addLine(line);
 function newFrame() {
   update();
   wglp.update();
-  //wglp.gScaleY = scaleY;
   window.requestAnimationFrame(newFrame);
 }
 window.requestAnimationFrame(newFrame);

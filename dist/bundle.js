@@ -16,25 +16,52 @@ var webglplotBundle = (function (exports) {
             this.scaleY = 1;
             this.offsetX = 0;
             this.offsetY = 0;
+            this.loop = false;
         }
     }
 
     class WebglLine extends WebglBaseLine {
+        //public numPoints: number;
+        //public xy: Float32Array;
+        //public color: ColorRGBA;
+        //public intenisty: number;
+        //public visible: boolean;
+        //public coord: number;
+        /**
+         * Create a new line
+         * @param c :the color of the line
+         * @param numPoints : number of data pints
+         * @example
+         * ```
+         * x= [0,1]
+         * y= [1,2]
+         * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
+         */
         constructor(c, numPoints) {
             super();
             this.webglNumPoints = numPoints;
             this.numPoints = numPoints;
             this.color = c;
-            this.intenisty = 1;
+            this.intensity = 1;
             this.xy = new Float32Array(2 * this.webglNumPoints);
             this.vbuffer = 0;
             this.prog = 0;
             this.coord = 0;
             this.visible = true;
         }
+        /**
+         *
+         * @param index : the index of the data point
+         * @param x : the horizontal value of the data point
+         */
         setX(index, x) {
             this.xy[index * 2] = x;
         }
+        /**
+         *
+         * @param index : the index of the data point
+         * @param y : the vertical value of the data point
+         */
         setY(index, y) {
             this.xy[index * 2 + 1] = y;
         }
@@ -73,7 +100,7 @@ var webglplotBundle = (function (exports) {
             this.webglNumPoints = num * 2;
             this.numPoints = num;
             this.color = c;
-            this.intenisty = 1;
+            this.intensity = 1;
             this.xy = new Float32Array(2 * this.webglNumPoints);
             this.vbuffer = 0;
             this.prog = 0;
@@ -114,6 +141,56 @@ var webglplotBundle = (function (exports) {
         }
     }
 
+    class WebglPolar extends WebglBaseLine {
+        constructor(c, numPoints) {
+            super();
+            this.webglNumPoints = numPoints;
+            this.numPoints = numPoints;
+            this.color = c;
+            this.intenisty = 1;
+            this.xy = new Float32Array(2 * this.webglNumPoints);
+            this.vbuffer = 0;
+            this.prog = 0;
+            this.coord = 0;
+            this.visible = true;
+            this.offsetTheta = 0;
+        }
+        /**
+         * @param index: index of the line
+         * @param theta : angle in deg
+         * @param r : radius
+         */
+        setRtheta(index, theta, r) {
+            //const rA = Math.abs(r);
+            //const thetaA = theta % 360;
+            const x = r * Math.cos(2 * Math.PI * (theta + this.offsetTheta) / 360);
+            const y = r * Math.sin(2 * Math.PI * (theta + this.offsetTheta) / 360);
+            //const index = Math.round( ((theta % 360)/360) * this.numPoints );
+            this.setX(index, x);
+            this.setY(index, y);
+        }
+        getTheta(index) {
+            //return Math.tan
+            return 0;
+        }
+        getR(index) {
+            //return Math.tan
+            return Math.sqrt(Math.pow(this.getX(index), 2) + Math.pow(this.getY(index), 2));
+        }
+        setX(index, x) {
+            this.xy[index * 2] = x;
+        }
+        setY(index, y) {
+            this.xy[index * 2 + 1] = y;
+        }
+        getX(index) {
+            return this.xy[index * 2];
+        }
+        getY(index) {
+            return this.xy[index * 2 + 1];
+        }
+    }
+
     /**
      * Author Danial Chitnis 2019
      *
@@ -122,20 +199,15 @@ var webglplotBundle = (function (exports) {
      * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
      */
     /**
-     * The main class for Webgl-plot
+     * The main class for the webgl-plot framework
      */
     class WebGLplot {
+        //public backgroundColor: ColorRGBA;
         /**
-         * The constructor when calling WebGLplot
-         * @param canv - The canvas which the plot is displayed
-         * @param backgroundColor - The background color for the plotting area
-         * @returns
-         *
-         * @example
-         * ```ts
-         * const wglp = new WebGlplot( myCanv, new ColorRGBA(0.1,0.1,0.1,1) );
+         * Create a webgl-plot instance
+         * @param canv: the canvas in which the plot appears
          */
-        constructor(canv, backgroundColor) {
+        constructor(canv) {
             const devicePixelRatio = window.devicePixelRatio || 1;
             // set the size of the drawingBuffer based on the size it's displayed.
             canv.width = canv.clientWidth * devicePixelRatio;
@@ -148,11 +220,12 @@ var webglplotBundle = (function (exports) {
             this.webgl = webgl;
             this.gScaleX = 1;
             this.gScaleY = 1;
+            this.gXYratio = 1;
             this.gOffsetX = 0;
             this.gOffsetY = 0;
-            this.backgroundColor = backgroundColor;
+            //this.backgroundColor = new ColorRGBA(255,0,0,1);
             // Clear the canvas
-            webgl.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, this.backgroundColor.a);
+            //webgl.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, this.backgroundColor.a);
             // Enable the depth test
             webgl.enable(webgl.DEPTH_TEST);
             // Clear the color and depth buffer
@@ -160,27 +233,34 @@ var webglplotBundle = (function (exports) {
             // Set the view port
             webgl.viewport(0, 0, canv.width, canv.height);
         }
+        /**
+         * update and redraws the content
+         */
         update() {
             const webgl = this.webgl;
             this.lines.forEach((line) => {
                 if (line.visible) {
                     webgl.useProgram(line.prog);
                     const uscale = webgl.getUniformLocation(line.prog, "uscale");
-                    webgl.uniformMatrix2fv(uscale, false, new Float32Array([line.scaleX * this.gScaleX, 0, 0, line.scaleY * this.gScaleY]));
+                    webgl.uniformMatrix2fv(uscale, false, new Float32Array([line.scaleX * this.gScaleX, 0, 0, line.scaleY * this.gScaleY * this.gXYratio]));
                     const uoffset = webgl.getUniformLocation(line.prog, "uoffset");
                     webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
                     const uColor = webgl.getUniformLocation(line.prog, "uColor");
                     webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
                     webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
-                    webgl.drawArrays(webgl.LINE_STRIP, 0, line.webglNumPoints);
+                    webgl.drawArrays((line.loop) ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
                 }
             });
         }
         clear() {
             // Clear the canvas  //??????????????????
-            this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
+            //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
             this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
         }
+        /**
+         * adds a line to the plot
+         * @param line : this could be any of line, linestep, histogram, or polar
+         */
         addLine(line) {
             line.vbuffer = this.webgl.createBuffer();
             this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line.vbuffer);
@@ -227,6 +307,7 @@ var webglplotBundle = (function (exports) {
     exports.ColorRGBA = ColorRGBA;
     exports.WebGLplot = WebGLplot;
     exports.WebglLine = WebglLine;
+    exports.WebglPolar = WebglPolar;
     exports.WebglStep = WebglStep;
 
     return exports;

@@ -5,3 +5,5 @@ docs
 .vscode
 .gitignore
 tsconfig.json
+rollup.config.js
+index.html

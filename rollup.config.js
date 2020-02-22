@@ -1,6 +1,6 @@
 // rollup.config.js
 export default {
-    input: './dist/index.js',
+    input: './dist/webglplot.js',
     output: {
       file: './dist/bundle.js',
       name: 'webglplotBundle',

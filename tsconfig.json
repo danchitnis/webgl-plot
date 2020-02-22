@@ -16,7 +16,6 @@
   "typedocOptions": {
     "mode": "file",
     "excludePrivate": true,
-    "out": "docs",
-    "theme": "node_modules/eledoc/bin/default/"
+    "out": "docs"
   }
 }

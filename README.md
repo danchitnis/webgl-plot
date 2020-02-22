@@ -1,6 +1,6 @@
 ![Build Action](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg "")
 
-Live demo [here 🚀](https://danchitnis.github.io/webgl-plot-examples/)
+## [Live demo 🚀](https://danchitnis.github.io/webgl-plot-examples/)
 
 # webgl-plot
 multi-line high-performance 2D graphs using native WebGL. The advantages are:
@@ -28,7 +28,7 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 const numX = Math.round(canv.clientWidth * devicePixelRatio);
 const color = new webglplotBundle.ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
 const line = new webglplotBundle.WebglLine(color, numX);
-const wglp = new webglplotBundle.WebGLplot(canv, new webglplotBundle.ColorRGBA(0.1,0.1,0.1,1) );
+const wglp = new webglplotBundle.WebGLplot(canv);
 ```
 
 Add the line to webgl canvas:
