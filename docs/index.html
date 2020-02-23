@@ -1,250 +1,52 @@
 <!doctype html>
-<html class="default no-js">
+<html lang="en">
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>webgl-plot</title>
-	<meta name="description" content="">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="assets/css/main.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="generator" content="Docusaurus">
+
+
+<title data-react-helmet="true">Hello from WebGL-Plot | WebGL-Plot</title>
+
+<meta data-react-helmet="true" http-equiv="x-ua-compatible" content="ie=edge"><meta data-react-helmet="true" property="og:title" content="Hello from WebGL-Plot | WebGL-Plot"><meta data-react-helmet="true" name="description" content="Description will go into a meta tag in &lt;head /&gt;"><meta data-react-helmet="true" property="og:description" content="Description will go into a meta tag in &lt;head /&gt;"><meta data-react-helmet="true" name="twitter:card" content="summary">
+
+<link data-react-helmet="true" rel="shortcut icon" href="/webgl-plot/img/favicon.ico">
+
+
+<link rel="stylesheet" href="/webgl-plot/styles.c0029458.css">
+
+
+<link rel="preload" href="/webgl-plot/styles.98508701.js" as="script">
+
+<link rel="preload" href="/webgl-plot/runtime~main.f8c96e5d.js" as="script">
+
+<link rel="preload" href="/webgl-plot/main.1d442951.js" as="script">
+
+<link rel="preload" href="/webgl-plot/1.41e583d6.js" as="script">
+
+<link rel="preload" href="/webgl-plot/2.1a1a64e2.js" as="script">
+
+<link rel="preload" href="/webgl-plot/ece76bd1.ab89413b.js" as="script">
+
 </head>
 <body>
-<header>
-	<div class="tsd-page-toolbar">
-		<div class="container">
-			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
-					<div class="field">
-						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
-						<input id="tsd-search-field" type="text" />
-					</div>
-					<ul class="results">
-						<li class="state loading">Preparing search index...</li>
-						<li class="state failure">The search index is not available</li>
-					</ul>
-					<a href="index.html" class="title">webgl-plot</a>
-				</div>
-				<div class="table-cell" id="tsd-widgets">
-					<div id="tsd-filter">
-						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
-						<div class="tsd-filter-group">
-							<div class="tsd-select" id="tsd-filter-visibility">
-								<span class="tsd-select-label">All</span>
-								<ul class="tsd-select-list">
-									<li data-value="public">Public</li>
-									<li data-value="protected">Public/Protected</li>
-									<li data-value="private" class="selected">All</li>
-								</ul>
-							</div>
-							<input type="checkbox" id="tsd-filter-inherited" checked />
-							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
-							<input type="checkbox" id="tsd-filter-externals" checked />
-							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
-							<input type="checkbox" id="tsd-filter-only-exported" />
-							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
-						</div>
-					</div>
-					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="tsd-page-title">
-		<div class="container">
-			<ul class="tsd-breadcrumb">
-				<li>
-					<a href="globals.html">Globals</a>
-				</li>
-			</ul>
-			<h1>webgl-plot</h1>
-		</div>
-	</div>
-</header>
-<div class="container container-main">
-	<div class="row">
-		<div class="col-8 col-content">
-			<div class="tsd-panel tsd-typography">
-				<p><img src="https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg" alt="Build Action"></p>
-				<a href="#a-hrefhttpsdanchitnisgithubiowebgl-plot-exampleslive-demo-🚀a" id="a-hrefhttpsdanchitnisgithubiowebgl-plot-exampleslive-demo-🚀a" style="color: inherit; text-decoration: none;">
-					<h2><a href="https://danchitnis.github.io/webgl-plot-examples/">Live demo 🚀</a></h2>
-				</a>
-				<a href="#webgl-plot" id="webgl-plot" style="color: inherit; text-decoration: none;">
-					<h1>webgl-plot</h1>
-				</a>
-				<p>multi-line high-performance 2D graphs using native WebGL. The advantages are:</p>
-				<ul>
-					<li>Simple and efficient 2D WebGL framework</li>
-					<li>Using WebGL native line drawing </li>
-					<li>High update rate which matches the screen refresh rate</li>
-					<li>Full control over the color of each line in each frame</li>
-					<li>No dependencies</li>
-					<li>Works on any browser/platform that <a href="https://caniuse.com/#feat=webgl">supports WebGL</a></li>
-					<li>Ideal for embedded systems with low resources</li>
-				</ul>
-				<a href="#use-cases" id="use-cases" style="color: inherit; text-decoration: none;">
-					<h2>Use cases</h2>
-				</a>
-				<p>When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.</p>
-				<a href="#limitations" id="limitations" style="color: inherit; text-decoration: none;">
-					<h2>Limitations</h2>
-				</a>
-				<p>cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of data vector and take a hit on the performance.</p>
-				<a href="#getting-started" id="getting-started" style="color: inherit; text-decoration: none;">
-					<h2>Getting started</h2>
-				</a>
-				<p>Initialization:</p>
-				<pre><code class="language-javascript"><span class="hljs-keyword">const</span> canv = <span class="hljs-built_in">document</span>.getElementById(<span class="hljs-string">"my_canvas"</span>);
-<span class="hljs-keyword">const</span> devicePixelRatio = <span class="hljs-built_in">window</span>.devicePixelRatio || <span class="hljs-number">1</span>;
-<span class="hljs-keyword">const</span> numX = <span class="hljs-built_in">Math</span>.round(canv.clientWidth * devicePixelRatio);
-<span class="hljs-keyword">const</span> color = <span class="hljs-keyword">new</span> webglplotBundle.ColorRGBA(<span class="hljs-built_in">Math</span>.random(), <span class="hljs-built_in">Math</span>.random(), <span class="hljs-built_in">Math</span>.random(), <span class="hljs-number">1</span>);
-<span class="hljs-keyword">const</span> line = <span class="hljs-keyword">new</span> webglplotBundle.WebglLine(color, numX);
-<span class="hljs-keyword">const</span> wglp = <span class="hljs-keyword">new</span> webglplotBundle.WebGLplot(canv);</code></pre>
-				<p>Add the line to webgl canvas:</p>
-				<pre><code class="language-javascript">line.linespaceX(<span class="hljs-number">-1</span>, <span class="hljs-number">2</span> / numX);
-wglp.addLine(line);</code></pre>
-				<p>Configure the requestAnimationFrame call:</p>
-				<pre><code class="language-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">newFrame</span>(<span class="hljs-params"></span>) </span>{
-  update();
-  wglp.update();
-  <span class="hljs-built_in">window</span>.requestAnimationFrame(newFrame);
-}
-<span class="hljs-built_in">window</span>.requestAnimationFrame(newFrame);</code></pre>
-				<p>Add the update function:</p>
-				<pre><code class="language-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">update</span>(<span class="hljs-params"></span>) </span>{
-    <span class="hljs-keyword">const</span> freq = <span class="hljs-number">0.001</span>;
-    <span class="hljs-keyword">const</span> amp = <span class="hljs-number">0.5</span>;
-    <span class="hljs-keyword">const</span> noise = <span class="hljs-number">0.1</span>;
+<script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}function e(){var t=null;try{t=localStorage.getItem("theme")}catch(t){}return t}var n=window.matchMedia("(prefers-color-scheme: dark)");n.addListener((function(n){null===e()&&t(n.matches?"dark":"")}));var a=e();null!==a?t(a):n.matches&&t("dark")}()</script>
+<div id="__docusaurus">
+<nav class="navbar navbar--light navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><div aria-label="Navigation bar toggle" class="navbar__toggle" role="button" tabindex="0"><svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" role="img" focusable="false"><title>Menu</title><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></div><a aria-current="page" class="navbar__brand active" href="/webgl-plot/"><img class="navbar__logo" src="/webgl-plot/img/logo.svg" alt="My Site Logo"><strong>WebGL-Plot</strong></a><a class="navbar__item navbar__link" href="/webgl-plot/docs/index">Docs</a></div><div class="navbar__items navbar__items--right"><a class="navbar__item navbar__link" target="_blank" rel="noopener noreferrer" href="https://github.com/danchitnis/webgl-plot">GitHub</a><div class="react-toggle react-toggle--disabled displayOnlyInLargeViewport_1gtM"><div class="react-toggle-track"><div class="react-toggle-track-check"><span class="toggle_keGJ moon_1gwN"></span></div><div class="react-toggle-track-x"><span class="toggle_keGJ sun_3CPA"></span></div></div><div class="react-toggle-thumb"></div><input type="checkbox" disabled="" aria-label="Dark mode toggle" class="react-toggle-screenreader-only"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div><div class="navbar-sidebar"><div class="navbar-sidebar__brand"><a aria-current="page" class="navbar__brand active" href="/webgl-plot/"><img class="navbar__logo" src="/webgl-plot/img/logo.svg" alt="My Site Logo"><strong>WebGL-Plot</strong></a></div><div class="navbar-sidebar__items"><div class="menu"><ul class="menu__list"><li class="menu__list-item"><a class="menu__link" href="/webgl-plot/docs/index">Docs</a></li><li class="menu__list-item"><a class="menu__link" target="_blank" rel="noopener noreferrer" href="https://github.com/danchitnis/webgl-plot">GitHub</a></li></ul></div></div></div></nav><div class="main-wrapper"><header class="hero hero--primary heroBanner_2Ftp"><div class="container"><h1 class="hero__title">WebGL-Plot</h1><p class="hero__subtitle">API documentation</p><div class="buttons_1Wc3"><a class="button button--outline button--secondary button--lg" href="/webgl-plot/docs/index/">Get Started</a></div></div></header><main><section class="features_P2SU"><div class="container"><div class="row"><div class="col col--4"><div class="text--center"><img class="featureImage_3Xqx" src="/webgl-plot/img/undraw_docusaurus_mountain.svg" alt="[object Object]"></div><h3>Easy to Use</h3><p>Docusaurus was designed from the ground up to be easily installed and used to get your website up and running quickly.</p></div><div class="col col--4"><div class="text--center"><img class="featureImage_3Xqx" src="/webgl-plot/img/undraw_docusaurus_tree.svg" alt="[object Object]"></div><h3>Focus on What Matters</h3><p>Docusaurus lets you focus on your docs, and we&#x27;ll do the chores. Go ahead and move your docs into the <code>docs</code> directory.</p></div><div class="col col--4"><div class="text--center"><img class="featureImage_3Xqx" src="/webgl-plot/img/undraw_docusaurus_react.svg" alt="[object Object]"></div><h3>Powered by React</h3><p>Extend or customize your website layout by reusing React. Docusaurus can be extended while reusing the same header and footer.</p></div></div></div></section></main></div><footer class="footer footer--dark"><div class="container"><div class="row footer__links"><div class="col footer__col"><h4 class="footer__title">Docs</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" href="/webgl-plot/docs/index">Style Guide</a></li><li class="footer__item"><a class="footer__link-item" href="/webgl-plot/docs/globals">Second Doc</a></li></ul></div><div class="col footer__col"><h4 class="footer__title">Community</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" target="_blank" rel="noopener noreferrer" href="https://stackoverflow.com/questions/tagged/docusaurus">Stack Overflow</a></li><li class="footer__item"><a class="footer__link-item" target="_blank" rel="noopener noreferrer" href="https://discordapp.com/invite/docusaurus">Discord</a></li></ul></div><div class="col footer__col"><h4 class="footer__title">Social</h4><ul class="footer__items"><li class="footer__item"><a class="footer__link-item" href="/webgl-plot/blog">Blog</a></li><li class="footer__item"><a class="footer__link-item" target="_blank" rel="noopener noreferrer" href="https://github.com/danchitnis/webgl-plot">GitHub</a></li></ul></div></div><div class="text--center">Copyright © 2020 webgl-plot. Built with Docusaurus.</div></div></footer>
+</div>
 
-    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; line.numPoints; i++) {
-        <span class="hljs-keyword">const</span> ySin = <span class="hljs-built_in">Math</span>.sin(<span class="hljs-built_in">Math</span>.PI * i * freq  * <span class="hljs-built_in">Math</span>.PI * <span class="hljs-number">2</span>);
-        <span class="hljs-keyword">const</span> yNoise = <span class="hljs-built_in">Math</span>.random() - <span class="hljs-number">0.5</span>;
-        line.setY(i, ySin * amp + yNoise * noise);
-    }
-}</code></pre>
-				<p>See this example in <a href="https://codepen.io/danchitnis/pen/mdJVEYY">Codepen</a> and
-				<a href="https://jsfiddle.net/danchitnis/mfcw73z2/">JSfiddle</a></p>
-				<p><a href="https://codesandbox.io/s/webglplot-m40u4?fontsize=14&amp;hidenavigation=1&amp;theme=dark"><img src="https://codesandbox.io/static/img/play-codesandbox.svg" alt="Edit WebGLplot"></a></p>
-				<a href="#demos-amp-examples" id="demos-amp-examples" style="color: inherit; text-decoration: none;">
-					<h2>Demos &amp; Examples</h2>
-				</a>
-				<p>See examples at <a href="https://github.com/danchitnis/webgl-plot-examples">webgl-plot-examples</a></p>
-				<a href="#api-documentation" id="api-documentation" style="color: inherit; text-decoration: none;">
-					<h2>API Documentation</h2>
-				</a>
-				<p>See <a href="https://danchitnis.github.io/webgl-plot/">here 📑</a></p>
-				<a href="#how-to-use-with-embedded-systems-applications" id="how-to-use-with-embedded-systems-applications" style="color: inherit; text-decoration: none;">
-					<h2>How to use with embedded systems applications?</h2>
-				</a>
-				<p>You can use WebUSB, Web Bluetooth, and Serial API. Examples will be provided soon.</p>
-				<a href="#build" id="build" style="color: inherit; text-decoration: none;">
-					<h2>Build</h2>
-				</a>
-				<pre><code class="language-bash">npm i
-npm run build</code></pre>
-				<a href="#license" id="license" style="color: inherit; text-decoration: none;">
-					<h2>License</h2>
-				</a>
-				<p>MIT</p>
-			</div>
-		</div>
-		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
-			<nav class="tsd-navigation primary">
-				<ul>
-					<li class="globals  ">
-						<a href="globals.html"><em>Globals</em></a>
-					</li>
-				</ul>
-			</nav>
-			<nav class="tsd-navigation secondary menu-sticky">
-				<ul class="before-current">
-					<li class=" tsd-kind-class">
-						<a href="classes/colorrgba.html" class="tsd-kind-icon">ColorRGBA</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/webglplot.html" class="tsd-kind-icon">WebGLplot</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/webglbaseline.html" class="tsd-kind-icon">Webgl<wbr>Base<wbr>Line</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/webglline.html" class="tsd-kind-icon">Webgl<wbr>Line</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/webglpolar.html" class="tsd-kind-icon">Webgl<wbr>Polar</a>
-					</li>
-					<li class=" tsd-kind-class">
-						<a href="classes/webglstep.html" class="tsd-kind-icon">Webgl<wbr>Step</a>
-					</li>
-				</ul>
-			</nav>
-		</div>
-	</div>
-</div>
-<footer class="with-border-bottom">
-	<div class="container">
-		<h2>Legend</h2>
-		<div class="tsd-legend-group">
-			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
-				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
-				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
-				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
-				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
-				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
-				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
-				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
-			</ul>
-		</div>
-	</div>
-</footer>
-<div class="container tsd-generator">
-	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
-</div>
-<div class="overlay"></div>
-<script src="assets/js/main.js"></script>
-<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+<script src="/webgl-plot/styles.98508701.js"></script>
+
+<script src="/webgl-plot/runtime~main.f8c96e5d.js"></script>
+
+<script src="/webgl-plot/main.1d442951.js"></script>
+
+<script src="/webgl-plot/1.41e583d6.js"></script>
+
+<script src="/webgl-plot/2.1a1a64e2.js"></script>
+
+<script src="/webgl-plot/ece76bd1.ab89413b.js"></script>
+
+
 </body>
 </html>

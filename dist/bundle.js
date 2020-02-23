@@ -223,9 +223,6 @@ var webglplotBundle = (function (exports) {
             this.gXYratio = 1;
             this.gOffsetX = 0;
             this.gOffsetY = 0;
-            //this.backgroundColor = new ColorRGBA(255,0,0,1);
-            // Clear the canvas
-            //webgl.clearColor(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b, this.backgroundColor.a);
             // Enable the depth test
             webgl.enable(webgl.DEPTH_TEST);
             // Clear the color and depth buffer

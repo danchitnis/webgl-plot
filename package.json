@@ -1,14 +1,17 @@
 {
   "name": "webgl-plot",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "High-performance 2D plotting framework based on native WebGL",
-  "main": "./dist/webglplot",
-  "typings": "./src/webglplot",
-  "types": "./src/webglplot",
+  "main": "./dist/webglplot.js",
+  "typings": "./dist/webgl-plot.d.ts",
+  "types": "./dist/webgl-plot.d.ts",
   "dependencies": {},
   "devDependencies": {
+    "@microsoft/api-documenter": "^7.7.12",
+    "@microsoft/api-extractor": "^7.7.8",
     "rollup": "^1.31.1",
     "typedoc": "^0.16.10",
+    "typedoc-plugin-markdown": "^2.2.16",
     "typescript": "^3.8.2"
   },
   "scripts": {
