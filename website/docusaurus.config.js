@@ -1,14 +1,14 @@
 module.exports = {
-  title: 'My Site',
-  tagline: 'The tagline of my site',
-  url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
+  title: 'WebGL-Plot',
+  tagline: 'API documentation',
+  url: 'https://danchitnis.github.io/',
+  baseUrl: '/webgl-plot/',
   favicon: 'img/favicon.ico',
   organizationName: 'danchitnis', // Usually your GitHub org/user name.
   projectName: 'webgl-plot', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'My Site',
+      title: 'WebGL-Plot',
       logo: {
         alt: 'My Site Logo',
         src: 'img/logo.svg',
@@ -16,7 +16,7 @@ module.exports = {
       links: [
         {to: 'docs/index', label: 'Docs', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/danchitnis/webgl-plot',
           label: 'GitHub',
           position: 'right',
         },
@@ -60,16 +60,12 @@ module.exports = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
-            },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
+              href: 'https://github.com/danchitnis/webgl-plot',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} webgl-plot. Built with Docusaurus.`,
     },
   },
   presets: [
@@ -79,7 +75,7 @@ module.exports = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/',
+            'https://github.com/danchitnis/webgl-plot/edit/master/docs/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
