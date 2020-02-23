@@ -1,9 +1,10 @@
 {
   "name": "webgl-plot",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "High-performance 2D plotting framework based on native WebGL",
   "main": "./dist/webglplot",
   "typings": "./src/webglplot",
+  "types": "./src/webglplot",
   "dependencies": {},
   "devDependencies": {
     "rollup": "^1.31.1",

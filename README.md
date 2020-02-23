@@ -62,7 +62,10 @@ function update() {
 }
 ```
 
-See this example in [Codepen](https://codepen.io/danchitnis/pen/mdJVEYY) and [JSfiddle](https://jsfiddle.net/danchitnis/mfcw73z2/)
+See this example in [Codepen](https://codepen.io/danchitnis/pen/mdJVEYY) and 
+[JSfiddle](https://jsfiddle.net/danchitnis/mfcw73z2/)
+
+[![Edit WebGLplot](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webglplot-m40u4?fontsize=14&hidenavigation=1&theme=dark)
 
 
 ## Demos & Examples
