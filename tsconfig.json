@@ -4,6 +4,8 @@
     "target": "ES2015",
     "noImplicitAny": true,
     "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
@@ -16,6 +18,8 @@
   "typedocOptions": {
     "mode": "file",
     "excludePrivate": true,
-    "out": "docs"
+    "out": "./website/docs",
+    "plugin": "typedoc-plugin-markdown",
+    "theme": "docusaurus2",
   }
 }
