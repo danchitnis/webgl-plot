@@ -6,6 +6,8 @@ sidebar_label: "WebglBaseLine"
 
 [webgl-plot](../index.md) › [Globals](../globals.md) › [WebglBaseLine](webglbaseline.md)
 
+Baseline class
+
 ## Hierarchy
 
 * **WebglBaseLine**
@@ -24,17 +26,17 @@ sidebar_label: "WebglBaseLine"
 
 ### Properties
 
+* [_coord](webglbaseline.md#private-_coord)
+* [_prog](webglbaseline.md#private-_prog)
+* [_vbuffer](webglbaseline.md#private-_vbuffer)
 * [color](webglbaseline.md#color)
-* [coord](webglbaseline.md#coord)
 * [intensity](webglbaseline.md#intensity)
 * [loop](webglbaseline.md#loop)
 * [numPoints](webglbaseline.md#numpoints)
 * [offsetX](webglbaseline.md#offsetx)
 * [offsetY](webglbaseline.md#offsety)
-* [prog](webglbaseline.md#prog)
 * [scaleX](webglbaseline.md#scalex)
 * [scaleY](webglbaseline.md#scaley)
-* [vbuffer](webglbaseline.md#vbuffer)
 * [visible](webglbaseline.md#visible)
 * [webglNumPoints](webglbaseline.md#webglnumpoints)
 * [xy](webglbaseline.md#xy)
@@ -45,25 +47,51 @@ sidebar_label: "WebglBaseLine"
 
 \+ **new WebglBaseLine**(): *[WebglBaseLine](webglbaseline.md)*
 
-*Defined in [WebglBaseLine.ts:23](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L23)*
+*Defined in [WebglBaseLine.ts:80](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L80)*
+
+**`internal`** 
 
 **Returns:** *[WebglBaseLine](webglbaseline.md)*
 
 ## Properties
 
+### `Private` _coord
+
+• **_coord**: *number*
+
+*Defined in [WebglBaseLine.ts:80](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L80)*
+
+**`internal`** 
+
+___
+
+### `Private` _prog
+
+• **_prog**: *WebGLProgram*
+
+*Defined in [WebglBaseLine.ts:74](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L74)*
+
+**`internal`** 
+
+___
+
+### `Private` _vbuffer
+
+• **_vbuffer**: *WebGLBuffer*
+
+*Defined in [WebglBaseLine.ts:68](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L68)*
+
+**`internal`** 
+
+___
+
 ###  color
 
 • **color**: *[ColorRGBA](colorrgba.md)*
 
-*Defined in [WebglBaseLine.ts:16](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L16)*
+*Defined in [WebglBaseLine.ts:26](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L26)*
 
-___
-
-###  coord
-
-• **coord**: *number*
-
-*Defined in [WebglBaseLine.ts:12](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L12)*
+The Color of the line
 
 ___
 
@@ -71,7 +99,7 @@ ___
 
 • **intensity**: *number*
 
-*Defined in [WebglBaseLine.ts:10](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L10)*
+*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L8)*
 
 ___
 
@@ -79,7 +107,11 @@ ___
 
 • **loop**: *boolean*
 
-*Defined in [WebglBaseLine.ts:23](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L23)*
+*Defined in [WebglBaseLine.ts:56](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L56)*
+
+if this is a close loop line or not
+
+**`default`** = false
 
 ___
 
@@ -87,7 +119,9 @@ ___
 
 • **numPoints**: *number*
 
-*Defined in [WebglBaseLine.ts:14](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L14)*
+*Defined in [WebglBaseLine.ts:15](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L15)*
+
+The number of data point pairs in the line
 
 ___
 
@@ -95,7 +129,11 @@ ___
 
 • **offsetX**: *number*
 
-*Defined in [WebglBaseLine.ts:20](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L20)*
+*Defined in [WebglBaseLine.ts:44](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L44)*
+
+The horixontal offset of the line
+
+**`default`** = 0
 
 ___
 
@@ -103,15 +141,11 @@ ___
 
 • **offsetY**: *number*
 
-*Defined in [WebglBaseLine.ts:21](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L21)*
+*Defined in [WebglBaseLine.ts:50](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L50)*
 
-___
+the vertical offset of the line
 
-###  prog
-
-• **prog**: *WebGLProgram*
-
-*Defined in [WebglBaseLine.ts:6](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L6)*
+**`default`** = 0
 
 ___
 
@@ -119,7 +153,11 @@ ___
 
 • **scaleX**: *number*
 
-*Defined in [WebglBaseLine.ts:18](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L18)*
+*Defined in [WebglBaseLine.ts:32](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L32)*
+
+The horizontal scale of the line
+
+**`default`** = 1
 
 ___
 
@@ -127,15 +165,11 @@ ___
 
 • **scaleY**: *number*
 
-*Defined in [WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L19)*
+*Defined in [WebglBaseLine.ts:38](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L38)*
 
-___
+The vertical sclae of the line
 
-###  vbuffer
-
-• **vbuffer**: *WebGLBuffer*
-
-*Defined in [WebglBaseLine.ts:5](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L5)*
+**`default`** = 1
 
 ___
 
@@ -143,7 +177,7 @@ ___
 
 • **visible**: *boolean*
 
-*Defined in [WebglBaseLine.ts:11](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L11)*
+*Defined in [WebglBaseLine.ts:9](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L9)*
 
 ___
 
@@ -151,7 +185,11 @@ ___
 
 • **webglNumPoints**: *number*
 
-*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L8)*
+*Defined in [WebglBaseLine.ts:62](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L62)*
+
+total webgl number of points
+
+**`internal`** 
 
 ___
 
@@ -159,4 +197,8 @@ ___
 
 • **xy**: *Float32Array*
 
-*Defined in [WebglBaseLine.ts:15](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L15)*
+*Defined in [WebglBaseLine.ts:21](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L21)*
+
+The data ponits for webgl array
+
+**`internal`**

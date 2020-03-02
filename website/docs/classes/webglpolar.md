@@ -20,6 +20,9 @@ sidebar_label: "WebglPolar"
 
 ### Properties
 
+* [_coord](webglpolar.md#private-_coord)
+* [_prog](webglpolar.md#private-_prog)
+* [_vbuffer](webglpolar.md#private-_vbuffer)
 * [color](webglpolar.md#color)
 * [coord](webglpolar.md#coord)
 * [intenisty](webglpolar.md#intenisty)
@@ -29,10 +32,8 @@ sidebar_label: "WebglPolar"
 * [offsetTheta](webglpolar.md#offsettheta)
 * [offsetX](webglpolar.md#offsetx)
 * [offsetY](webglpolar.md#offsety)
-* [prog](webglpolar.md#prog)
 * [scaleX](webglpolar.md#scalex)
 * [scaleY](webglpolar.md#scaley)
-* [vbuffer](webglpolar.md#vbuffer)
 * [visible](webglpolar.md#visible)
 * [webglNumPoints](webglpolar.md#webglnumpoints)
 * [xy](webglpolar.md#xy)
@@ -53,7 +54,7 @@ sidebar_label: "WebglPolar"
 
 *Overrides [WebglBaseLine](webglbaseline.md).[constructor](webglbaseline.md#constructor)*
 
-*Defined in [WbglPolar.ts:13](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L13)*
+*Defined in [WbglPolar.ts:13](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L13)*
 
 **Parameters:**
 
@@ -66,13 +67,49 @@ Name | Type |
 
 ## Properties
 
+### `Private` _coord
+
+• **_coord**: *number*
+
+*Inherited from [WebglBaseLine](webglbaseline.md).[_coord](webglbaseline.md#private-_coord)*
+
+*Defined in [WebglBaseLine.ts:80](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L80)*
+
+**`internal`** 
+
+___
+
+### `Private` _prog
+
+• **_prog**: *WebGLProgram*
+
+*Inherited from [WebglBaseLine](webglbaseline.md).[_prog](webglbaseline.md#private-_prog)*
+
+*Defined in [WebglBaseLine.ts:74](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L74)*
+
+**`internal`** 
+
+___
+
+### `Private` _vbuffer
+
+• **_vbuffer**: *WebGLBuffer*
+
+*Inherited from [WebglBaseLine](webglbaseline.md).[_vbuffer](webglbaseline.md#private-_vbuffer)*
+
+*Defined in [WebglBaseLine.ts:68](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L68)*
+
+**`internal`** 
+
+___
+
 ###  color
 
 • **color**: *[ColorRGBA](colorrgba.md)*
 
 *Overrides [WebglBaseLine](webglbaseline.md).[color](webglbaseline.md#color)*
 
-*Defined in [WbglPolar.ts:9](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L9)*
+*Defined in [WbglPolar.ts:9](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L9)*
 
 ___
 
@@ -80,9 +117,7 @@ ___
 
 • **coord**: *number*
 
-*Overrides [WebglBaseLine](webglbaseline.md).[coord](webglbaseline.md#coord)*
-
-*Defined in [WbglPolar.ts:12](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L12)*
+*Defined in [WbglPolar.ts:12](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L12)*
 
 ___
 
@@ -90,7 +125,7 @@ ___
 
 • **intenisty**: *number*
 
-*Defined in [WbglPolar.ts:10](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L10)*
+*Defined in [WbglPolar.ts:10](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L10)*
 
 ___
 
@@ -100,7 +135,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[intensity](webglbaseline.md#intensity)*
 
-*Defined in [WebglBaseLine.ts:10](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L10)*
+*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L8)*
 
 ___
 
@@ -110,7 +145,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[loop](webglbaseline.md#loop)*
 
-*Defined in [WebglBaseLine.ts:23](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L23)*
+*Defined in [WebglBaseLine.ts:56](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L56)*
+
+if this is a close loop line or not
+
+**`default`** = false
 
 ___
 
@@ -120,7 +159,7 @@ ___
 
 *Overrides [WebglBaseLine](webglbaseline.md).[numPoints](webglbaseline.md#numpoints)*
 
-*Defined in [WbglPolar.ts:7](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L7)*
+*Defined in [WbglPolar.ts:7](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L7)*
 
 ___
 
@@ -128,7 +167,7 @@ ___
 
 • **offsetTheta**: *number*
 
-*Defined in [WbglPolar.ts:13](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L13)*
+*Defined in [WbglPolar.ts:13](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L13)*
 
 ___
 
@@ -138,7 +177,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetX](webglbaseline.md#offsetx)*
 
-*Defined in [WebglBaseLine.ts:20](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L20)*
+*Defined in [WebglBaseLine.ts:44](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L44)*
+
+The horixontal offset of the line
+
+**`default`** = 0
 
 ___
 
@@ -148,17 +191,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetY](webglbaseline.md#offsety)*
 
-*Defined in [WebglBaseLine.ts:21](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L21)*
+*Defined in [WebglBaseLine.ts:50](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L50)*
 
-___
+the vertical offset of the line
 
-###  prog
-
-• **prog**: *WebGLProgram*
-
-*Inherited from [WebglBaseLine](webglbaseline.md).[prog](webglbaseline.md#prog)*
-
-*Defined in [WebglBaseLine.ts:6](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L6)*
+**`default`** = 0
 
 ___
 
@@ -168,7 +205,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleX](webglbaseline.md#scalex)*
 
-*Defined in [WebglBaseLine.ts:18](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L18)*
+*Defined in [WebglBaseLine.ts:32](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L32)*
+
+The horizontal scale of the line
+
+**`default`** = 1
 
 ___
 
@@ -178,17 +219,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleY](webglbaseline.md#scaley)*
 
-*Defined in [WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L19)*
+*Defined in [WebglBaseLine.ts:38](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L38)*
 
-___
+The vertical sclae of the line
 
-###  vbuffer
-
-• **vbuffer**: *WebGLBuffer*
-
-*Inherited from [WebglBaseLine](webglbaseline.md).[vbuffer](webglbaseline.md#vbuffer)*
-
-*Defined in [WebglBaseLine.ts:5](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L5)*
+**`default`** = 1
 
 ___
 
@@ -198,7 +233,7 @@ ___
 
 *Overrides [WebglBaseLine](webglbaseline.md).[visible](webglbaseline.md#visible)*
 
-*Defined in [WbglPolar.ts:11](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L11)*
+*Defined in [WbglPolar.ts:11](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L11)*
 
 ___
 
@@ -208,7 +243,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[webglNumPoints](webglbaseline.md#webglnumpoints)*
 
-*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L8)*
+*Defined in [WebglBaseLine.ts:62](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L62)*
+
+total webgl number of points
+
+**`internal`** 
 
 ___
 
@@ -218,7 +257,7 @@ ___
 
 *Overrides [WebglBaseLine](webglbaseline.md).[xy](webglbaseline.md#xy)*
 
-*Defined in [WbglPolar.ts:8](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L8)*
+*Defined in [WbglPolar.ts:8](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L8)*
 
 ## Methods
 
@@ -226,7 +265,7 @@ ___
 
 ▸ **getR**(`index`: number): *number*
 
-*Defined in [WbglPolar.ts:53](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L53)*
+*Defined in [WbglPolar.ts:53](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L53)*
 
 **Parameters:**
 
@@ -242,7 +281,7 @@ ___
 
 ▸ **getTheta**(`index`: number): *number*
 
-*Defined in [WbglPolar.ts:48](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L48)*
+*Defined in [WbglPolar.ts:48](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L48)*
 
 **Parameters:**
 
@@ -258,7 +297,7 @@ ___
 
 ▸ **getX**(`index`: number): *number*
 
-*Defined in [WbglPolar.ts:66](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L66)*
+*Defined in [WbglPolar.ts:66](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L66)*
 
 **Parameters:**
 
@@ -274,7 +313,7 @@ ___
 
 ▸ **getY**(`index`: number): *number*
 
-*Defined in [WbglPolar.ts:70](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L70)*
+*Defined in [WbglPolar.ts:70](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L70)*
 
 **Parameters:**
 
@@ -290,7 +329,7 @@ ___
 
 ▸ **setRtheta**(`index`: number, `theta`: number, `r`: number): *void*
 
-*Defined in [WbglPolar.ts:38](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglPolar.ts#L38)*
+*Defined in [WbglPolar.ts:38](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglPolar.ts#L38)*
 
 **Parameters:**
 

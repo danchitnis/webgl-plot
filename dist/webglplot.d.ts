@@ -12,9 +12,12 @@ import { WebglPolar } from "./WbglPolar";
 import { WebglBaseLine } from "./WebglBaseLine";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 /**
- * The main class for the webgl-plot framework
+ * The main class for the webgl-plot library
  */
 export declare class WebGLplot {
+    /**
+     * @private
+     */
     private webgl;
     /**
      * Global horizontal scale factor
@@ -47,19 +50,38 @@ export declare class WebGLplot {
     lines: WebglBaseLine[];
     /**
      * Create a webgl-plot instance
-     * @param canv: the canvas in which the plot appears
+     * @param canv - the HTML canvas in which the plot appears
+     *
+     * @example
+     * ```typescript
+     * const canv = dcoument.getEelementbyId("canvas");
+     * const webglp = new WebGLplot(canv);
+     * ```
      */
     constructor(canv: HTMLCanvasElement);
     /**
-     * update and redraws the content
+     * updates and redraws the content of the plot
      */
     update(): void;
     clear(): void;
     /**
      * adds a line to the plot
-     * @param line : this could be any of line, linestep, histogram, or polar
+     * @param line - this could be any of line, linestep, histogram, or polar
+     *
+     * @example
+     * ```typescript
+     * const line = new line(color, numPoints);
+     * wglp.addLine(line);
+     * ```
      */
     addLine(line: WebglBaseLine): void;
+    /**
+     * Change the WbGL viewport
+     * @param a
+     * @param b
+     * @param c
+     * @param d
+     */
     viewport(a: number, b: number, c: number, d: number): void;
 }
 //# sourceMappingURL=webglplot.d.ts.map

@@ -6,6 +6,8 @@ sidebar_label: "WebglStep"
 
 [webgl-plot](../index.md) › [Globals](../globals.md) › [WebglStep](webglstep.md)
 
+The step based line plot
+
 ## Hierarchy
 
 * [WebglBaseLine](webglbaseline.md)
@@ -20,17 +22,17 @@ sidebar_label: "WebglStep"
 
 ### Properties
 
+* [_coord](webglstep.md#private-_coord)
+* [_prog](webglstep.md#private-_prog)
+* [_vbuffer](webglstep.md#private-_vbuffer)
 * [color](webglstep.md#color)
-* [coord](webglstep.md#coord)
 * [intensity](webglstep.md#intensity)
 * [loop](webglstep.md#loop)
 * [numPoints](webglstep.md#numpoints)
 * [offsetX](webglstep.md#offsetx)
 * [offsetY](webglstep.md#offsety)
-* [prog](webglstep.md#prog)
 * [scaleX](webglstep.md#scalex)
 * [scaleY](webglstep.md#scaley)
-* [vbuffer](webglstep.md#vbuffer)
 * [visible](webglstep.md#visible)
 * [webglNumPoints](webglstep.md#webglnumpoints)
 * [xy](webglstep.md#xy)
@@ -40,7 +42,7 @@ sidebar_label: "WebglStep"
 * [constY](webglstep.md#consty)
 * [getX](webglstep.md#getx)
 * [getY](webglstep.md#gety)
-* [linespaceX](webglstep.md#linespacex)
+* [lineSpaceX](webglstep.md#linespacex)
 * [setY](webglstep.md#sety)
 * [shiftAdd](webglstep.md#shiftadd)
 
@@ -52,18 +54,63 @@ sidebar_label: "WebglStep"
 
 *Overrides [WebglBaseLine](webglbaseline.md).[constructor](webglbaseline.md#constructor)*
 
-*Defined in [WbglStep.ts:5](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglStep.ts#L5)*
+*Defined in [WbglStep.ts:7](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglStep.ts#L7)*
+
+Create a new step line
+
+**`example`** 
+```typescript
+x= [0,1]
+y= [1,2]
+line = new WebglStep( new ColorRGBA(0.1,0.1,0.1,1), 2);
+```
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`c` | [ColorRGBA](colorrgba.md) |
-`num` | number |
+Name | Type | Description |
+------ | ------ | ------ |
+`c` | [ColorRGBA](colorrgba.md) | the color of the line |
+`num` | number | - |
 
 **Returns:** *[WebglStep](webglstep.md)*
 
 ## Properties
+
+### `Private` _coord
+
+• **_coord**: *number*
+
+*Inherited from [WebglBaseLine](webglbaseline.md).[_coord](webglbaseline.md#private-_coord)*
+
+*Defined in [WebglBaseLine.ts:80](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L80)*
+
+**`internal`** 
+
+___
+
+### `Private` _prog
+
+• **_prog**: *WebGLProgram*
+
+*Inherited from [WebglBaseLine](webglbaseline.md).[_prog](webglbaseline.md#private-_prog)*
+
+*Defined in [WebglBaseLine.ts:74](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L74)*
+
+**`internal`** 
+
+___
+
+### `Private` _vbuffer
+
+• **_vbuffer**: *WebGLBuffer*
+
+*Inherited from [WebglBaseLine](webglbaseline.md).[_vbuffer](webglbaseline.md#private-_vbuffer)*
+
+*Defined in [WebglBaseLine.ts:68](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L68)*
+
+**`internal`** 
+
+___
 
 ###  color
 
@@ -71,17 +118,9 @@ Name | Type |
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[color](webglbaseline.md#color)*
 
-*Defined in [WebglBaseLine.ts:16](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L16)*
+*Defined in [WebglBaseLine.ts:26](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L26)*
 
-___
-
-###  coord
-
-• **coord**: *number*
-
-*Inherited from [WebglBaseLine](webglbaseline.md).[coord](webglbaseline.md#coord)*
-
-*Defined in [WebglBaseLine.ts:12](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L12)*
+The Color of the line
 
 ___
 
@@ -91,7 +130,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[intensity](webglbaseline.md#intensity)*
 
-*Defined in [WebglBaseLine.ts:10](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L10)*
+*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L8)*
 
 ___
 
@@ -101,7 +140,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[loop](webglbaseline.md#loop)*
 
-*Defined in [WebglBaseLine.ts:23](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L23)*
+*Defined in [WebglBaseLine.ts:56](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L56)*
+
+if this is a close loop line or not
+
+**`default`** = false
 
 ___
 
@@ -111,7 +154,9 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[numPoints](webglbaseline.md#numpoints)*
 
-*Defined in [WebglBaseLine.ts:14](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L14)*
+*Defined in [WebglBaseLine.ts:15](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L15)*
+
+The number of data point pairs in the line
 
 ___
 
@@ -121,7 +166,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetX](webglbaseline.md#offsetx)*
 
-*Defined in [WebglBaseLine.ts:20](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L20)*
+*Defined in [WebglBaseLine.ts:44](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L44)*
+
+The horixontal offset of the line
+
+**`default`** = 0
 
 ___
 
@@ -131,17 +180,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetY](webglbaseline.md#offsety)*
 
-*Defined in [WebglBaseLine.ts:21](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L21)*
+*Defined in [WebglBaseLine.ts:50](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L50)*
 
-___
+the vertical offset of the line
 
-###  prog
-
-• **prog**: *WebGLProgram*
-
-*Inherited from [WebglBaseLine](webglbaseline.md).[prog](webglbaseline.md#prog)*
-
-*Defined in [WebglBaseLine.ts:6](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L6)*
+**`default`** = 0
 
 ___
 
@@ -151,7 +194,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleX](webglbaseline.md#scalex)*
 
-*Defined in [WebglBaseLine.ts:18](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L18)*
+*Defined in [WebglBaseLine.ts:32](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L32)*
+
+The horizontal scale of the line
+
+**`default`** = 1
 
 ___
 
@@ -161,17 +208,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleY](webglbaseline.md#scaley)*
 
-*Defined in [WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L19)*
+*Defined in [WebglBaseLine.ts:38](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L38)*
 
-___
+The vertical sclae of the line
 
-###  vbuffer
-
-• **vbuffer**: *WebGLBuffer*
-
-*Inherited from [WebglBaseLine](webglbaseline.md).[vbuffer](webglbaseline.md#vbuffer)*
-
-*Defined in [WebglBaseLine.ts:5](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L5)*
+**`default`** = 1
 
 ___
 
@@ -181,7 +222,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[visible](webglbaseline.md#visible)*
 
-*Defined in [WebglBaseLine.ts:11](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L11)*
+*Defined in [WebglBaseLine.ts:9](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L9)*
 
 ___
 
@@ -191,7 +232,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[webglNumPoints](webglbaseline.md#webglnumpoints)*
 
-*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L8)*
+*Defined in [WebglBaseLine.ts:62](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L62)*
+
+total webgl number of points
+
+**`internal`** 
 
 ___
 
@@ -201,7 +246,11 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[xy](webglbaseline.md#xy)*
 
-*Defined in [WebglBaseLine.ts:15](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WebglBaseLine.ts#L15)*
+*Defined in [WebglBaseLine.ts:21](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WebglBaseLine.ts#L21)*
+
+The data ponits for webgl array
+
+**`internal`** 
 
 ## Methods
 
@@ -209,13 +258,15 @@ ___
 
 ▸ **constY**(`c`: number): *void*
 
-*Defined in [WbglStep.ts:45](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglStep.ts#L45)*
+*Defined in [WbglStep.ts:74](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglStep.ts#L74)*
+
+Set a constant value for all Y values in the line
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`c` | number |
+Name | Type | Description |
+------ | ------ | ------ |
+`c` | number | constant value  |
 
 **Returns:** *void*
 
@@ -225,7 +276,7 @@ ___
 
 ▸ **getX**(`index`: number): *number*
 
-*Defined in [WbglStep.ts:29](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglStep.ts#L29)*
+*Defined in [WbglStep.ts:38](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglStep.ts#L38)*
 
 **Parameters:**
 
@@ -241,30 +292,41 @@ ___
 
 ▸ **getY**(`index`: number): *number*
 
-*Defined in [WbglStep.ts:33](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglStep.ts#L33)*
+*Defined in [WbglStep.ts:46](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglStep.ts#L46)*
+
+Get an X value at a specific index
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`index` | number |
+Name | Type | Description |
+------ | ------ | ------ |
+`index` | number | the index of X  |
 
 **Returns:** *number*
 
 ___
 
-###  linespaceX
+###  lineSpaceX
 
-▸ **linespaceX**(`start`: number, `stepsize`: number): *void*
+▸ **lineSpaceX**(`start`: number, `stepsize`: number): *void*
 
-*Defined in [WbglStep.ts:37](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglStep.ts#L37)*
+*Defined in [WbglStep.ts:62](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglStep.ts#L62)*
+
+Make an equally spaced array of X points
+
+**`example`** 
+```typescript
+//x = [-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
+const numX = 10;
+line.lineSpaceX(-1, 2 / numX);
+```
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`start` | number |
-`stepsize` | number |
+Name | Type | Description |
+------ | ------ | ------ |
+`start` | number | the start of the series |
+`stepsize` | number | - |
 
 **Returns:** *void*
 
@@ -274,14 +336,16 @@ ___
 
 ▸ **setY**(`index`: number, `y`: number): *void*
 
-*Defined in [WbglStep.ts:24](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglStep.ts#L24)*
+*Defined in [WbglStep.ts:33](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglStep.ts#L33)*
+
+Set the Y value at a specific index
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`index` | number |
-`y` | number |
+Name | Type | Description |
+------ | ------ | ------ |
+`index` | number | the index of the data point |
+`y` | number | the vertical value of the data point  |
 
 **Returns:** *void*
 
@@ -291,12 +355,20 @@ ___
 
 ▸ **shiftAdd**(`data`: Float32Array): *void*
 
-*Defined in [WbglStep.ts:52](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/WbglStep.ts#L52)*
+*Defined in [WbglStep.ts:91](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/WbglStep.ts#L91)*
+
+Add a new Y values to the end of current array and shift it, so that the total number of the pair remains the same
+
+**`example`** 
+```typescript
+yArray = new Float32Array([3, 4, 5]);
+line.shiftAdd(yArray);
+```
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`data` | Float32Array |
+Name | Type | Description |
+------ | ------ | ------ |
+`data` | Float32Array | the Y array  |
 
 **Returns:** *void*

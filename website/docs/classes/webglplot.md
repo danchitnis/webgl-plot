@@ -6,7 +6,7 @@ sidebar_label: "WebGLplot"
 
 [webgl-plot](../index.md) › [Globals](../globals.md) › [WebGLplot](webglplot.md)
 
-The main class for the webgl-plot framework
+The main class for the webgl-plot library
 
 ## Hierarchy
 
@@ -40,15 +40,21 @@ The main class for the webgl-plot framework
 
 \+ **new WebGLplot**(`canv`: HTMLCanvasElement): *[WebGLplot](webglplot.md)*
 
-*Defined in [webglplot.ts:58](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L58)*
+*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L59)*
 
 Create a webgl-plot instance
 
+**`example`** 
+```typescript
+const canv = dcoument.getEelementbyId("canvas");
+const webglp = new WebGLplot(canv);
+```
+
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`canv` | HTMLCanvasElement |
+Name | Type | Description |
+------ | ------ | ------ |
+`canv` | HTMLCanvasElement | the HTML canvas in which the plot appears  |
 
 **Returns:** *[WebGLplot](webglplot.md)*
 
@@ -58,7 +64,7 @@ Name | Type |
 
 • **gOffsetX**: *number*
 
-*Defined in [webglplot.ts:47](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L47)*
+*Defined in [webglplot.ts:48](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L48)*
 
 Global horizontal offset
 
@@ -70,7 +76,7 @@ ___
 
 • **gOffsetY**: *number*
 
-*Defined in [webglplot.ts:53](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L53)*
+*Defined in [webglplot.ts:54](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L54)*
 
 Global vertical offset
 
@@ -82,7 +88,7 @@ ___
 
 • **gScaleX**: *number*
 
-*Defined in [webglplot.ts:29](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L29)*
+*Defined in [webglplot.ts:30](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L30)*
 
 Global horizontal scale factor
 
@@ -94,7 +100,7 @@ ___
 
 • **gScaleY**: *number*
 
-*Defined in [webglplot.ts:35](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L35)*
+*Defined in [webglplot.ts:36](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L36)*
 
 Global vertical scale factor
 
@@ -106,7 +112,7 @@ ___
 
 • **gXYratio**: *number*
 
-*Defined in [webglplot.ts:41](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L41)*
+*Defined in [webglplot.ts:42](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L42)*
 
 Global X/Y scale ratio
 
@@ -118,7 +124,7 @@ ___
 
 • **lines**: *[WebglBaseLine](webglbaseline.md)[]*
 
-*Defined in [webglplot.ts:58](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L58)*
+*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L59)*
 
 collection of lines in the plot
 
@@ -128,15 +134,21 @@ collection of lines in the plot
 
 ▸ **addLine**(`line`: [WebglBaseLine](webglbaseline.md)): *void*
 
-*Defined in [webglplot.ts:142](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L142)*
+*Defined in [webglplot.ts:175](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L175)*
 
 adds a line to the plot
+
+**`example`** 
+```typescript
+const line = new line(color, numPoints);
+wglp.addLine(line);
+```
 
 **Parameters:**
 
 Name | Type | Description |
 ------ | ------ | ------ |
-`line` | [WebglBaseLine](webglbaseline.md) | : this could be any of line, linestep, histogram, or polar  |
+`line` | [WebglBaseLine](webglbaseline.md) | this could be any of line, linestep, histogram, or polar  |
 
 **Returns:** *void*
 
@@ -146,7 +158,7 @@ ___
 
 ▸ **clear**(): *void*
 
-*Defined in [webglplot.ts:132](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L132)*
+*Defined in [webglplot.ts:157](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L157)*
 
 **Returns:** *void*
 
@@ -156,9 +168,9 @@ ___
 
 ▸ **update**(): *void*
 
-*Defined in [webglplot.ts:105](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L105)*
+*Defined in [webglplot.ts:106](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L106)*
 
-update and redraws the content
+updates and redraws the content of the plot
 
 **Returns:** *void*
 
@@ -168,15 +180,17 @@ ___
 
 ▸ **viewport**(`a`: number, `b`: number, `c`: number, `d`: number): *void*
 
-*Defined in [webglplot.ts:192](https://github.com/danchitnis/webgl-plot/blob/4f87755/src/webglplot.ts#L192)*
+*Defined in [webglplot.ts:241](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/webglplot.ts#L241)*
+
+Change the WbGL viewport
 
 **Parameters:**
 
-Name | Type |
------- | ------ |
-`a` | number |
-`b` | number |
-`c` | number |
-`d` | number |
+Name | Type | Description |
+------ | ------ | ------ |
+`a` | number | - |
+`b` | number | - |
+`c` | number | - |
+`d` | number |   |
 
 **Returns:** *void*

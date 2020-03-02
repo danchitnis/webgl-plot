@@ -1,19 +1,71 @@
 import { ColorRGBA } from "./ColorRGBA";
+/**
+ * Baseline class
+ */
 export declare class WebglBaseLine {
-    vbuffer: WebGLBuffer;
-    prog: WebGLProgram;
-    webglNumPoints: number;
     intensity: number;
     visible: boolean;
-    coord: number;
+    /**
+     * The number of data point pairs in the line
+     */
     numPoints: number;
+    /**
+     * The data ponits for webgl array
+     * @internal
+     */
     xy: Float32Array;
+    /**
+     * The Color of the line
+     */
     color: ColorRGBA;
+    /**
+     * The horizontal scale of the line
+     * @default = 1
+     */
     scaleX: number;
+    /**
+     * The vertical sclae of the line
+     * @default = 1
+     */
     scaleY: number;
+    /**
+     * The horixontal offset of the line
+     * @default = 0
+     */
     offsetX: number;
+    /**
+     * the vertical offset of the line
+     * @default = 0
+     */
     offsetY: number;
+    /**
+     * if this is a close loop line or not
+     * @default = false
+     */
     loop: boolean;
+    /**
+     * total webgl number of points
+     * @internal
+     */
+    webglNumPoints: number;
+    /**
+     * @private
+     * @internal
+     */
+    _vbuffer: WebGLBuffer;
+    /**
+     * @private
+     * @internal
+     */
+    _prog: WebGLProgram;
+    /**
+     * @private
+     * @internal
+     */
+    _coord: number;
+    /**
+     * @internal
+     */
     constructor();
 }
 //# sourceMappingURL=WebglBaseLine.d.ts.map

@@ -9,7 +9,7 @@ const line = new webglplotBundle.WebglLine(color, numX);
 
 const wglp = new webglplotBundle.WebGLplot(canv);
 
-line.linespaceX(-1, 2 / numX);
+line.lineSpaceX(-1, 2 / numX);
 wglp.addLine(line);
 
 function newFrame() {
