@@ -1,4 +1,4 @@
-import { WebglBaseLine } from "./WebglBaseLine";
+import { WebglBaseLine } from "./WebglBaseLine.js";
 export class WebglPolar extends WebglBaseLine {
     constructor(c, numPoints) {
         super();

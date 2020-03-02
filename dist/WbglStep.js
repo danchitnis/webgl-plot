@@ -1,4 +1,4 @@
-import { WebglBaseLine } from "./WebglBaseLine";
+import { WebglBaseLine } from "./WebglBaseLine.js";
 /**
  * The step based line plot
  */

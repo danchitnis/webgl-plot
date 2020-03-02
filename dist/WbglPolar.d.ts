@@ -1,5 +1,5 @@
-import { ColorRGBA } from "./ColorRGBA";
-import { WebglBaseLine } from "./WebglBaseLine";
+import { ColorRGBA } from "./ColorRGBA.js";
+import { WebglBaseLine } from "./WebglBaseLine.js";
 export declare class WebglPolar extends WebglBaseLine {
     numPoints: number;
     xy: Float32Array;
