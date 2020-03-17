@@ -9,7 +9,7 @@
   "devDependencies": {
     "@microsoft/api-documenter": "^7.7.12",
     "@microsoft/api-extractor": "^7.7.8",
-    "rollup": "^1.31.1",
+    "rollup": "^2.0.6",
     "typedoc": "^0.16.10",
     "typedoc-plugin-markdown": "^2.2.16",
     "typescript": "^3.8.2"
