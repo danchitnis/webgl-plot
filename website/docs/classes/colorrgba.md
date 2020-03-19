@@ -29,7 +29,7 @@ sidebar_label: "ColorRGBA"
 
 \+ **new ColorRGBA**(`r`: number, `g`: number, `b`: number, `a`: number): *[ColorRGBA](colorrgba.md)*
 
-*Defined in [ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/ColorRGBA.ts#L6)*
+*Defined in [ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/ColorRGBA.ts#L6)*
 
 **Parameters:**
 
@@ -48,7 +48,7 @@ Name | Type |
 
 • **a**: *number*
 
-*Defined in [ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/ColorRGBA.ts#L6)*
+*Defined in [ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/ColorRGBA.ts#L6)*
 
 ___
 
@@ -56,7 +56,7 @@ ___
 
 • **b**: *number*
 
-*Defined in [ColorRGBA.ts:5](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/ColorRGBA.ts#L5)*
+*Defined in [ColorRGBA.ts:5](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/ColorRGBA.ts#L5)*
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 • **g**: *number*
 
-*Defined in [ColorRGBA.ts:4](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/ColorRGBA.ts#L4)*
+*Defined in [ColorRGBA.ts:4](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/ColorRGBA.ts#L4)*
 
 ___
 
@@ -72,4 +72,4 @@ ___
 
 • **r**: *number*
 
-*Defined in [ColorRGBA.ts:3](https://github.com/danchitnis/webgl-plot/blob/b167e6d/src/ColorRGBA.ts#L3)*
+*Defined in [ColorRGBA.ts:3](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/ColorRGBA.ts#L3)*
