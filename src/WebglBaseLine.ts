@@ -1,25 +1,23 @@
-import { ColorRGBA } from "./ColorRGBA.js";
+import { ColorRGBA } from "./ColorRGBA";
 
 /**
  * Baseline class
  */
 export class WebglBaseLine {
-
   public intensity: number;
   public visible: boolean;
-  
 
   /**
    * The number of data point pairs in the line
    */
   public numPoints: number;
-  
+
   /**
    * The data ponits for webgl array
    * @internal
    */
   public xy: Float32Array;
-  
+
   /**
    * The Color of the line
    */
@@ -54,13 +52,13 @@ export class WebglBaseLine {
    * @default = false
    */
   public loop: boolean;
-  
+
   /**
    * total webgl number of points
    * @internal
    */
   public webglNumPoints: number;
-  
+
   /**
    * @private
    * @internal

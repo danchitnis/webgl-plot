@@ -6,18 +6,18 @@
  * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
  */
 
-import { ColorRGBA } from "./ColorRGBA.js";
-import { WebglLine } from "./WbglLine.js";
-import { WebglStep } from "./WbglStep.js";
-import { WebglPolar } from "./WbglPolar.js";
-import { WebglBaseLine } from "./WebglBaseLine.js";
+import { ColorRGBA } from "./ColorRGBA";
+import { WebglLine } from "./WbglLine";
+import { WebglStep } from "./WbglStep";
+import { WebglPolar } from "./WbglPolar";
+import { WebglBaseLine } from "./WebglBaseLine";
 
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 
 /**
  * The main class for the webgl-plot library
  */
-export class WebGLplot {
+export default class WebGLplot {
   /**
    * @private
    */
@@ -61,7 +61,7 @@ export class WebGLplot {
   /**
    * Create a webgl-plot instance
    * @param canv - the HTML canvas in which the plot appears
-   * 
+   *
    * @example
    * ```typescript
    * const canv = dcoument.getEelementbyId("canvas");
@@ -77,7 +77,7 @@ export class WebGLplot {
 
     const webgl = canv.getContext("webgl", {
       antialias: true,
-      transparent: false
+      transparent: false,
     }) as WebGLRenderingContext;
 
     this.lines = [];
@@ -106,7 +106,7 @@ export class WebGLplot {
   public update(): void {
     const webgl = this.webgl;
 
-    this.lines.forEach(line => {
+    this.lines.forEach((line) => {
       if (line.visible) {
         webgl.useProgram(line._prog);
 
@@ -118,38 +118,22 @@ export class WebGLplot {
             line.scaleX * this.gScaleX,
             0,
             0,
-            line.scaleY * this.gScaleY * this.gXYratio
+            line.scaleY * this.gScaleY * this.gXYratio,
           ])
         );
 
         const uoffset = webgl.getUniformLocation(line._prog, "uoffset");
         webgl.uniform2fv(
           uoffset,
-          new Float32Array([
-            line.offsetX + this.gOffsetX,
-            line.offsetY + this.gOffsetY
-          ])
+          new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY])
         );
 
         const uColor = webgl.getUniformLocation(line._prog, "uColor");
-        webgl.uniform4fv(uColor, [
-          line.color.r,
-          line.color.g,
-          line.color.b,
-          line.color.a
-        ]);
+        webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
 
-        webgl.bufferData(
-          webgl.ARRAY_BUFFER,
-          line.xy as ArrayBuffer,
-          webgl.STREAM_DRAW
-        );
+        webgl.bufferData(webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, webgl.STREAM_DRAW);
 
-        webgl.drawArrays(
-          line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP,
-          0,
-          line.webglNumPoints
-        );
+        webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
       }
     });
   }
@@ -157,15 +141,13 @@ export class WebGLplot {
   public clear(): void {
     // Clear the canvas  //??????????????????
     //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
-    this.webgl.clear(
-      this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT
-    );
+    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
   }
 
   /**
    * adds a line to the plot
    * @param line - this could be any of line, linestep, histogram, or polar
-   * 
+   *
    * @example
    * ```typescript
    * const line = new line(color, numPoints);
@@ -175,11 +157,7 @@ export class WebGLplot {
   public addLine(line: WebglBaseLine): void {
     line._vbuffer = this.webgl.createBuffer() as WebGLBuffer;
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
-    this.webgl.bufferData(
-      this.webgl.ARRAY_BUFFER,
-      line.xy as ArrayBuffer,
-      this.webgl.STREAM_DRAW
-    );
+    this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, this.webgl.STREAM_DRAW);
 
     const vertCode = `
       attribute vec2 coordinates;
@@ -218,14 +196,7 @@ export class WebGLplot {
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
 
     line._coord = this.webgl.getAttribLocation(line._prog, "coordinates");
-    this.webgl.vertexAttribPointer(
-      line._coord,
-      2,
-      this.webgl.FLOAT,
-      false,
-      0,
-      0
-    );
+    this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
     this.webgl.enableVertexAttribArray(line._coord);
 
     this.lines.push(line);
@@ -233,10 +204,10 @@ export class WebGLplot {
 
   /**
    * Change the WbGL viewport
-   * @param a 
-   * @param b 
-   * @param c 
-   * @param d 
+   * @param a
+   * @param b
+   * @param c
+   * @param d
    */
   public viewport(a: number, b: number, c: number, d: number): void {
     this.webgl.viewport(a, b, c, d);

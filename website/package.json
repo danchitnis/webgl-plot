@@ -9,11 +9,12 @@
     "deploy": "docusaurus deploy"
   },
   "dependencies": {
-    "@docusaurus/core": "^2.0.0-alpha.43",
-    "@docusaurus/preset-classic": "^2.0.0-alpha.43",
+    "@docusaurus/core": "^2.0.0-alpha.50",
+    "@docusaurus/plugin-content-pages": "^2.0.0-alpha.50",
+    "@docusaurus/preset-classic": "^2.0.0-alpha.50",
     "classnames": "^2.2.6",
-    "react": "^16.13.0",
-    "react-dom": "^16.13.0"
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
   },
   "browserslist": {
     "production": [
@@ -26,5 +27,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "eslint-plugin-mdx": "^1.6.8"
   }
 }

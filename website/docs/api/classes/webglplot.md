@@ -40,7 +40,7 @@ The main class for the webgl-plot library
 
 \+ **new WebGLplot**(`canv`: HTMLCanvasElement): *[WebGLplot](webglplot.md)*
 
-*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L59)*
+*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L59)*
 
 Create a webgl-plot instance
 
@@ -64,7 +64,7 @@ Name | Type | Description |
 
 • **gOffsetX**: *number*
 
-*Defined in [webglplot.ts:48](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L48)*
+*Defined in [webglplot.ts:48](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L48)*
 
 Global horizontal offset
 
@@ -76,7 +76,7 @@ ___
 
 • **gOffsetY**: *number*
 
-*Defined in [webglplot.ts:54](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L54)*
+*Defined in [webglplot.ts:54](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L54)*
 
 Global vertical offset
 
@@ -88,7 +88,7 @@ ___
 
 • **gScaleX**: *number*
 
-*Defined in [webglplot.ts:30](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L30)*
+*Defined in [webglplot.ts:30](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L30)*
 
 Global horizontal scale factor
 
@@ -100,7 +100,7 @@ ___
 
 • **gScaleY**: *number*
 
-*Defined in [webglplot.ts:36](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L36)*
+*Defined in [webglplot.ts:36](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L36)*
 
 Global vertical scale factor
 
@@ -112,7 +112,7 @@ ___
 
 • **gXYratio**: *number*
 
-*Defined in [webglplot.ts:42](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L42)*
+*Defined in [webglplot.ts:42](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L42)*
 
 Global X/Y scale ratio
 
@@ -124,7 +124,7 @@ ___
 
 • **lines**: *[WebglBaseLine](webglbaseline.md)[]*
 
-*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L59)*
+*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L59)*
 
 collection of lines in the plot
 
@@ -134,7 +134,7 @@ collection of lines in the plot
 
 ▸ **addLine**(`line`: [WebglBaseLine](webglbaseline.md)): *void*
 
-*Defined in [webglplot.ts:175](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L175)*
+*Defined in [webglplot.ts:175](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L175)*
 
 adds a line to the plot
 
@@ -158,7 +158,7 @@ ___
 
 ▸ **clear**(): *void*
 
-*Defined in [webglplot.ts:157](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L157)*
+*Defined in [webglplot.ts:157](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L157)*
 
 **Returns:** *void*
 
@@ -168,7 +168,7 @@ ___
 
 ▸ **update**(): *void*
 
-*Defined in [webglplot.ts:106](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L106)*
+*Defined in [webglplot.ts:106](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L106)*
 
 updates and redraws the content of the plot
 
@@ -180,7 +180,7 @@ ___
 
 ▸ **viewport**(`a`: number, `b`: number, `c`: number, `d`: number): *void*
 
-*Defined in [webglplot.ts:241](https://github.com/danchitnis/webgl-plot/blob/3034d30/src/webglplot.ts#L241)*
+*Defined in [webglplot.ts:241](https://github.com/danchitnis/webgl-plot/blob/ee06299/src/webglplot.ts#L241)*
 
 Change the WbGL viewport
 

@@ -1,15 +1,14 @@
 module.exports = {
-  "someSidebar": {
-    "Docusaurus": [
-      "index"
+  someSidebar: {
+    Introduction: ["api/index"],
+    "API Documentation": [
+      "api/classes/webglplot",
+      "api/classes/colorrgba",
+      "api/classes/webglbaseline",
+      "api/classes/webglline",
+      "api/classes/webglpolar",
+      "api/classes/webglstep",
     ],
-    "Classes": [
-      "classes/colorrgba",
-      "classes/webglplot",
-      "classes/webglbaseline",
-      "classes/webglline",
-      "classes/webglpolar",
-      "classes/webglstep"
-    ]
-  }
+    Examples: ["examples/ex1"],
+  },
 };

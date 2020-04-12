@@ -1,66 +1,67 @@
 module.exports = {
-  title: 'WebGL-Plot',
-  tagline: 'API documentation',
-  url: 'https://danchitnis.github.io/',
-  baseUrl: '/webgl-plot/',
-  favicon: 'img/favicon.ico',
-  organizationName: 'danchitnis', // Usually your GitHub org/user name.
-  projectName: 'webgl-plot', // Usually your repo name.
+  title: "WebGL-Plot",
+  tagline: "API documentation",
+  url: "https://webgl-plot.now.sh/",
+  baseUrl: "/",
+  favicon: "img/favicon.ico",
+  organizationName: "danchitnis", // Usually your GitHub org/user name.
+  projectName: "webgl-plot", // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'WebGL-Plot',
+      title: "WebGL-Plot",
       logo: {
-        alt: 'My Site Logo',
-        src: 'img/logo.svg',
+        alt: "My Site Logo",
+        src: "img/logo.svg",
       },
       links: [
-        {to: 'docs/index', label: 'Docs', position: 'left'},
+        { to: "docs/index", label: "Docs", position: "left" },
+        { to: "example/", label: "Examples", position: "left" },
         {
-          href: 'https://github.com/danchitnis/webgl-plot',
-          label: 'GitHub',
-          position: 'right',
+          href: "https://github.com/danchitnis/webgl-plot",
+          label: "GitHub",
+          position: "right",
         },
       ],
     },
     footer: {
-      style: 'dark',
+      style: "dark",
       links: [
         {
-          title: 'Docs',
+          title: "Docs",
           items: [
             {
-              label: 'Style Guide',
-              to: 'docs/index',
+              label: "Style Guide",
+              to: "docs/index",
             },
             {
-              label: 'Second Doc',
-              to: 'docs/globals',
+              label: "Second Doc",
+              to: "docs/globals",
             },
           ],
         },
         {
-          title: 'Community',
+          title: "Community",
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: "Stack Overflow",
+              href: "https://stackoverflow.com/questions/tagged/docusaurus",
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              label: "Discord",
+              href: "https://discordapp.com/invite/docusaurus",
             },
           ],
         },
         {
-          title: 'Social',
+          title: "Social",
           items: [
             {
-              label: 'Blog',
-              to: 'blog',
+              label: "Blog",
+              to: "blog",
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/danchitnis/webgl-plot',
+              label: "GitHub",
+              href: "https://github.com/danchitnis/webgl-plot",
             },
           ],
         },
@@ -70,15 +71,17 @@ module.exports = {
   },
   presets: [
     [
-      '@docusaurus/preset-classic',
+      "@docusaurus/preset-classic",
       {
         docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
-          editUrl:
-            'https://github.com/danchitnis/webgl-plot/edit/master/docs/',
+          sidebarPath: require.resolve("./sidebars.js"),
+          editUrl: "https://github.com/danchitnis/webgl-plot/edit/master/docs/",
+        },
+        pages: {
+          sidebarPath: require.resolve("./sidebars.js"),
         },
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: require.resolve("./src/css/custom.css"),
         },
       },
     ],

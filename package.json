@@ -7,8 +7,8 @@
   "types": "./dist/webgl-plot.d.ts",
   "dependencies": {},
   "devDependencies": {
-    "rollup": "^2.1.0",
-    "typedoc": "^0.17.1",
+    "rollup": "^2.6.0",
+    "typedoc": "^0.17.4",
     "typedoc-plugin-markdown": "^2.2.17",
     "typescript": "^3.8.3"
   },
