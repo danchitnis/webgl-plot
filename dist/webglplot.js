@@ -5,15 +5,15 @@
  * https://codepen.io/AzazelN28
  * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
  */
-import { ColorRGBA } from "./ColorRGBA.js";
-import { WebglLine } from "./WbglLine.js";
-import { WebglStep } from "./WbglStep.js";
-import { WebglPolar } from "./WbglPolar.js";
+import { ColorRGBA } from "./ColorRGBA";
+import { WebglLine } from "./WbglLine";
+import { WebglStep } from "./WbglStep";
+import { WebglPolar } from "./WbglPolar";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 /**
  * The main class for the webgl-plot library
  */
-export class WebGLplot {
+export default class WebGLPlot {
     /**
      * Create a webgl-plot instance
      * @param canv - the HTML canvas in which the plot appears
@@ -31,7 +31,7 @@ export class WebGLplot {
         canv.height = canv.clientHeight * devicePixelRatio;
         const webgl = canv.getContext("webgl", {
             antialias: true,
-            transparent: false
+            transparent: false,
         });
         this.lines = [];
         this.webgl = webgl;
@@ -52,7 +52,7 @@ export class WebGLplot {
      */
     update() {
         const webgl = this.webgl;
-        this.lines.forEach(line => {
+        this.lines.forEach((line) => {
             if (line.visible) {
                 webgl.useProgram(line._prog);
                 const uscale = webgl.getUniformLocation(line._prog, "uscale");
@@ -60,20 +60,12 @@ export class WebGLplot {
                     line.scaleX * this.gScaleX,
                     0,
                     0,
-                    line.scaleY * this.gScaleY * this.gXYratio
+                    line.scaleY * this.gScaleY * this.gXYratio,
                 ]));
                 const uoffset = webgl.getUniformLocation(line._prog, "uoffset");
-                webgl.uniform2fv(uoffset, new Float32Array([
-                    line.offsetX + this.gOffsetX,
-                    line.offsetY + this.gOffsetY
-                ]));
+                webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
                 const uColor = webgl.getUniformLocation(line._prog, "uColor");
-                webgl.uniform4fv(uColor, [
-                    line.color.r,
-                    line.color.g,
-                    line.color.b,
-                    line.color.a
-                ]);
+                webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
                 webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
                 webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
             }

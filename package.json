@@ -3,11 +3,11 @@
   "version": "0.2.9",
   "description": "High-performance 2D plotting framework based on native WebGL",
   "main": "./dist/webglplot.js",
-  "typings": "./dist/webgl-plot.d.ts",
-  "types": "./dist/webgl-plot.d.ts",
+  "typings": "./dist/webglplot.d.ts",
+  "types": "./dist/webglplot.d.ts",
   "dependencies": {},
   "devDependencies": {
-    "rollup": "^2.6.0",
+    "rollup": "^2.6.1",
     "typedoc": "^0.17.4",
     "typedoc-plugin-markdown": "^2.2.17",
     "typescript": "^3.8.3"

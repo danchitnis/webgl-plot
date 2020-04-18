@@ -17,7 +17,7 @@ export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 /**
  * The main class for the webgl-plot library
  */
-export default class WebGLplot {
+export default class WebGLPlot {
   /**
    * @private
    */

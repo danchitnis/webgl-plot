@@ -245,8 +245,8 @@ var webglplotBundle = (function (exports) {
         setRtheta(index, theta, r) {
             //const rA = Math.abs(r);
             //const thetaA = theta % 360;
-            const x = r * Math.cos(2 * Math.PI * (theta + this.offsetTheta) / 360);
-            const y = r * Math.sin(2 * Math.PI * (theta + this.offsetTheta) / 360);
+            const x = r * Math.cos((2 * Math.PI * (theta + this.offsetTheta)) / 360);
+            const y = r * Math.sin((2 * Math.PI * (theta + this.offsetTheta)) / 360);
             //const index = Math.round( ((theta % 360)/360) * this.numPoints );
             this.setX(index, x);
             this.setY(index, y);
@@ -283,7 +283,7 @@ var webglplotBundle = (function (exports) {
     /**
      * The main class for the webgl-plot library
      */
-    class WebGLplot {
+    class WebGLPlot {
         /**
          * Create a webgl-plot instance
          * @param canv - the HTML canvas in which the plot appears
@@ -301,7 +301,7 @@ var webglplotBundle = (function (exports) {
             canv.height = canv.clientHeight * devicePixelRatio;
             const webgl = canv.getContext("webgl", {
                 antialias: true,
-                transparent: false
+                transparent: false,
             });
             this.lines = [];
             this.webgl = webgl;
@@ -322,7 +322,7 @@ var webglplotBundle = (function (exports) {
          */
         update() {
             const webgl = this.webgl;
-            this.lines.forEach(line => {
+            this.lines.forEach((line) => {
                 if (line.visible) {
                     webgl.useProgram(line._prog);
                     const uscale = webgl.getUniformLocation(line._prog, "uscale");
@@ -330,20 +330,12 @@ var webglplotBundle = (function (exports) {
                         line.scaleX * this.gScaleX,
                         0,
                         0,
-                        line.scaleY * this.gScaleY * this.gXYratio
+                        line.scaleY * this.gScaleY * this.gXYratio,
                     ]));
                     const uoffset = webgl.getUniformLocation(line._prog, "uoffset");
-                    webgl.uniform2fv(uoffset, new Float32Array([
-                        line.offsetX + this.gOffsetX,
-                        line.offsetY + this.gOffsetY
-                    ]));
+                    webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
                     const uColor = webgl.getUniformLocation(line._prog, "uColor");
-                    webgl.uniform4fv(uColor, [
-                        line.color.r,
-                        line.color.g,
-                        line.color.b,
-                        line.color.a
-                    ]);
+                    webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
                     webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
                     webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
                 }
@@ -415,10 +407,10 @@ var webglplotBundle = (function (exports) {
     }
 
     exports.ColorRGBA = ColorRGBA;
-    exports.WebGLplot = WebGLplot;
     exports.WebglLine = WebglLine;
     exports.WebglPolar = WebglPolar;
     exports.WebglStep = WebglStep;
+    exports.default = WebGLPlot;
 
     return exports;
 
