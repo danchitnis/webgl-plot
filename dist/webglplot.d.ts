@@ -5,16 +5,16 @@
  * https://codepen.io/AzazelN28
  * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
  */
-import { ColorRGBA } from "./ColorRGBA.js";
-import { WebglLine } from "./WbglLine.js";
-import { WebglStep } from "./WbglStep.js";
-import { WebglPolar } from "./WbglPolar.js";
-import { WebglBaseLine } from "./WebglBaseLine.js";
+import { ColorRGBA } from "./ColorRGBA";
+import { WebglLine } from "./WbglLine";
+import { WebglStep } from "./WbglStep";
+import { WebglPolar } from "./WbglPolar";
+import { WebglBaseLine } from "./WebglBaseLine";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 /**
  * The main class for the webgl-plot library
  */
-export declare class WebGLplot {
+export default class WebGLPlot {
     /**
      * @private
      */

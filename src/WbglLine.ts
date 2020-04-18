@@ -1,5 +1,5 @@
-import { ColorRGBA } from "./ColorRGBA.js";
-import { WebglBaseLine } from "./WebglBaseLine.js";
+import { ColorRGBA } from "./ColorRGBA";
+import { WebglBaseLine } from "./WebglBaseLine";
 
 /**
  * The standard Line class

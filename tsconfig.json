@@ -12,14 +12,12 @@
       "*": ["node_modules/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*"],
   "typedocOptions": {
     "mode": "file",
     "excludePrivate": true,
-    "out": "./website/docs",
+    "out": "./website/api/docs",
     "plugin": "typedoc-plugin-markdown",
-    "theme": "docusaurus2",
+    "theme": "docusaurus2"
   }
 }

@@ -1,4 +1,4 @@
-import { WebglBaseLine } from "./WebglBaseLine.js";
+import { WebglBaseLine } from "./WebglBaseLine";
 export class WebglPolar extends WebglBaseLine {
     constructor(c, numPoints) {
         super();
@@ -21,8 +21,8 @@ export class WebglPolar extends WebglBaseLine {
     setRtheta(index, theta, r) {
         //const rA = Math.abs(r);
         //const thetaA = theta % 360;
-        const x = r * Math.cos(2 * Math.PI * (theta + this.offsetTheta) / 360);
-        const y = r * Math.sin(2 * Math.PI * (theta + this.offsetTheta) / 360);
+        const x = r * Math.cos((2 * Math.PI * (theta + this.offsetTheta)) / 360);
+        const y = r * Math.sin((2 * Math.PI * (theta + this.offsetTheta)) / 360);
         //const index = Math.round( ((theta % 360)/360) * this.numPoints );
         this.setX(index, x);
         this.setY(index, y);

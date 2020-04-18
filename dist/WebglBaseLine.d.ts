@@ -1,4 +1,4 @@
-import { ColorRGBA } from "./ColorRGBA.js";
+import { ColorRGBA } from "./ColorRGBA";
 /**
  * Baseline class
  */
