@@ -4,9 +4,9 @@
 
 # webgl-plot
 
-multi-line high-performance 2D graphs using native WebGL. The advantages are:
+multi-line high-performance 2D plotting library using native WebGL. The advantages are:
 
-- Simple and efficient 2D WebGL framework
+- Simple and efficient 2D WebGL library
 - Using WebGL native line drawing
 - High update rate which matches the screen refresh rate
 - Full control over the color of each line in each frame
@@ -83,14 +83,21 @@ function update() {
 }
 ```
 
-See this example in [Codepen](https://codepen.io/danchitnis/pen/mdJVEYY) and
-[JSfiddle](https://jsfiddle.net/danchitnis/mfcw73z2/)
-
 [![Edit WebGLplot](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webglplot-m40u4?fontsize=14&hidenavigation=1&theme=dark)
 
-## Demos & Examples
+## React Example
 
-See examples at [webgl-plot-examples](https://github.com/danchitnis/webgl-plot-examples)
+React example is under development...
+
+[![Edit WebGL-Plot React](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webgl-plot-react-8y1qj?fontsize=14&hidenavigation=1&theme=dark)
+
+## Demos
+
+See examples based on vanilla JS at [webgl-plot-examples](https://github.com/danchitnis/webgl-plot-examples)
+
+See examples based on [React](https://webgl-plot.now.sh/example/)
+
+See [SPAD Simulation](https://danchitnis.github.io/SPADsim/) which use WebGL-Plot as an oscilloscope display
 
 ## API Documentation
 
