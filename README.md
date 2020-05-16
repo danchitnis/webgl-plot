@@ -99,6 +99,18 @@ See examples based on [React](https://webgl-plot.now.sh/example/)
 
 See [SPAD Simulation](https://danchitnis.github.io/SPADsim/) which use WebGL-Plot as an oscilloscope display
 
+## JS Bundle
+
+To use WebGL-Plot as a JS pre-bundled package first import the following in your HTML file:
+
+```HTML
+<script src="https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/bundle.min.js"></script>
+```
+
+See examples on how to use this bundle in [Codepen](https://codepen.io/danchitnis/pen/mdJVEYY) and [JSfiddle](https://jsfiddle.net/danchitnis/mfcw73z2/)
+
+Notice that this method is only recommended for test and small codes.
+
 ## API Documentation
 
 See [here 📑](https://webgl-plot.now.sh/)
