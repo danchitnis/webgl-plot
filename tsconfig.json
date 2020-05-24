@@ -16,7 +16,7 @@
   "typedocOptions": {
     "mode": "file",
     "excludePrivate": true,
-    "out": "./website/api/docs",
+    "out": "./docs",
     "plugin": "typedoc-plugin-markdown",
     "theme": "docusaurus2"
   }
