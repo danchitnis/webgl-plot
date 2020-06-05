@@ -171,10 +171,10 @@ resolve@^1.1.6:
   dependencies:
     path-parse "^1.0.6"
 
-rollup@^2.10.8:
-  version "2.10.8"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.10.8.tgz#ae7d341096aa81b352b1eb13912d775ec1913f5c"
-  integrity sha512-lbowcWxla8CNBNvCVnmZnoZzugM1g9yd7fd7oc5eWIdI4wECzpIpEJLBoeD+9UITwnnt1X3b9bt7gdZHC+rRAg==
+rollup@^2.13.1:
+  version "2.13.1"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-2.13.1.tgz#06ac5be4f85df0b79f23cdfa90de63e78095a984"
+  integrity sha512-EiICynxIO1DTFmFn+/98gfaqCToK2nbjPjHJLuNvpcwc+P035VrXmJxi3JsOhqkdty+0cOEhJ26ceGTY3UPMPQ==
   optionalDependencies:
     fsevents "~2.1.2"
 
