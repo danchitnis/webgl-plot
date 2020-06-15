@@ -202,6 +202,10 @@ export default class WebGLPlot {
     this.lines.push(line);
   }
 
+  public removeLine(index: number) {
+    //to be implemented
+  }
+
   /**
    * Change the WbGL viewport
    * @param a

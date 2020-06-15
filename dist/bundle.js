@@ -394,6 +394,9 @@ var webglplotBundle = (function (exports) {
             this.webgl.enableVertexAttribArray(line._coord);
             this.lines.push(line);
         }
+        removeLine(index) {
+            //to be implemented
+        }
         /**
          * Change the WbGL viewport
          * @param a

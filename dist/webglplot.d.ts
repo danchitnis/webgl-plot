@@ -75,6 +75,7 @@ export default class WebGLPlot {
      * ```
      */
     addLine(line: WebglBaseLine): void;
+    removeLine(index: number): void;
     /**
      * Change the WbGL viewport
      * @param a
