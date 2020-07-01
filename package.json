@@ -8,6 +8,7 @@
   "types": "./dist/webglplot.d.ts",
   "dependencies": {},
   "devDependencies": {
+    "@types/node": "14.0.14",
     "rollup": "^2.16.1",
     "typedoc": "^0.17.7",
     "typedoc-plugin-markdown": "^2.3.1",
