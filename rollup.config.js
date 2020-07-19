@@ -10,13 +10,3 @@ export default {
     { file: pkg.module, format: "es" },
   ],
 };
-
-// rollup.config.js
-/*export default {
-  input: "./dist/webglplot.js",
-  output: {
-    file: "./dist/bundle.js",
-    name: "webglplotBundle",
-    format: "iife",
-  },
-};*/
