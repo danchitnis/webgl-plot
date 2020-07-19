@@ -1,5 +1,8 @@
-var webglplotBundle = (function (exports) {
-    'use strict';
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (global = global || self, factory(global.WebGLPlot = {}));
+}(this, (function (exports) { 'use strict';
 
     class ColorRGBA {
         constructor(r, g, b, a) {
@@ -415,6 +418,6 @@ var webglplotBundle = (function (exports) {
     exports.WebglStep = WebglStep;
     exports.default = WebGLPlot;
 
-    return exports;
+    Object.defineProperty(exports, '__esModule', { value: true });
 
-}({}));
+})));
