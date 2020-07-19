@@ -104,10 +104,27 @@ See [SPAD Simulation](https://danchitnis.github.io/SPADsim/) which use WebGL-Plo
 To use WebGL-Plot as a JS pre-bundled package first import the following in your HTML file:
 
 ```HTML
-<script src="https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/webglplot.umd.min.js"></script>
 ```
 
 See examples on how to use this bundle in [Codepen](https://codepen.io/danchitnis/pen/mdJVEYY) and [JSfiddle](https://jsfiddle.net/danchitnis/mfcw73z2/)
+
+For ES6 module and direct browser import use:
+
+```HTML
+<script type="module" src="your-code.js"></script>
+```
+
+and in your-code.js:
+
+```javascript
+import WebGLplot, {
+  WebglLine,
+  ColorRGBA,
+} from "https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/webglplot.esm.min.js";
+```
+
+Thanks to [TimDaub](https://github.com/TimDaub) for testing the ES6 module.
 
 Notice that this method is only recommended for test and small codes.
 
