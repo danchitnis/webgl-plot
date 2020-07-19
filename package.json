@@ -8,10 +8,10 @@
   "types": "./dist/webglplot.d.ts",
   "dependencies": {},
   "devDependencies": {
-    "rollup": "^2.16.1",
-    "typedoc": "^0.17.7",
+    "rollup": "^2.22.1",
+    "typedoc": "^0.17.8",
     "typedoc-plugin-markdown": "^2.3.1",
-    "typescript": "^3.9.5"
+    "typescript": "^3.9.7"
   },
   "scripts": {
     "build": "tsc && rollup -c",
