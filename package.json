@@ -6,16 +6,16 @@
   "module": "./dist/webglplot.esm.js",
   "typings": "./dist/webglplot.d.ts",
   "types": "./dist/webglplot.d.ts",
-  "dependencies": {},
   "devDependencies": {
-    "rollup": "^2.22.1",
+    "rollup": "^2.23.0",
     "typedoc": "^0.17.8",
-    "typedoc-plugin-markdown": "^2.3.1",
+    "typedoc-plugin-markdown": "^2.4.0",
     "typescript": "^3.9.7"
   },
   "scripts": {
     "build": "tsc && rollup -c",
-    "doc": "typedoc"
+    "doc": "typedoc",
+    "sdk": "yarn dlx @yarnpkg/pnpify --sdk vscode"
   },
   "repository": {
     "type": "git",

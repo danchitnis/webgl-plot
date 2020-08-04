@@ -8,19 +8,22 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 - Simple and efficient 2D WebGL library
 - Using WebGL native line drawing
-- High update rate which matches the screen refresh rate
+- High update rate which matches the screen's refresh rate
+- Works for both dynamic and static data
 - Full control over the color of each line in each frame
 - No dependencies
 - Works on any browser/platform that [supports WebGL](https://caniuse.com/#feat=webgl)
-- Ideal for embedded systems with low resources
+- Ideal for embedded systems with low resources or large datasets
 
 ## Use cases
 
-When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.
+**Dynamic**: When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.
+
+**Static**: Enables rapid pan and zoom capability for inspecting very large datasets. See the [static example](https://danchitnis.github.io/webgl-plot-examples/static.html)
 
 ## Limitations
 
-cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of data vector and take a hit on the performance.
+cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of the data vector and take a hit on the performance. Top performance (refresh rate, memory, etc) is the top priority for this library.
 
 ## Getting started
 
@@ -85,19 +88,23 @@ function update() {
 
 [![Edit WebGLplot](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webglplot-m40u4?fontsize=14&hidenavigation=1&theme=dark)
 
-## React Example
-
-React example is under development...
-
-[![Edit WebGL-Plot React](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webgl-plot-react-8y1qj?fontsize=14&hidenavigation=1&theme=dark)
-
 ## Demos
 
 See examples based on vanilla JS at [webgl-plot-examples](https://github.com/danchitnis/webgl-plot-examples)
 
-See examples based on [React](https://webgl-plot.now.sh/example/)
+See examples based on [React](https://webgl-plot-react.vercel.app/)
 
 See [SPAD Simulation](https://danchitnis.github.io/SPADsim/) which use WebGL-Plot as an oscilloscope display
+
+## React Examples
+
+For a basic React example see here:
+
+[![Edit WebGL-Plot React](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webgl-plot-react-8y1qj?fontsize=14&hidenavigation=1&theme=dark)
+
+React website is under development...
+
+[https://webgl-plot-react.vercel.app/](https://webgl-plot-react.vercel.app/) ⚛
 
 ## JS Bundle
 
@@ -134,7 +141,7 @@ See [here 📑](https://webgl-plot.now.sh/)
 
 ## How to use with embedded systems applications?
 
-You can use WebUSB, Web Bluetooth, and Serial API. Examples will be provided soon.
+You can use WebUSB, Web Bluetooth, and Serial API. You can use [ComPort](https://github.com/danchitnis/ComPort) for a basic implementation of Serial API
 
 ## Build
 

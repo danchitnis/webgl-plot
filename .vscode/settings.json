@@ -4,7 +4,15 @@
     "source.fixAll": true
   },
   "eslint.options": {
-    "extensions": [".js", ".jsx", ".md", ".mdx", ".ts", ".tsx"]
+    "extensions": [
+      ".js",
+      ".jsx",
+      ".md",
+      ".mdx",
+      ".ts",
+      ".tsx"
+    ]
   },
-  "typescript.tsdk": "node_modules\\typescript\\lib"
+  "typescript.tsdk": ".yarn/sdks/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true
 }

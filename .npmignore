@@ -8,3 +8,6 @@ docs
 tsconfig.json
 rollup.config.js
 index.html
+.yarn
+.pnp.js
+.yarnrc.yml

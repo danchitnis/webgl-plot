@@ -6,7 +6,7 @@ export default {
   input: "./dist/webglplot.js",
   //plugins: [typescript({ tsconfig: "./tsconfig.json" })],
   output: [
-    { file: pkg.main, format: "umd", name: "WebGLPlotBundle" },
+    { file: pkg.main, format: "umd", name: "WebGLPlotBundle", exports: "named" },
     { file: pkg.module, format: "es" },
   ],
 };
