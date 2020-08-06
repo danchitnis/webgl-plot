@@ -13,6 +13,7 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 - Full control over the color of each line in each frame
 - No dependencies
 - Works on any browser/platform that [supports WebGL](https://caniuse.com/#feat=webgl)
+- Compatible with [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas) and [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) for offloading cpu time from the main thread
 - Ideal for embedded systems with low resources or large datasets
 
 ## Use cases

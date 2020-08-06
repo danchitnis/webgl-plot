@@ -1,13 +1,16 @@
-const canv = document.getElementById("my_canvas");
+const canvas = document.getElementById("my_canvas");
 
 const devicePixelRatio = window.devicePixelRatio || 1;
-const numX = Math.round(canv.clientWidth * devicePixelRatio);
+canvas.width = canvas.clientWidth * devicePixelRatio;
+canvas.height = canvas.clientHeight * devicePixelRatio;
+
+const numX = Math.round(canvas.width);
 
 const color = new WebGLPlotBundle.ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
 
 const line = new WebGLPlotBundle.WebglLine(color, numX);
 
-const wglp = new WebGLPlotBundle.default(canv);
+const wglp = new WebGLPlotBundle.default(canvas);
 
 line.lineSpaceX(-1, 2 / numX);
 wglp.addLine(line);
