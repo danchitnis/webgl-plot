@@ -52,7 +52,7 @@ The standard Line class
 
 *Overrides [WebglBaseLine](webglbaseline.md).[constructor](webglbaseline.md#constructor)*
 
-*Defined in [WbglLine.ts:7](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L7)*
+*Defined in [src/WbglLine.ts:7](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L7)*
 
 Create a new line
 
@@ -80,7 +80,7 @@ Name | Type | Description |
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[color](webglbaseline.md#color)*
 
-*Defined in [WebglBaseLine.ts:24](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L24)*
+*Defined in [src/WebglBaseLine.ts:24](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L24)*
 
 The Color of the line
 
@@ -92,7 +92,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[intensity](webglbaseline.md#intensity)*
 
-*Defined in [WebglBaseLine.ts:7](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L7)*
+*Defined in [src/WebglBaseLine.ts:7](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L7)*
 
 ___
 
@@ -102,7 +102,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[loop](webglbaseline.md#loop)*
 
-*Defined in [WebglBaseLine.ts:54](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L54)*
+*Defined in [src/WebglBaseLine.ts:54](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L54)*
 
 if this is a close loop line or not
 
@@ -116,7 +116,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[numPoints](webglbaseline.md#numpoints)*
 
-*Defined in [WebglBaseLine.ts:13](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L13)*
+*Defined in [src/WebglBaseLine.ts:13](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L13)*
 
 The number of data point pairs in the line
 
@@ -128,7 +128,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetX](webglbaseline.md#offsetx)*
 
-*Defined in [WebglBaseLine.ts:42](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L42)*
+*Defined in [src/WebglBaseLine.ts:42](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L42)*
 
 The horixontal offset of the line
 
@@ -142,7 +142,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetY](webglbaseline.md#offsety)*
 
-*Defined in [WebglBaseLine.ts:48](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L48)*
+*Defined in [src/WebglBaseLine.ts:48](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L48)*
 
 the vertical offset of the line
 
@@ -156,7 +156,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleX](webglbaseline.md#scalex)*
 
-*Defined in [WebglBaseLine.ts:30](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L30)*
+*Defined in [src/WebglBaseLine.ts:30](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L30)*
 
 The horizontal scale of the line
 
@@ -170,7 +170,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleY](webglbaseline.md#scaley)*
 
-*Defined in [WebglBaseLine.ts:36](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L36)*
+*Defined in [src/WebglBaseLine.ts:36](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L36)*
 
 The vertical sclae of the line
 
@@ -184,7 +184,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[visible](webglbaseline.md#visible)*
 
-*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L8)*
+*Defined in [src/WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L8)*
 
 ___
 
@@ -194,7 +194,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[webglNumPoints](webglbaseline.md#webglnumpoints)*
 
-*Defined in [WebglBaseLine.ts:60](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L60)*
+*Defined in [src/WebglBaseLine.ts:60](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L60)*
 
 total webgl number of points
 
@@ -208,7 +208,7 @@ ___
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[xy](webglbaseline.md#xy)*
 
-*Defined in [WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L19)*
+*Defined in [src/WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WebglBaseLine.ts#L19)*
 
 The data ponits for webgl array
 
@@ -220,7 +220,7 @@ The data ponits for webgl array
 
 ▸ **constY**(`c`: number): *void*
 
-*Defined in [WbglLine.ts:85](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L85)*
+*Defined in [src/WbglLine.ts:85](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L85)*
 
 Set a constant value for all Y values in the line
 
@@ -238,7 +238,7 @@ ___
 
 ▸ **getX**(`index`: number): *number*
 
-*Defined in [WbglLine.ts:50](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L50)*
+*Defined in [src/WbglLine.ts:50](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L50)*
 
 Get an X value at a specific index
 
@@ -256,7 +256,7 @@ ___
 
 ▸ **getY**(`index`: number): *number*
 
-*Defined in [WbglLine.ts:58](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L58)*
+*Defined in [src/WbglLine.ts:58](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L58)*
 
 Get an Y value at a specific index
 
@@ -274,7 +274,7 @@ ___
 
 ▸ **lineSpaceX**(`start`: number, `stepSize`: number): *void*
 
-*Defined in [WbglLine.ts:74](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L74)*
+*Defined in [src/WbglLine.ts:74](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L74)*
 
 Make an equally spaced array of X points
 
@@ -300,7 +300,7 @@ ___
 
 ▸ **setX**(`index`: number, `x`: number): *void*
 
-*Defined in [WbglLine.ts:33](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L33)*
+*Defined in [src/WbglLine.ts:33](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L33)*
 
 Set the X value at a specific index
 
@@ -319,7 +319,7 @@ ___
 
 ▸ **setY**(`index`: number, `y`: number): *void*
 
-*Defined in [WbglLine.ts:42](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L42)*
+*Defined in [src/WbglLine.ts:42](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L42)*
 
 Set the Y value at a specific index
 
@@ -338,7 +338,7 @@ ___
 
 ▸ **shiftAdd**(`data`: Float32Array): *void*
 
-*Defined in [WbglLine.ts:102](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WbglLine.ts#L102)*
+*Defined in [src/WbglLine.ts:102](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/WbglLine.ts#L102)*
 
 Add a new Y values to the end of current array and shift it, so that the total number of the pair remains the same
 

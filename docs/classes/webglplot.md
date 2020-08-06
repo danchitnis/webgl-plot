@@ -31,6 +31,7 @@ The main class for the webgl-plot library
 
 * [addLine](webglplot.md#addline)
 * [clear](webglplot.md#clear)
+* [removeLine](webglplot.md#removeline)
 * [update](webglplot.md#update)
 * [viewport](webglplot.md#viewport)
 
@@ -38,23 +39,51 @@ The main class for the webgl-plot library
 
 ###  constructor
 
-\+ **new WebGLPlot**(`canv`: HTMLCanvasElement): *[WebGLPlot](webglplot.md)*
+\+ **new WebGLPlot**(`canvas`: HTMLCanvasElement | OffscreenCanvas): *[WebGLPlot](webglplot.md)*
 
-*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L59)*
+*Defined in [src/webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L59)*
 
 Create a webgl-plot instance
 
 **`example`** 
+
+For HTMLCanvas
 ```typescript
-const canv = dcoument.getEelementbyId("canvas");
-const webglp = new WebGLplot(canv);
+const canvas = dcoument.getEelementbyId("canvas");
+
+const devicePixelRatio = window.devicePixelRatio || 1;
+canvas.width = canvas.clientWidth * devicePixelRatio;
+canvas.height = canvas.clientHeight * devicePixelRatio;
+
+const webglp = new WebGLplot(canvas);
+...
+```
+
+**`example`** 
+
+For OffScreenCanvas
+```typescript
+const offscreen = htmlCanvas.transferControlToOffscreen();
+
+offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
+offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
+
+const worker = new Worker("offScreenCanvas.js", { type: "module" });
+worker.postMessage({ canvas: offscreen }, [offscreen]);
+```
+Then in offScreenCanvas.js
+```typescript
+onmessage = function (evt) {
+const wglp = new WebGLplot(evt.data.canvas);
+...
+}
 ```
 
 **Parameters:**
 
 Name | Type | Description |
 ------ | ------ | ------ |
-`canv` | HTMLCanvasElement | the HTML canvas in which the plot appears  |
+`canvas` | HTMLCanvasElement &#124; OffscreenCanvas | the canvas in which the plot appears  |
 
 **Returns:** *[WebGLPlot](webglplot.md)*
 
@@ -64,7 +93,7 @@ Name | Type | Description |
 
 • **gOffsetX**: *number*
 
-*Defined in [webglplot.ts:48](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L48)*
+*Defined in [src/webglplot.ts:48](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L48)*
 
 Global horizontal offset
 
@@ -76,7 +105,7 @@ ___
 
 • **gOffsetY**: *number*
 
-*Defined in [webglplot.ts:54](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L54)*
+*Defined in [src/webglplot.ts:54](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L54)*
 
 Global vertical offset
 
@@ -88,7 +117,7 @@ ___
 
 • **gScaleX**: *number*
 
-*Defined in [webglplot.ts:30](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L30)*
+*Defined in [src/webglplot.ts:30](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L30)*
 
 Global horizontal scale factor
 
@@ -100,7 +129,7 @@ ___
 
 • **gScaleY**: *number*
 
-*Defined in [webglplot.ts:36](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L36)*
+*Defined in [src/webglplot.ts:36](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L36)*
 
 Global vertical scale factor
 
@@ -112,7 +141,7 @@ ___
 
 • **gXYratio**: *number*
 
-*Defined in [webglplot.ts:42](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L42)*
+*Defined in [src/webglplot.ts:42](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L42)*
 
 Global X/Y scale ratio
 
@@ -124,7 +153,7 @@ ___
 
 • **lines**: *[WebglBaseLine](webglbaseline.md)[]*
 
-*Defined in [webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L59)*
+*Defined in [src/webglplot.ts:59](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L59)*
 
 collection of lines in the plot
 
@@ -134,7 +163,7 @@ collection of lines in the plot
 
 ▸ **addLine**(`line`: [WebglBaseLine](webglbaseline.md)): *void*
 
-*Defined in [webglplot.ts:157](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L157)*
+*Defined in [src/webglplot.ts:181](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L181)*
 
 adds a line to the plot
 
@@ -158,7 +187,23 @@ ___
 
 ▸ **clear**(): *void*
 
-*Defined in [webglplot.ts:141](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L141)*
+*Defined in [src/webglplot.ts:165](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L165)*
+
+**Returns:** *void*
+
+___
+
+###  removeLine
+
+▸ **removeLine**(`index`: number): *void*
+
+*Defined in [src/webglplot.ts:229](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L229)*
+
+**Parameters:**
+
+Name | Type |
+------ | ------ |
+`index` | number |
 
 **Returns:** *void*
 
@@ -168,7 +213,7 @@ ___
 
 ▸ **update**(): *void*
 
-*Defined in [webglplot.ts:106](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L106)*
+*Defined in [src/webglplot.ts:130](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L130)*
 
 updates and redraws the content of the plot
 
@@ -180,7 +225,7 @@ ___
 
 ▸ **viewport**(`a`: number, `b`: number, `c`: number, `d`: number): *void*
 
-*Defined in [webglplot.ts:212](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/webglplot.ts#L212)*
+*Defined in [src/webglplot.ts:240](https://github.com/danchitnis/webgl-plot/blob/d10059b/src/webglplot.ts#L240)*
 
 Change the WbGL viewport
 
