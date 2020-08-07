@@ -6,7 +6,7 @@ sidebar_label: "README"
 
 [webgl-plot](index.md) › [Globals](globals.md)
 
-![Build Action](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg)
+![npm](https://github.com/danchitnis/webgl-plot/workflows/npm/badge.svg) ![yarn](https://github.com/danchitnis/webgl-plot/workflows/yarn/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) ![Build](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg)
 
 ## [Live demo 🚀](https://danchitnis.github.io/webgl-plot-examples/)
 
@@ -16,27 +16,31 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 - Simple and efficient 2D WebGL library
 - Using WebGL native line drawing
-- High update rate which matches the screen refresh rate
+- High update rate which matches the screen's refresh rate
+- Works for both dynamic and static data
 - Full control over the color of each line in each frame
 - No dependencies
 - Works on any browser/platform that [supports WebGL](https://caniuse.com/#feat=webgl)
-- Ideal for embedded systems with low resources
+- Compatible with [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas) and [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) for offloading cpu time from the main thread
+- Ideal for embedded systems with low resources or large datasets
 
 ## Use cases
 
-When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.
+**Dynamic**: When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.
+
+**Static**: Enables rapid pan and zoom capability for inspecting very large datasets. See the [static example](https://danchitnis.github.io/webgl-plot-examples/static.html)
 
 ## Limitations
 
-cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of data vector and take a hit on the performance.
+cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of the data vector and take a hit on the performance. Top performance (refresh rate, memory, etc) is the top priority for this library.
 
 ## Getting started
 
-Create an HTML canvas:
+Create an HTML canvas with an appropriate width or height:
 
 ```html
 <div>
-  <canvas class="canvas" id="my_canvas"></canvas>
+  <canvas style="width: 100%;" id="my_canvas"></canvas>
 </div>
 ```
 
@@ -46,15 +50,22 @@ Import WebGL-Plot library using ES6 modules:
 import WebGLplot, { WebglLine, ColorRGBA } from "webgl-plot";
 ```
 
+Prepare the canvas
+
+```javascript
+const canvas = document.getElementById("my_canvas");
+const devicePixelRatio = window.devicePixelRatio || 1;
+canvas.width = canvas.clientWidth * devicePixelRatio;
+canvas.height = canvas.clientHeight * devicePixelRatio;
+```
+
 Initialization:
 
 ```javascript
-const canv = document.getElementById("my_canvas");
-const devicePixelRatio = window.devicePixelRatio || 1;
-const numX = Math.round(canv.clientWidth * devicePixelRatio);
+const numX = canvas.width;
 const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
-const line = new WebglLine(color, numX);
-const wglp = new WebGLplot(canv);
+const line = new WebglLine(color);
+const wglp = new WebGLplot(canvas, numX);
 ```
 
 Add the line to webgl canvas:
@@ -70,9 +81,9 @@ Configure the requestAnimationFrame call:
 function newFrame() {
   update();
   wglp.update();
-  window.requestAnimationFrame(newFrame);
+  requestAnimationFrame(newFrame);
 }
-window.requestAnimationFrame(newFrame);
+requestAnimationFrame(newFrame);
 ```
 
 Add the update function:
@@ -93,29 +104,50 @@ function update() {
 
 [![Edit WebGLplot](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webglplot-m40u4?fontsize=14&hidenavigation=1&theme=dark)
 
-## React Example
-
-React example is under development...
-
-[![Edit WebGL-Plot React](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webgl-plot-react-8y1qj?fontsize=14&hidenavigation=1&theme=dark)
-
 ## Demos
 
 See examples based on vanilla JS at [webgl-plot-examples](https://github.com/danchitnis/webgl-plot-examples)
 
-See examples based on [React](https://webgl-plot.now.sh/example/)
+See examples based on [React](https://webgl-plot-react.vercel.app/)
 
 See [SPAD Simulation](https://danchitnis.github.io/SPADsim/) which use WebGL-Plot as an oscilloscope display
+
+## React Examples
+
+For a basic React example see here:
+
+[![Edit WebGL-Plot React](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webgl-plot-react-8y1qj?fontsize=14&hidenavigation=1&theme=dark)
+
+React website is under development...
+
+[https://webgl-plot-react.vercel.app/](https://webgl-plot-react.vercel.app/) ⚛
 
 ## JS Bundle
 
 To use WebGL-Plot as a JS pre-bundled package first import the following in your HTML file:
 
 ```HTML
-<script src="https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/webglplot.umd.min.js"></script>
 ```
 
 See examples on how to use this bundle in [Codepen](https://codepen.io/danchitnis/pen/mdJVEYY) and [JSfiddle](https://jsfiddle.net/danchitnis/mfcw73z2/)
+
+For ES6 module and direct browser import use:
+
+```HTML
+<script type="module" src="your-code.js"></script>
+```
+
+and in your-code.js:
+
+```javascript
+import WebGLplot, {
+  WebglLine,
+  ColorRGBA,
+} from "https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/webglplot.esm.min.js";
+```
+
+Thanks to [TimDaub](https://github.com/TimDaub) for testing the ES6 module.
 
 Notice that this method is only recommended for test and small codes.
 
@@ -125,7 +157,7 @@ See [here 📑](https://webgl-plot.now.sh/)
 
 ## How to use with embedded systems applications?
 
-You can use WebUSB, Web Bluetooth, and Serial API. Examples will be provided soon.
+You can use WebUSB, Web Bluetooth, and Serial API. You can use [ComPort](https://github.com/danchitnis/ComPort) for a basic implementation of Serial API
 
 ## Build
 

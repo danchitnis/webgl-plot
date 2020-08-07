@@ -44,7 +44,7 @@ Baseline class
 
 \+ **new WebglBaseLine**(): *[WebglBaseLine](webglbaseline.md)*
 
-*Defined in [WebglBaseLine.ts:78](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L78)*
+*Defined in [src/WebglBaseLine.ts:78](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L78)*
 
 **`internal`** 
 
@@ -56,7 +56,7 @@ Baseline class
 
 • **color**: *[ColorRGBA](colorrgba.md)*
 
-*Defined in [WebglBaseLine.ts:24](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L24)*
+*Defined in [src/WebglBaseLine.ts:24](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L24)*
 
 The Color of the line
 
@@ -66,7 +66,7 @@ ___
 
 • **intensity**: *number*
 
-*Defined in [WebglBaseLine.ts:7](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L7)*
+*Defined in [src/WebglBaseLine.ts:7](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L7)*
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 • **loop**: *boolean*
 
-*Defined in [WebglBaseLine.ts:54](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L54)*
+*Defined in [src/WebglBaseLine.ts:54](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L54)*
 
 if this is a close loop line or not
 
@@ -86,7 +86,7 @@ ___
 
 • **numPoints**: *number*
 
-*Defined in [WebglBaseLine.ts:13](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L13)*
+*Defined in [src/WebglBaseLine.ts:13](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L13)*
 
 The number of data point pairs in the line
 
@@ -96,7 +96,7 @@ ___
 
 • **offsetX**: *number*
 
-*Defined in [WebglBaseLine.ts:42](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L42)*
+*Defined in [src/WebglBaseLine.ts:42](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L42)*
 
 The horixontal offset of the line
 
@@ -108,7 +108,7 @@ ___
 
 • **offsetY**: *number*
 
-*Defined in [WebglBaseLine.ts:48](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L48)*
+*Defined in [src/WebglBaseLine.ts:48](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L48)*
 
 the vertical offset of the line
 
@@ -120,7 +120,7 @@ ___
 
 • **scaleX**: *number*
 
-*Defined in [WebglBaseLine.ts:30](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L30)*
+*Defined in [src/WebglBaseLine.ts:30](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L30)*
 
 The horizontal scale of the line
 
@@ -132,7 +132,7 @@ ___
 
 • **scaleY**: *number*
 
-*Defined in [WebglBaseLine.ts:36](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L36)*
+*Defined in [src/WebglBaseLine.ts:36](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L36)*
 
 The vertical sclae of the line
 
@@ -144,7 +144,7 @@ ___
 
 • **visible**: *boolean*
 
-*Defined in [WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L8)*
+*Defined in [src/WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L8)*
 
 ___
 
@@ -152,7 +152,7 @@ ___
 
 • **webglNumPoints**: *number*
 
-*Defined in [WebglBaseLine.ts:60](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L60)*
+*Defined in [src/WebglBaseLine.ts:60](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L60)*
 
 total webgl number of points
 
@@ -164,7 +164,7 @@ ___
 
 • **xy**: *Float32Array*
 
-*Defined in [WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/88a7835/src/WebglBaseLine.ts#L19)*
+*Defined in [src/WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L19)*
 
 The data ponits for webgl array
 

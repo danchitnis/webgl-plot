@@ -49,16 +49,48 @@ export default class WebGLPlot {
      */
     lines: WebglBaseLine[];
     /**
+     * log debug output
+     */
+    debug: boolean;
+    /**
      * Create a webgl-plot instance
-     * @param canv - the HTML canvas in which the plot appears
+     * @param canvas - the canvas in which the plot appears
+     * @param debug - (Optional) log debug messages to console
      *
      * @example
+     *
+     * For HTMLCanvas
      * ```typescript
-     * const canv = dcoument.getEelementbyId("canvas");
-     * const webglp = new WebGLplot(canv);
+     * const canvas = dcoument.getEelementbyId("canvas");
+     *
+     * const devicePixelRatio = window.devicePixelRatio || 1;
+     * canvas.width = canvas.clientWidth * devicePixelRatio;
+     * canvas.height = canvas.clientHeight * devicePixelRatio;
+     *
+     * const webglp = new WebGLplot(canvas);
+     * ...
+     * ```
+     * @example
+     *
+     * For OffScreenCanvas
+     * ```typescript
+     * const offscreen = htmlCanvas.transferControlToOffscreen();
+     *
+     * offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
+     * offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
+     *
+     * const worker = new Worker("offScreenCanvas.js", { type: "module" });
+     * worker.postMessage({ canvas: offscreen }, [offscreen]);
+     * ```
+     * Then in offScreenCanvas.js
+     * ```typescript
+     * onmessage = function (evt) {
+     * const wglp = new WebGLplot(evt.data.canvas);
+     * ...
+     * }
      * ```
      */
-    constructor(canv: HTMLCanvasElement);
+    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, debug?: boolean);
     /**
      * updates and redraws the content of the plot
      */
@@ -75,7 +107,10 @@ export default class WebGLPlot {
      * ```
      */
     addLine(line: WebglBaseLine): void;
-    removeLine(index: number): void;
+    /**
+     * remove the last line
+     */
+    popLine(): void;
     /**
      * Change the WbGL viewport
      * @param a
@@ -83,6 +118,7 @@ export default class WebGLPlot {
      * @param c
      * @param d
      */
-    viewport(a: number, b: number, c: number, d: number): void;
+    private viewport;
+    private log;
 }
 //# sourceMappingURL=webglplot.d.ts.map

@@ -16,20 +16,51 @@ export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 export default class WebGLPlot {
     /**
      * Create a webgl-plot instance
-     * @param canv - the HTML canvas in which the plot appears
+     * @param canvas - the canvas in which the plot appears
+     * @param debug - (Optional) log debug messages to console
      *
      * @example
+     *
+     * For HTMLCanvas
      * ```typescript
-     * const canv = dcoument.getEelementbyId("canvas");
-     * const webglp = new WebGLplot(canv);
+     * const canvas = dcoument.getEelementbyId("canvas");
+     *
+     * const devicePixelRatio = window.devicePixelRatio || 1;
+     * canvas.width = canvas.clientWidth * devicePixelRatio;
+     * canvas.height = canvas.clientHeight * devicePixelRatio;
+     *
+     * const webglp = new WebGLplot(canvas);
+     * ...
+     * ```
+     * @example
+     *
+     * For OffScreenCanvas
+     * ```typescript
+     * const offscreen = htmlCanvas.transferControlToOffscreen();
+     *
+     * offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
+     * offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
+     *
+     * const worker = new Worker("offScreenCanvas.js", { type: "module" });
+     * worker.postMessage({ canvas: offscreen }, [offscreen]);
+     * ```
+     * Then in offScreenCanvas.js
+     * ```typescript
+     * onmessage = function (evt) {
+     * const wglp = new WebGLplot(evt.data.canvas);
+     * ...
+     * }
      * ```
      */
-    constructor(canv) {
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        // set the size of the drawingBuffer based on the size it's displayed.
-        canv.width = canv.clientWidth * devicePixelRatio;
-        canv.height = canv.clientHeight * devicePixelRatio;
-        const webgl = canv.getContext("webgl", {
+    constructor(canvas, debug) {
+        /**
+         * log debug output
+         */
+        this.debug = false;
+        this.debug = debug == undefined ? false : debug;
+        this.log("canvas type is: " + canvas.constructor.name);
+        this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
+        const webgl = canvas.getContext("webgl", {
             antialias: true,
             transparent: false,
         });
@@ -45,7 +76,7 @@ export default class WebGLPlot {
         // Clear the color and depth buffer
         webgl.clear(webgl.COLOR_BUFFER_BIT || webgl.DEPTH_BUFFER_BIT);
         // Set the view port
-        webgl.viewport(0, 0, canv.width, canv.height);
+        webgl.viewport(0, 0, canvas.width, canvas.height);
     }
     /**
      * updates and redraws the content of the plot
@@ -124,8 +155,11 @@ export default class WebGLPlot {
         this.webgl.enableVertexAttribArray(line._coord);
         this.lines.push(line);
     }
-    removeLine(index) {
-        //to be implemented
+    /**
+     * remove the last line
+     */
+    popLine() {
+        this.lines.pop();
     }
     /**
      * Change the WbGL viewport
@@ -136,6 +170,11 @@ export default class WebGLPlot {
      */
     viewport(a, b, c, d) {
         this.webgl.viewport(a, b, c, d);
+    }
+    log(str) {
+        if (this.debug) {
+            console.log("[webgl-plot]:" + str);
+        }
     }
 }
 //# sourceMappingURL=webglplot.js.map
