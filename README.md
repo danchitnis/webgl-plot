@@ -56,8 +56,8 @@ Initialization:
 ```javascript
 const numX = canvas.width;
 const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
-const line = new WebglLine(color);
-const wglp = new WebGLplot(canvas, numX);
+const line = new WebglLine(color, numX);
+const wglp = new WebGLplot(canvas);
 ```
 
 Add the line to webgl canvas:
