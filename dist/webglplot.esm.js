@@ -284,6 +284,7 @@ class WebGLPlot {
     /**
      * Create a webgl-plot instance
      * @param canvas - the canvas in which the plot appears
+     * @param debug - (Optional) log debug messages to console
      *
      * @example
      *
@@ -318,9 +319,14 @@ class WebGLPlot {
      * }
      * ```
      */
-    constructor(canvas) {
-        console.log("[webgl-plot]:canvas type is:", canvas.constructor.name);
-        console.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
+    constructor(canvas, debug) {
+        /**
+         * log debug output
+         */
+        this.debug = false;
+        this.debug = debug == undefined ? false : debug;
+        this.log("canvas type is: " + canvas.constructor.name);
+        this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
         const webgl = canvas.getContext("webgl", {
             antialias: true,
             transparent: false,
@@ -431,6 +437,11 @@ class WebGLPlot {
      */
     viewport(a, b, c, d) {
         this.webgl.viewport(a, b, c, d);
+    }
+    log(str) {
+        if (this.debug) {
+            console.log("[webgl-plot]:" + str);
+        }
     }
 }
 

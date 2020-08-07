@@ -59,8 +59,14 @@ export default class WebGLPlot {
   public lines: WebglBaseLine[];
 
   /**
+   * log debug output
+   */
+  public debug = false;
+
+  /**
    * Create a webgl-plot instance
    * @param canvas - the canvas in which the plot appears
+   * @param debug - (Optional) log debug messages to console
    *
    * @example
    *
@@ -95,9 +101,11 @@ export default class WebGLPlot {
    * }
    * ```
    */
-  constructor(canvas: HTMLCanvasElement | OffscreenCanvas) {
-    console.log("[webgl-plot]:canvas type is:", canvas.constructor.name);
-    console.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
+  constructor(canvas: HTMLCanvasElement | OffscreenCanvas, debug?: boolean) {
+    this.debug = debug == undefined ? false : debug;
+
+    this.log("canvas type is: " + canvas.constructor.name);
+    this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
 
     const webgl = canvas.getContext("webgl", {
       antialias: true,
@@ -229,7 +237,7 @@ export default class WebGLPlot {
   /**
    * remove the last line
    */
-  public popLine() {
+  public popLine(): void {
     this.lines.pop();
   }
 
@@ -242,5 +250,11 @@ export default class WebGLPlot {
    */
   private viewport(a: number, b: number, c: number, d: number): void {
     this.webgl.viewport(a, b, c, d);
+  }
+
+  private log(str: string): void {
+    if (this.debug) {
+      console.log("[webgl-plot]:" + str);
+    }
   }
 }

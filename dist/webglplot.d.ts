@@ -49,8 +49,13 @@ export default class WebGLPlot {
      */
     lines: WebglBaseLine[];
     /**
+     * log debug output
+     */
+    debug: boolean;
+    /**
      * Create a webgl-plot instance
      * @param canvas - the canvas in which the plot appears
+     * @param debug - (Optional) log debug messages to console
      *
      * @example
      *
@@ -85,7 +90,7 @@ export default class WebGLPlot {
      * }
      * ```
      */
-    constructor(canvas: HTMLCanvasElement | OffscreenCanvas);
+    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, debug?: boolean);
     /**
      * updates and redraws the content of the plot
      */
@@ -114,5 +119,6 @@ export default class WebGLPlot {
      * @param d
      */
     private viewport;
+    private log;
 }
 //# sourceMappingURL=webglplot.d.ts.map
