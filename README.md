@@ -1,4 +1,4 @@
-![Build Action](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg)
+![Build Action](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg) ![Code Scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning%20-%20action/badge.svg)
 
 ## [Live demo 🚀](https://danchitnis.github.io/webgl-plot-examples/)
 
