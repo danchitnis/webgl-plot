@@ -1,4 +1,4 @@
-![Build Action](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg) ![Code Scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning%20-%20action/badge.svg)
+![npm](https://github.com/danchitnis/webgl-plot/workflows/npm/badge.svg) ![yarn](https://github.com/danchitnis/webgl-plot/workflows/yarn/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) ![Build](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg)
 
 ## [Live demo 🚀](https://danchitnis.github.io/webgl-plot-examples/)
 
