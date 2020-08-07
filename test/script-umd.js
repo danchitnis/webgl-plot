@@ -4,7 +4,7 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 canvas.width = canvas.clientWidth * devicePixelRatio;
 canvas.height = canvas.clientHeight * devicePixelRatio;
 
-const numX = Math.round(canvas.width);
+const numX = canvas.width;
 
 const color = new WebGLPlotBundle.ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
 
@@ -18,9 +18,9 @@ wglp.addLine(line);
 function newFrame() {
   update();
   wglp.update();
-  window.requestAnimationFrame(newFrame);
+  requestAnimationFrame(newFrame);
 }
-window.requestAnimationFrame(newFrame);
+requestAnimationFrame(newFrame);
 
 function update() {
   const freq = 0.001;

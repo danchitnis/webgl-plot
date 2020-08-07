@@ -102,7 +102,10 @@ export default class WebGLPlot {
      * ```
      */
     addLine(line: WebglBaseLine): void;
-    removeLine(index: number): void;
+    /**
+     * remove the last line
+     */
+    popLine(): void;
     /**
      * Change the WbGL viewport
      * @param a
@@ -110,6 +113,6 @@ export default class WebGLPlot {
      * @param c
      * @param d
      */
-    viewport(a: number, b: number, c: number, d: number): void;
+    private viewport;
 }
 //# sourceMappingURL=webglplot.d.ts.map

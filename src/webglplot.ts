@@ -226,8 +226,11 @@ export default class WebGLPlot {
     this.lines.push(line);
   }
 
-  public removeLine(index: number) {
-    //to be implemented
+  /**
+   * remove the last line
+   */
+  public popLine() {
+    this.lines.pop();
   }
 
   /**
@@ -237,7 +240,7 @@ export default class WebGLPlot {
    * @param c
    * @param d
    */
-  public viewport(a: number, b: number, c: number, d: number): void {
+  private viewport(a: number, b: number, c: number, d: number): void {
     this.webgl.viewport(a, b, c, d);
   }
 }

@@ -416,8 +416,11 @@ class WebGLPlot {
         this.webgl.enableVertexAttribArray(line._coord);
         this.lines.push(line);
     }
-    removeLine(index) {
-        //to be implemented
+    /**
+     * remove the last line
+     */
+    popLine() {
+        this.lines.pop();
     }
     /**
      * Change the WbGL viewport

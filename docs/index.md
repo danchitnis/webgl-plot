@@ -21,6 +21,7 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 - Full control over the color of each line in each frame
 - No dependencies
 - Works on any browser/platform that [supports WebGL](https://caniuse.com/#feat=webgl)
+- Compatible with [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas) and [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) for offloading cpu time from the main thread
 - Ideal for embedded systems with low resources or large datasets
 
 ## Use cases
@@ -35,11 +36,11 @@ cannot change the line width due to the OpenGL implementation of a line. The Ope
 
 ## Getting started
 
-Create an HTML canvas:
+Create an HTML canvas with an appropriate width or height:
 
 ```html
 <div>
-  <canvas class="canvas" id="my_canvas"></canvas>
+  <canvas style="width: 100%;" id="my_canvas"></canvas>
 </div>
 ```
 
@@ -49,15 +50,22 @@ Import WebGL-Plot library using ES6 modules:
 import WebGLplot, { WebglLine, ColorRGBA } from "webgl-plot";
 ```
 
+Prepare the canvas
+
+```javascript
+const canvas = document.getElementById("my_canvas");
+const devicePixelRatio = window.devicePixelRatio || 1;
+canvas.width = canvas.clientWidth * devicePixelRatio;
+canvas.height = canvas.clientHeight * devicePixelRatio;
+```
+
 Initialization:
 
 ```javascript
-const canv = document.getElementById("my_canvas");
-const devicePixelRatio = window.devicePixelRatio || 1;
-const numX = Math.round(canv.clientWidth * devicePixelRatio);
+const numX = canvas.width;
 const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
-const line = new WebglLine(color, numX);
-const wglp = new WebGLplot(canv);
+const line = new WebglLine(color);
+const wglp = new WebGLplot(canvas, numX);
 ```
 
 Add the line to webgl canvas:
@@ -73,9 +81,9 @@ Configure the requestAnimationFrame call:
 function newFrame() {
   update();
   wglp.update();
-  window.requestAnimationFrame(newFrame);
+  requestAnimationFrame(newFrame);
 }
-window.requestAnimationFrame(newFrame);
+requestAnimationFrame(newFrame);
 ```
 
 Add the update function:

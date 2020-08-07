@@ -1,15 +1,15 @@
 import WebGLplot, { WebglLine, ColorRGBA } from "../dist/webglplot.esm.js";
 
 onmessage = function (evt) {
-  const canv = evt.data.canvas;
+  const canvas = evt.data.canvas;
 
-  const numX = Math.round(canv.width * 1);
+  const numX = canvas.width;
 
   const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
 
   const line = new WebglLine(color, numX);
 
-  const wglp = new WebGLplot(canv);
+  const wglp = new WebGLplot(canvas);
 
   line.lineSpaceX(-1, 2 / numX);
   wglp.addLine(line);
