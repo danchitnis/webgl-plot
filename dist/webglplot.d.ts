@@ -118,7 +118,7 @@ export default class WebGLPlot {
      * @param c
      * @param d
      */
-    private viewport;
+    viewport(a: number, b: number, c: number, d: number): void;
     private log;
 }
 //# sourceMappingURL=webglplot.d.ts.map

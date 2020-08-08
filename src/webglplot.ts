@@ -248,7 +248,7 @@ export default class WebGLPlot {
    * @param c
    * @param d
    */
-  private viewport(a: number, b: number, c: number, d: number): void {
+  public viewport(a: number, b: number, c: number, d: number): void {
     this.webgl.viewport(a, b, c, d);
   }
 
