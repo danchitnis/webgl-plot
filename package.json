@@ -11,7 +11,7 @@
     "@typescript-eslint/parser": "^3.8.0",
     "eslint": "^7.6.0",
     "rollup": "^2.23.1",
-    "typedoc": "^0.17.8",
+    "typedoc": "^0.18.0",
     "typedoc-plugin-markdown": "^2.4.0",
     "typescript": "^3.9.7"
   },
