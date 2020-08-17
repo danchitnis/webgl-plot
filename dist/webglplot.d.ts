@@ -20,6 +20,10 @@ export default class WebGLPlot {
      */
     private webgl;
     /**
+     * @private
+     */
+    private lineProg;
+    /**
      * Global horizontal scale factor
      * @default = 1.0
      */

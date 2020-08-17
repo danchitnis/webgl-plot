@@ -24,6 +24,11 @@ export default class WebGLPlot {
   private webgl: WebGLRenderingContext;
 
   /**
+   * @private
+   */
+  private lineProg: WebGLProgram;
+
+  /**
    * Global horizontal scale factor
    * @default = 1.0
    */
@@ -130,6 +135,39 @@ export default class WebGLPlot {
 
     // Set the view port
     webgl.viewport(0, 0, canvas.width, canvas.height);
+
+    const vertCode = `
+      attribute vec2 coordinates;
+      uniform mat2 uscale;
+      uniform vec2 uoffset;
+
+      void main(void) {
+        gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
+      }`;
+
+    const fragCode = `
+      precision mediump float;
+      uniform highp vec4 uColor;
+      void main(void) {
+        gl_FragColor =  uColor;
+      }`;
+
+    // Create a vertex shader object
+    const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
+    // Attach vertex shader source code
+    webgl.shaderSource(vertShader as WebGLShader, vertCode);
+    // Compile the vertex shader
+    webgl.compileShader(vertShader as WebGLShader);
+
+    // Fragment shader source code
+    const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
+    webgl.shaderSource(fragShader as WebGLShader, fragCode);
+    webgl.compileShader(fragShader as WebGLShader);
+
+    this.lineProg = this.webgl.createProgram() as WebGLProgram;
+    webgl.attachShader(this.lineProg, vertShader as WebGLShader);
+    webgl.attachShader(this.lineProg, fragShader as WebGLShader);
+    webgl.linkProgram(this.lineProg);
   }
 
   /**
@@ -191,42 +229,7 @@ export default class WebGLPlot {
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
     this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, this.webgl.STREAM_DRAW);
 
-    const vertCode = `
-      attribute vec2 coordinates;
-      uniform mat2 uscale;
-      uniform vec2 uoffset;
-
-      void main(void) {
-         gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
-      }`;
-
-    // Create a vertex shader object
-    const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
-
-    // Attach vertex shader source code
-    this.webgl.shaderSource(vertShader as WebGLShader, vertCode);
-
-    // Compile the vertex shader
-    this.webgl.compileShader(vertShader as WebGLShader);
-
-    // Fragment shader source code
-    const fragCode = `
-         precision mediump float;
-         uniform highp vec4 uColor;
-         void main(void) {
-            gl_FragColor =  uColor;
-         }`;
-
-    const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
-    this.webgl.shaderSource(fragShader as WebGLShader, fragCode);
-    this.webgl.compileShader(fragShader as WebGLShader);
-    line._prog = this.webgl.createProgram() as WebGLProgram;
-    this.webgl.attachShader(line._prog, vertShader as WebGLShader);
-    this.webgl.attachShader(line._prog, fragShader as WebGLShader);
-    this.webgl.linkProgram(line._prog);
-
-    this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
-
+    line._prog = this.lineProg;
     line._coord = this.webgl.getAttribLocation(line._prog, "coordinates");
     this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
     this.webgl.enableVertexAttribArray(line._coord);
