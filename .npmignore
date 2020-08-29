@@ -1,6 +1,7 @@
 node_modules
 temp
 test
+benchmark
 docs
 .github
 .vscode
