@@ -118,37 +118,10 @@ export default class WebGLPlot {
      * ```
      */
     addLine(line) {
+        line.initProgram(this.webgl);
         line._vbuffer = this.webgl.createBuffer();
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
         this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy, this.webgl.STREAM_DRAW);
-        const vertCode = `
-      attribute vec2 coordinates;
-      uniform mat2 uscale;
-      uniform vec2 uoffset;
-
-      void main(void) {
-         gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
-      }`;
-        // Create a vertex shader object
-        const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
-        // Attach vertex shader source code
-        this.webgl.shaderSource(vertShader, vertCode);
-        // Compile the vertex shader
-        this.webgl.compileShader(vertShader);
-        // Fragment shader source code
-        const fragCode = `
-         precision mediump float;
-         uniform highp vec4 uColor;
-         void main(void) {
-            gl_FragColor =  uColor;
-         }`;
-        const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
-        this.webgl.shaderSource(fragShader, fragCode);
-        this.webgl.compileShader(fragShader);
-        line._prog = this.webgl.createProgram();
-        this.webgl.attachShader(line._prog, vertShader);
-        this.webgl.attachShader(line._prog, fragShader);
-        this.webgl.linkProgram(line._prog);
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
         line._coord = this.webgl.getAttribLocation(line._prog, "coordinates");
         this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);

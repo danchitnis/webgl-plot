@@ -3,6 +3,9 @@ import { ColorRGBA } from "./ColorRGBA";
  * Baseline class
  */
 export declare class WebglBaseLine {
+    private static readonly vertCode;
+    private static readonly fragCode;
+    private static program;
     intensity: number;
     visible: boolean;
     /**
@@ -63,6 +66,8 @@ export declare class WebglBaseLine {
      * @internal
      */
     _coord: number;
+    initProgram(webgl: WebGLRenderingContext): void;
+    private createProgram;
     /**
      * @internal
      */
