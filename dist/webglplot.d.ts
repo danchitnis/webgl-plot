@@ -1,5 +1,5 @@
 /**
- * Author Danial Chitnis 2019
+ * Author Danial Chitnis 2019-20
  *
  * inspired by:
  * https://codepen.io/AzazelN28
@@ -11,6 +11,14 @@ import { WebglStep } from "./WbglStep";
 import { WebglPolar } from "./WbglPolar";
 import { WebglBaseLine } from "./WebglBaseLine";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
+declare type WebGLPlotConfig = {
+    antialias?: boolean;
+    transparent?: boolean;
+    powerPerformance?: "default" | "high-performance" | "low-power";
+    deSync?: boolean;
+    preserveDrawing?: boolean;
+    debug?: boolean;
+};
 /**
  * The main class for the webgl-plot library
  */
@@ -18,7 +26,7 @@ export default class WebGLPlot {
     /**
      * @private
      */
-    private webgl;
+    private readonly webgl;
     /**
      * Global horizontal scale factor
      * @default = 1.0
@@ -47,7 +55,8 @@ export default class WebGLPlot {
     /**
      * collection of lines in the plot
      */
-    lines: WebglBaseLine[];
+    private _lines;
+    private progThinLine;
     /**
      * log debug output
      */
@@ -90,7 +99,8 @@ export default class WebGLPlot {
      * }
      * ```
      */
-    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, debug?: boolean);
+    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebGLPlotConfig);
+    get lines(): WebglBaseLine[];
     /**
      * updates and redraws the content of the plot
      */
@@ -106,11 +116,16 @@ export default class WebGLPlot {
      * wglp.addLine(line);
      * ```
      */
-    addLine(line: WebglBaseLine): void;
+    addLine(line: WebglLine | WebglStep | WebglPolar): void;
+    private initThinLineProgram;
     /**
      * remove the last line
      */
     popLine(): void;
+    /**
+     * remove all the lines
+     */
+    removeAllLines(): void;
     /**
      * Change the WbGL viewport
      * @param a

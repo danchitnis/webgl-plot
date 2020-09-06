@@ -18,7 +18,6 @@ export class WebglPolar extends WebglBaseLine {
     this.intenisty = 1;
     this.xy = new Float32Array(2 * this.webglNumPoints);
     this._vbuffer = 0;
-    this._prog = 0;
     this._coord = 0;
     this.visible = true;
 

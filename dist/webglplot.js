@@ -1,5 +1,5 @@
 /**
- * Author Danial Chitnis 2019
+ * Author Danial Chitnis 2019-20
  *
  * inspired by:
  * https://codepen.io/AzazelN28
@@ -52,31 +52,47 @@ export default class WebGLPlot {
      * }
      * ```
      */
-    constructor(canvas, debug) {
+    constructor(canvas, options) {
         /**
          * log debug output
          */
         this.debug = false;
-        this.debug = debug == undefined ? false : debug;
+        if (options == undefined) {
+            this.webgl = canvas.getContext("webgl", {
+                antialias: true,
+                transparent: false,
+            });
+        }
+        else {
+            this.webgl = canvas.getContext("webgl", {
+                antialias: options.antialias,
+                transparent: options.transparent,
+                desynchronized: options.deSync,
+                powerPerformance: options.powerPerformance,
+                preserveDrawing: options.preserveDrawing,
+            });
+            this.debug = options.debug == undefined ? false : options.debug;
+        }
         this.log("canvas type is: " + canvas.constructor.name);
         this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
-        const webgl = canvas.getContext("webgl", {
-            antialias: true,
-            transparent: false,
-        });
-        this.lines = [];
-        this.webgl = webgl;
+        this._lines = [];
+        //this.webgl = webgl;
         this.gScaleX = 1;
         this.gScaleY = 1;
         this.gXYratio = 1;
         this.gOffsetX = 0;
         this.gOffsetY = 0;
         // Enable the depth test
-        webgl.enable(webgl.DEPTH_TEST);
+        this.webgl.enable(this.webgl.DEPTH_TEST);
         // Clear the color and depth buffer
-        webgl.clear(webgl.COLOR_BUFFER_BIT || webgl.DEPTH_BUFFER_BIT);
+        this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
         // Set the view port
-        webgl.viewport(0, 0, canvas.width, canvas.height);
+        this.webgl.viewport(0, 0, canvas.width, canvas.height);
+        this.progThinLine = this.webgl.createProgram();
+        this.initThinLineProgram();
+    }
+    get lines() {
+        return this._lines;
     }
     /**
      * updates and redraws the content of the plot
@@ -85,17 +101,17 @@ export default class WebGLPlot {
         const webgl = this.webgl;
         this.lines.forEach((line) => {
             if (line.visible) {
-                webgl.useProgram(line._prog);
-                const uscale = webgl.getUniformLocation(line._prog, "uscale");
+                webgl.useProgram(this.progThinLine);
+                const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
                 webgl.uniformMatrix2fv(uscale, false, new Float32Array([
                     line.scaleX * this.gScaleX,
                     0,
                     0,
                     line.scaleY * this.gScaleY * this.gXYratio,
                 ]));
-                const uoffset = webgl.getUniformLocation(line._prog, "uoffset");
+                const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
                 webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
-                const uColor = webgl.getUniformLocation(line._prog, "uColor");
+                const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
                 webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
                 webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
                 webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
@@ -118,21 +134,56 @@ export default class WebGLPlot {
      * ```
      */
     addLine(line) {
-        line.initProgram(this.webgl);
+        //line.initProgram(this.webgl);
         line._vbuffer = this.webgl.createBuffer();
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
         this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy, this.webgl.STREAM_DRAW);
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
-        line._coord = this.webgl.getAttribLocation(line._prog, "coordinates");
+        line._coord = this.webgl.getAttribLocation(this.progThinLine, "coordinates");
         this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
         this.webgl.enableVertexAttribArray(line._coord);
         this.lines.push(line);
+    }
+    initThinLineProgram() {
+        const vertCode = `
+      attribute vec2 coordinates;
+      uniform mat2 uscale;
+      uniform vec2 uoffset;
+      void main(void) {
+         gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
+      }`;
+        // Create a vertex shader object
+        const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
+        // Attach vertex shader source code
+        this.webgl.shaderSource(vertShader, vertCode);
+        // Compile the vertex shader
+        this.webgl.compileShader(vertShader);
+        // Fragment shader source code
+        const fragCode = `
+         precision mediump float;
+         uniform highp vec4 uColor;
+         void main(void) {
+            gl_FragColor =  uColor;
+         }`;
+        const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
+        this.webgl.shaderSource(fragShader, fragCode);
+        this.webgl.compileShader(fragShader);
+        this.progThinLine = this.webgl.createProgram();
+        this.webgl.attachShader(this.progThinLine, vertShader);
+        this.webgl.attachShader(this.progThinLine, fragShader);
+        this.webgl.linkProgram(this.progThinLine);
     }
     /**
      * remove the last line
      */
     popLine() {
         this.lines.pop();
+    }
+    /**
+     * remove all the lines
+     */
+    removeAllLines() {
+        this._lines = [];
     }
     /**
      * Change the WbGL viewport

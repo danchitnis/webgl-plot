@@ -1,5 +1,5 @@
 /**
- * Author Danial Chitnis 2019
+ * Author Danial Chitnis 2019-20
  *
  * inspired by:
  * https://codepen.io/AzazelN28
@@ -14,6 +14,15 @@ import { WebglBaseLine } from "./WebglBaseLine";
 
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 
+type WebGLPlotConfig = {
+  antialias?: boolean;
+  transparent?: boolean;
+  powerPerformance?: "default" | "high-performance" | "low-power";
+  deSync?: boolean;
+  preserveDrawing?: boolean;
+  debug?: boolean;
+};
+
 /**
  * The main class for the webgl-plot library
  */
@@ -21,7 +30,7 @@ export default class WebGLPlot {
   /**
    * @private
    */
-  private webgl: WebGLRenderingContext;
+  private readonly webgl: WebGLRenderingContext;
 
   /**
    * Global horizontal scale factor
@@ -56,7 +65,9 @@ export default class WebGLPlot {
   /**
    * collection of lines in the plot
    */
-  public lines: WebglBaseLine[];
+  private _lines: WebglBaseLine[];
+
+  private progThinLine: WebGLProgram;
 
   /**
    * log debug output
@@ -101,20 +112,29 @@ export default class WebGLPlot {
    * }
    * ```
    */
-  constructor(canvas: HTMLCanvasElement | OffscreenCanvas, debug?: boolean) {
-    this.debug = debug == undefined ? false : debug;
+  constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebGLPlotConfig) {
+    if (options == undefined) {
+      this.webgl = canvas.getContext("webgl", {
+        antialias: true,
+        transparent: false,
+      }) as WebGLRenderingContext;
+    } else {
+      this.webgl = canvas.getContext("webgl", {
+        antialias: options.antialias,
+        transparent: options.transparent,
+        desynchronized: options.deSync,
+        powerPerformance: options.powerPerformance,
+        preserveDrawing: options.preserveDrawing,
+      }) as WebGLRenderingContext;
+      this.debug = options.debug == undefined ? false : options.debug;
+    }
 
     this.log("canvas type is: " + canvas.constructor.name);
     this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
 
-    const webgl = canvas.getContext("webgl", {
-      antialias: true,
-      transparent: false,
-    }) as WebGLRenderingContext;
+    this._lines = [];
 
-    this.lines = [];
-
-    this.webgl = webgl;
+    //this.webgl = webgl;
 
     this.gScaleX = 1;
     this.gScaleY = 1;
@@ -123,13 +143,21 @@ export default class WebGLPlot {
     this.gOffsetY = 0;
 
     // Enable the depth test
-    webgl.enable(webgl.DEPTH_TEST);
+    this.webgl.enable(this.webgl.DEPTH_TEST);
 
     // Clear the color and depth buffer
-    webgl.clear(webgl.COLOR_BUFFER_BIT || webgl.DEPTH_BUFFER_BIT);
+    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
 
     // Set the view port
-    webgl.viewport(0, 0, canvas.width, canvas.height);
+    this.webgl.viewport(0, 0, canvas.width, canvas.height);
+
+    this.progThinLine = this.webgl.createProgram() as WebGLProgram;
+
+    this.initThinLineProgram();
+  }
+
+  get lines(): WebglBaseLine[] {
+    return this._lines;
   }
 
   /**
@@ -140,9 +168,9 @@ export default class WebGLPlot {
 
     this.lines.forEach((line) => {
       if (line.visible) {
-        webgl.useProgram(line._prog);
+        webgl.useProgram(this.progThinLine);
 
-        const uscale = webgl.getUniformLocation(line._prog, "uscale");
+        const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
         webgl.uniformMatrix2fv(
           uscale,
           false,
@@ -154,13 +182,13 @@ export default class WebGLPlot {
           ])
         );
 
-        const uoffset = webgl.getUniformLocation(line._prog, "uoffset");
+        const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
         webgl.uniform2fv(
           uoffset,
           new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY])
         );
 
-        const uColor = webgl.getUniformLocation(line._prog, "uColor");
+        const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
         webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
 
         webgl.bufferData(webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, webgl.STREAM_DRAW);
@@ -186,19 +214,54 @@ export default class WebGLPlot {
    * wglp.addLine(line);
    * ```
    */
-  public addLine(line: WebglBaseLine): void {
-    line.initProgram(this.webgl);
+  public addLine(line: WebglLine | WebglStep | WebglPolar): void {
+    //line.initProgram(this.webgl);
     line._vbuffer = this.webgl.createBuffer() as WebGLBuffer;
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
     this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, this.webgl.STREAM_DRAW);
 
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
 
-    line._coord = this.webgl.getAttribLocation(line._prog, "coordinates");
+    line._coord = this.webgl.getAttribLocation(this.progThinLine, "coordinates");
     this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
     this.webgl.enableVertexAttribArray(line._coord);
 
     this.lines.push(line);
+  }
+
+  private initThinLineProgram() {
+    const vertCode = `
+      attribute vec2 coordinates;
+      uniform mat2 uscale;
+      uniform vec2 uoffset;
+      void main(void) {
+         gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
+      }`;
+
+    // Create a vertex shader object
+    const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
+
+    // Attach vertex shader source code
+    this.webgl.shaderSource(vertShader as WebGLShader, vertCode);
+
+    // Compile the vertex shader
+    this.webgl.compileShader(vertShader as WebGLShader);
+
+    // Fragment shader source code
+    const fragCode = `
+         precision mediump float;
+         uniform highp vec4 uColor;
+         void main(void) {
+            gl_FragColor =  uColor;
+         }`;
+
+    const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
+    this.webgl.shaderSource(fragShader as WebGLShader, fragCode);
+    this.webgl.compileShader(fragShader as WebGLShader);
+    this.progThinLine = this.webgl.createProgram() as WebGLProgram;
+    this.webgl.attachShader(this.progThinLine, vertShader as WebGLShader);
+    this.webgl.attachShader(this.progThinLine, fragShader as WebGLShader);
+    this.webgl.linkProgram(this.progThinLine);
   }
 
   /**
@@ -206,6 +269,13 @@ export default class WebGLPlot {
    */
   public popLine(): void {
     this.lines.pop();
+  }
+
+  /**
+   * remove all the lines
+   */
+  public removeAllLines(): void {
+    this._lines = [];
   }
 
   /**

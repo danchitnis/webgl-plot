@@ -8,10 +8,10 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 const numX = canvas.width;
 
-const wglp = new WebGLplot(canvas);
+const wglp = new WebGLplot(canvas, { powerPerformance: "high-performance" });
 
 const createLines = (num) => {
-  wglp.lines = [];
+  wglp.removeAllLines();
   for (let i = 0; i < num; i++) {
     const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
     const line = new WebglLine(color, numX);

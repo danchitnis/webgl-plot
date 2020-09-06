@@ -4,24 +4,7 @@ import { ColorRGBA } from "./ColorRGBA";
  * Baseline class
  */
 export class WebglBaseLine {
-  private static readonly vertCode = `
-      attribute vec2 coordinates;
-      uniform mat2 uscale;
-      uniform vec2 uoffset;
-
-      void main(void) {
-          gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
-      }`;
-
-  private static readonly fragCode = `
-      precision mediump float;
-      uniform highp vec4 uColor;
-
-      void main(void) {
-         gl_FragColor =  uColor;
-      }`;
-
-  private static program: WebGLProgram;
+  //private static program: WebGLProgram;
 
   public intensity: number;
   public visible: boolean;
@@ -88,35 +71,13 @@ export class WebglBaseLine {
    * @private
    * @internal
    */
-  public _prog: WebGLProgram;
+  //public _prog: WebGLProgram;
 
   /**
    * @private
    * @internal
    */
   public _coord: number;
-
-  public initProgram(webgl: WebGLRenderingContext) {
-    if(!WebglBaseLine.program) {
-      this.createProgram(webgl);
-    }
-    this._prog = WebglBaseLine.program;
-  }
-
-  private createProgram(webgl: WebGLRenderingContext) {
-    const vertShader = webgl.createShader(webgl.VERTEX_SHADER);
-    webgl.shaderSource(vertShader as WebGLShader, WebglBaseLine.vertCode);
-    webgl.compileShader(vertShader as WebGLShader);
-
-    const fragShader = webgl.createShader(webgl.FRAGMENT_SHADER);
-    webgl.shaderSource(fragShader as WebGLShader, WebglBaseLine.fragCode);
-    webgl.compileShader(fragShader as WebGLShader);
-
-    WebglBaseLine.program = webgl.createProgram() as WebGLProgram;
-    webgl.attachShader(WebglBaseLine.program, vertShader as WebGLShader);
-    webgl.attachShader(WebglBaseLine.program, fragShader as WebGLShader);
-    webgl.linkProgram(WebglBaseLine.program);
-  }
 
   /**
    * @internal
@@ -130,7 +91,6 @@ export class WebglBaseLine {
     this.loop = false;
 
     this._vbuffer = 0;
-    this._prog = 0;
     this._coord = 0;
     this.visible = true;
     this.intensity = 1;
