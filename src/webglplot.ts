@@ -67,6 +67,10 @@ export default class WebGLPlot {
    */
   private _lines: WebglBaseLine[];
 
+  get lines(): WebglBaseLine[] {
+    return this._lines;
+  }
+
   private progThinLine: WebGLProgram;
 
   /**
@@ -83,7 +87,7 @@ export default class WebGLPlot {
    *
    * For HTMLCanvas
    * ```typescript
-   * const canvas = dcoument.getEelementbyId("canvas");
+   * const canvas = document.getElementbyId("canvas");
    *
    * const devicePixelRatio = window.devicePixelRatio || 1;
    * canvas.width = canvas.clientWidth * devicePixelRatio;
@@ -154,10 +158,6 @@ export default class WebGLPlot {
     this.progThinLine = this.webgl.createProgram() as WebGLProgram;
 
     this.initThinLineProgram();
-  }
-
-  get lines(): WebglBaseLine[] {
-    return this._lines;
   }
 
   /**

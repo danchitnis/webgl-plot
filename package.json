@@ -7,13 +7,13 @@
   "typings": "./dist/webglplot.d.ts",
   "types": "./dist/webglplot.d.ts",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.0.1",
-    "@typescript-eslint/parser": "^4.0.1",
-    "eslint": "^7.8.1",
-    "rollup": "^2.26.10",
-    "typedoc": "^0.19.1",
-    "typedoc-plugin-markdown": "^2.4.2",
-    "typescript": "^4.0.2"
+    "@typescript-eslint/eslint-plugin": "^4.3.0",
+    "@typescript-eslint/parser": "^4.3.0",
+    "eslint": "^7.10.0",
+    "rollup": "^2.28.2",
+    "typedoc": "^0.19.2",
+    "typedoc-plugin-markdown": "^3.0.5",
+    "typescript": "^4.0.3"
   },
   "scripts": {
     "build": "tsc && rollup -c",

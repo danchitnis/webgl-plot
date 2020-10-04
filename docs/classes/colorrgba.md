@@ -1,10 +1,8 @@
----
-id: "colorrgba"
-title: "ColorRGBA"
-sidebar_label: "ColorRGBA"
----
+**webgl-plot**
 
-[webgl-plot](../index.md) › [Globals](../globals.md) › [ColorRGBA](colorrgba.md)
+> [README](../README.md) / [Globals](../globals.md) / ColorRGBA
+
+# Class: ColorRGBA
 
 ## Hierarchy
 
@@ -25,13 +23,13 @@ sidebar_label: "ColorRGBA"
 
 ## Constructors
 
-###  constructor
+### constructor
 
-\+ **new ColorRGBA**(`r`: number, `g`: number, `b`: number, `a`: number): *[ColorRGBA](colorrgba.md)*
+\+ **new ColorRGBA**(`r`: number, `g`: number, `b`: number, `a`: number): [ColorRGBA](colorrgba.md)
 
-*Defined in [src/ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/ColorRGBA.ts#L6)*
+*Defined in [src/ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/ColorRGBA.ts#L6)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
@@ -40,36 +38,36 @@ Name | Type |
 `b` | number |
 `a` | number |
 
-**Returns:** *[ColorRGBA](colorrgba.md)*
+**Returns:** [ColorRGBA](colorrgba.md)
 
 ## Properties
 
-###  a
+### a
 
-• **a**: *number*
+•  **a**: number
 
-*Defined in [src/ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/ColorRGBA.ts#L6)*
-
-___
-
-###  b
-
-• **b**: *number*
-
-*Defined in [src/ColorRGBA.ts:5](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/ColorRGBA.ts#L5)*
+*Defined in [src/ColorRGBA.ts:6](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/ColorRGBA.ts#L6)*
 
 ___
 
-###  g
+### b
 
-• **g**: *number*
+•  **b**: number
 
-*Defined in [src/ColorRGBA.ts:4](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/ColorRGBA.ts#L4)*
+*Defined in [src/ColorRGBA.ts:5](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/ColorRGBA.ts#L5)*
 
 ___
 
-###  r
+### g
 
-• **r**: *number*
+•  **g**: number
 
-*Defined in [src/ColorRGBA.ts:3](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/ColorRGBA.ts#L3)*
+*Defined in [src/ColorRGBA.ts:4](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/ColorRGBA.ts#L4)*
+
+___
+
+### r
+
+•  **r**: number
+
+*Defined in [src/ColorRGBA.ts:3](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/ColorRGBA.ts#L3)*

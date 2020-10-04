@@ -1,10 +1,8 @@
----
-id: "webglstep"
-title: "WebglStep"
-sidebar_label: "WebglStep"
----
+**webgl-plot**
 
-[webgl-plot](../index.md) › [Globals](../globals.md) › [WebglStep](webglstep.md)
+> [README](../README.md) / [Globals](../globals.md) / WebglStep
+
+# Class: WebglStep
 
 The step based line plot
 
@@ -45,13 +43,13 @@ The step based line plot
 
 ## Constructors
 
-###  constructor
+### constructor
 
-\+ **new WebglStep**(`c`: [ColorRGBA](colorrgba.md), `num`: number): *[WebglStep](webglstep.md)*
+\+ **new WebglStep**(`c`: [ColorRGBA](colorrgba.md), `num`: number): [WebglStep](webglstep.md)
 
 *Overrides [WebglBaseLine](webglbaseline.md).[constructor](webglbaseline.md#constructor)*
 
-*Defined in [src/WbglStep.ts:7](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WbglStep.ts#L7)*
+*Defined in [src/WbglStep.ts:7](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WbglStep.ts#L7)*
 
 Create a new step line
 
@@ -62,46 +60,46 @@ y= [1,2]
 line = new WebglStep( new ColorRGBA(0.1,0.1,0.1,1), 2);
 ```
 
-**Parameters:**
+#### Parameters:
 
 Name | Type | Description |
 ------ | ------ | ------ |
 `c` | [ColorRGBA](colorrgba.md) | the color of the line |
 `num` | number | - |
 
-**Returns:** *[WebglStep](webglstep.md)*
+**Returns:** [WebglStep](webglstep.md)
 
 ## Properties
 
-###  color
+### color
 
-• **color**: *[ColorRGBA](colorrgba.md)*
+•  **color**: [ColorRGBA](colorrgba.md)
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[color](webglbaseline.md#color)*
 
-*Defined in [src/WebglBaseLine.ts:24](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L24)*
+*Defined in [src/WebglBaseLine.ts:26](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L26)*
 
 The Color of the line
 
 ___
 
-###  intensity
+### intensity
 
-• **intensity**: *number*
+•  **intensity**: number
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[intensity](webglbaseline.md#intensity)*
 
-*Defined in [src/WebglBaseLine.ts:7](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L7)*
+*Defined in [src/WebglBaseLine.ts:9](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L9)*
 
 ___
 
-###  loop
+### loop
 
-• **loop**: *boolean*
+•  **loop**: boolean
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[loop](webglbaseline.md#loop)*
 
-*Defined in [src/WebglBaseLine.ts:54](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L54)*
+*Defined in [src/WebglBaseLine.ts:56](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L56)*
 
 if this is a close loop line or not
 
@@ -109,25 +107,25 @@ if this is a close loop line or not
 
 ___
 
-###  numPoints
+### numPoints
 
-• **numPoints**: *number*
+•  **numPoints**: number
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[numPoints](webglbaseline.md#numpoints)*
 
-*Defined in [src/WebglBaseLine.ts:13](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L13)*
+*Defined in [src/WebglBaseLine.ts:15](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L15)*
 
 The number of data point pairs in the line
 
 ___
 
-###  offsetX
+### offsetX
 
-• **offsetX**: *number*
+•  **offsetX**: number
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetX](webglbaseline.md#offsetx)*
 
-*Defined in [src/WebglBaseLine.ts:42](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L42)*
+*Defined in [src/WebglBaseLine.ts:44](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L44)*
 
 The horixontal offset of the line
 
@@ -135,13 +133,13 @@ The horixontal offset of the line
 
 ___
 
-###  offsetY
+### offsetY
 
-• **offsetY**: *number*
+•  **offsetY**: number
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[offsetY](webglbaseline.md#offsety)*
 
-*Defined in [src/WebglBaseLine.ts:48](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L48)*
+*Defined in [src/WebglBaseLine.ts:50](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L50)*
 
 the vertical offset of the line
 
@@ -149,13 +147,13 @@ the vertical offset of the line
 
 ___
 
-###  scaleX
+### scaleX
 
-• **scaleX**: *number*
+•  **scaleX**: number
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleX](webglbaseline.md#scalex)*
 
-*Defined in [src/WebglBaseLine.ts:30](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L30)*
+*Defined in [src/WebglBaseLine.ts:32](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L32)*
 
 The horizontal scale of the line
 
@@ -163,13 +161,13 @@ The horizontal scale of the line
 
 ___
 
-###  scaleY
+### scaleY
 
-• **scaleY**: *number*
+•  **scaleY**: number
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[scaleY](webglbaseline.md#scaley)*
 
-*Defined in [src/WebglBaseLine.ts:36](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L36)*
+*Defined in [src/WebglBaseLine.ts:38](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L38)*
 
 The vertical sclae of the line
 
@@ -177,23 +175,23 @@ The vertical sclae of the line
 
 ___
 
-###  visible
+### visible
 
-• **visible**: *boolean*
+•  **visible**: boolean
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[visible](webglbaseline.md#visible)*
 
-*Defined in [src/WebglBaseLine.ts:8](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L8)*
+*Defined in [src/WebglBaseLine.ts:10](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L10)*
 
 ___
 
-###  webglNumPoints
+### webglNumPoints
 
-• **webglNumPoints**: *number*
+•  **webglNumPoints**: number
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[webglNumPoints](webglbaseline.md#webglnumpoints)*
 
-*Defined in [src/WebglBaseLine.ts:60](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L60)*
+*Defined in [src/WebglBaseLine.ts:62](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L62)*
 
 total webgl number of points
 
@@ -201,13 +199,13 @@ total webgl number of points
 
 ___
 
-###  xy
+### xy
 
-• **xy**: *Float32Array*
+•  **xy**: Float32Array
 
 *Inherited from [WebglBaseLine](webglbaseline.md).[xy](webglbaseline.md#xy)*
 
-*Defined in [src/WebglBaseLine.ts:19](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WebglBaseLine.ts#L19)*
+*Defined in [src/WebglBaseLine.ts:21](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WebglBaseLine.ts#L21)*
 
 The data ponits for webgl array
 
@@ -215,63 +213,63 @@ The data ponits for webgl array
 
 ## Methods
 
-###  constY
+### constY
 
-▸ **constY**(`c`: number): *void*
+▸ **constY**(`c`: number): void
 
-*Defined in [src/WbglStep.ts:74](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WbglStep.ts#L74)*
+*Defined in [src/WbglStep.ts:74](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WbglStep.ts#L74)*
 
 Set a constant value for all Y values in the line
 
-**Parameters:**
+#### Parameters:
 
 Name | Type | Description |
 ------ | ------ | ------ |
 `c` | number | constant value  |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  getX
+### getX
 
-▸ **getX**(`index`: number): *number*
+▸ **getX**(`index`: number): number
 
-*Defined in [src/WbglStep.ts:38](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WbglStep.ts#L38)*
+*Defined in [src/WbglStep.ts:38](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WbglStep.ts#L38)*
 
-**Parameters:**
+#### Parameters:
 
 Name | Type |
 ------ | ------ |
 `index` | number |
 
-**Returns:** *number*
+**Returns:** number
 
 ___
 
-###  getY
+### getY
 
-▸ **getY**(`index`: number): *number*
+▸ **getY**(`index`: number): number
 
-*Defined in [src/WbglStep.ts:46](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WbglStep.ts#L46)*
+*Defined in [src/WbglStep.ts:46](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WbglStep.ts#L46)*
 
 Get an X value at a specific index
 
-**Parameters:**
+#### Parameters:
 
 Name | Type | Description |
 ------ | ------ | ------ |
 `index` | number | the index of X  |
 
-**Returns:** *number*
+**Returns:** number
 
 ___
 
-###  lineSpaceX
+### lineSpaceX
 
-▸ **lineSpaceX**(`start`: number, `stepsize`: number): *void*
+▸ **lineSpaceX**(`start`: number, `stepsize`: number): void
 
-*Defined in [src/WbglStep.ts:62](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WbglStep.ts#L62)*
+*Defined in [src/WbglStep.ts:62](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WbglStep.ts#L62)*
 
 Make an equally spaced array of X points
 
@@ -282,41 +280,41 @@ const numX = 10;
 line.lineSpaceX(-1, 2 / numX);
 ```
 
-**Parameters:**
+#### Parameters:
 
 Name | Type | Description |
 ------ | ------ | ------ |
 `start` | number | the start of the series |
 `stepsize` | number | - |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  setY
+### setY
 
-▸ **setY**(`index`: number, `y`: number): *void*
+▸ **setY**(`index`: number, `y`: number): void
 
-*Defined in [src/WbglStep.ts:33](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WbglStep.ts#L33)*
+*Defined in [src/WbglStep.ts:33](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WbglStep.ts#L33)*
 
 Set the Y value at a specific index
 
-**Parameters:**
+#### Parameters:
 
 Name | Type | Description |
 ------ | ------ | ------ |
 `index` | number | the index of the data point |
 `y` | number | the vertical value of the data point  |
 
-**Returns:** *void*
+**Returns:** void
 
 ___
 
-###  shiftAdd
+### shiftAdd
 
-▸ **shiftAdd**(`data`: Float32Array): *void*
+▸ **shiftAdd**(`data`: Float32Array): void
 
-*Defined in [src/WbglStep.ts:91](https://github.com/danchitnis/webgl-plot/blob/4d4db76/src/WbglStep.ts#L91)*
+*Defined in [src/WbglStep.ts:91](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/WbglStep.ts#L91)*
 
 Add a new Y values to the end of current array and shift it, so that the total number of the pair remains the same
 
@@ -326,10 +324,10 @@ yArray = new Float32Array([3, 4, 5]);
 line.shiftAdd(yArray);
 ```
 
-**Parameters:**
+#### Parameters:
 
 Name | Type | Description |
 ------ | ------ | ------ |
 `data` | Float32Array | the Y array  |
 
-**Returns:** *void*
+**Returns:** void
