@@ -56,6 +56,7 @@ export default class WebGLPlot {
      * collection of lines in the plot
      */
     private _lines;
+    get lines(): WebglBaseLine[];
     private progThinLine;
     /**
      * log debug output
@@ -70,7 +71,7 @@ export default class WebGLPlot {
      *
      * For HTMLCanvas
      * ```typescript
-     * const canvas = dcoument.getEelementbyId("canvas");
+     * const canvas = document.getElementbyId("canvas");
      *
      * const devicePixelRatio = window.devicePixelRatio || 1;
      * canvas.width = canvas.clientWidth * devicePixelRatio;
@@ -100,7 +101,6 @@ export default class WebGLPlot {
      * ```
      */
     constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebGLPlotConfig);
-    get lines(): WebglBaseLine[];
     /**
      * updates and redraws the content of the plot
      */

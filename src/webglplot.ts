@@ -146,11 +146,8 @@ export default class WebGLPlot {
     this.gOffsetX = 0;
     this.gOffsetY = 0;
 
-    // Enable the depth test
-    this.webgl.enable(this.webgl.DEPTH_TEST);
-
-    // Clear the color and depth buffer
-    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
+    // Clear the color
+    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
 
     // Set the view port
     this.webgl.viewport(0, 0, canvas.width, canvas.height);
@@ -201,7 +198,7 @@ export default class WebGLPlot {
   public clear(): void {
     // Clear the canvas  //??????????????????
     //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
-    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT || this.webgl.DEPTH_BUFFER_BIT);
+    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
   }
 
   /**
