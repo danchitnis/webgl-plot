@@ -1,4 +1,4 @@
-![npm](https://github.com/danchitnis/webgl-plot/workflows/npm/badge.svg) ![yarn](https://github.com/danchitnis/webgl-plot/workflows/yarn/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) ![Build](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg)
+![Npm Build](https://github.com/danchitnis/webgl-plot/workflows/Npm%20Build/badge.svg) ![Yarn Build](https://github.com/danchitnis/webgl-plot/workflows/Yarn%20Build/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) ![Build](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg)
 
 ## [Live demo 🚀](https://danchitnis.github.io/webgl-plot-examples/vanilla/)
 
@@ -142,6 +142,11 @@ import WebGLplot, {
 Thanks to [TimDaub](https://github.com/TimDaub) for testing the ES6 module.
 
 Notice that this method is only recommended for test and small codes.
+
+## SkyPack
+
+[Skypack](https://www.skypack.dev/view/webgl-plot) is the new exciting CDN for ESM Javascript. See the example below on how to use it:
+[JSfiddle](https://jsfiddle.net/danchitnis/tu1svwbp/)
 
 ## API Documentation
 
