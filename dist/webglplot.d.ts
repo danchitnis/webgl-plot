@@ -9,7 +9,7 @@ import { ColorRGBA } from "./ColorRGBA";
 import { WebglLine } from "./WbglLine";
 import { WebglStep } from "./WbglStep";
 import { WebglPolar } from "./WbglPolar";
-import { WebglBaseLine } from "./WebglBaseLine";
+import type { WebglBaseLine } from "./WebglBaseLine";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
 declare type WebGLPlotConfig = {
     antialias?: boolean;

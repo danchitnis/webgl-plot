@@ -1,4 +1,4 @@
-import { ColorRGBA } from "./ColorRGBA";
+import type { ColorRGBA } from "./ColorRGBA";
 import { WebglBaseLine } from "./WebglBaseLine";
 /**
  * The step based line plot

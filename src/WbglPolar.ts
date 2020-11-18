@@ -1,4 +1,4 @@
-import { ColorRGBA } from "./ColorRGBA";
+import type { ColorRGBA } from "./ColorRGBA";
 import { WebglBaseLine } from "./WebglBaseLine";
 
 export class WebglPolar extends WebglBaseLine {
@@ -7,7 +7,6 @@ export class WebglPolar extends WebglBaseLine {
   public color: ColorRGBA;
   public intenisty: number;
   public visible: boolean;
-  public coord: number;
   public offsetTheta: number;
 
   constructor(c: ColorRGBA, numPoints: number) {

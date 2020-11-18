@@ -1,24 +1,23 @@
 {
   "name": "webgl-plot",
-  "version": "0.5.1",
+  "version": "0.5.3",
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
   "module": "./dist/webglplot.esm.js",
   "typings": "./dist/webglplot.d.ts",
   "types": "./dist/webglplot.d.ts",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.3.0",
-    "@typescript-eslint/parser": "^4.3.0",
-    "eslint": "^7.10.0",
-    "rollup": "^2.28.2",
+    "@typescript-eslint/eslint-plugin": "^4.7.0",
+    "@typescript-eslint/parser": "^4.7.0",
+    "eslint": "^7.13.0",
+    "rollup": "^2.33.1",
     "typedoc": "^0.19.2",
-    "typedoc-plugin-markdown": "^3.0.5",
-    "typescript": "^4.0.3"
+    "typedoc-plugin-markdown": "^3.0.11",
+    "typescript": "^4.0.5"
   },
   "scripts": {
     "build": "tsc && rollup -c",
-    "doc": "typedoc",
-    "sdk": "yarn dlx @yarnpkg/pnpify --sdk vscode"
+    "doc": "typedoc"
   },
   "repository": {
     "type": "git",
