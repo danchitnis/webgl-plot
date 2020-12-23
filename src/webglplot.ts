@@ -63,12 +63,21 @@ export default class WebGLPlot {
   public gOffsetY: number;
 
   /**
-   * collection of lines in the plot
+   * collection of data lines in the plot
    */
-  private _lines: WebglBaseLine[];
+  private _linesData: WebglBaseLine[];
 
-  get lines(): WebglBaseLine[] {
-    return this._lines;
+  /**
+   * collection of auxiliary lines (grids, markers, etc) in the plot
+   */
+  private _linesAux: WebglBaseLine[];
+
+  get linesData(): WebglBaseLine[] {
+    return this._linesData;
+  }
+
+  get linesAux(): WebglBaseLine[] {
+    return this._linesAux;
   }
 
   private progThinLine: WebGLProgram;
@@ -136,7 +145,8 @@ export default class WebGLPlot {
     this.log("canvas type is: " + canvas.constructor.name);
     this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
 
-    this._lines = [];
+    this._linesData = [];
+    this._linesAux = [];
 
     //this.webgl = webgl;
 
@@ -160,10 +170,10 @@ export default class WebGLPlot {
   /**
    * updates and redraws the content of the plot
    */
-  public update(): void {
+  private updateLines(lines: WebglBaseLine[]): void {
     const webgl = this.webgl;
 
-    this.lines.forEach((line) => {
+    lines.forEach((line) => {
       if (line.visible) {
         webgl.useProgram(this.progThinLine);
 
@@ -195,6 +205,11 @@ export default class WebGLPlot {
     });
   }
 
+  public update(): void {
+    this.updateLines(this.linesData);
+    this.updateLines(this.linesAux);
+  }
+
   public clear(): void {
     // Clear the canvas  //??????????????????
     //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
@@ -211,7 +226,7 @@ export default class WebGLPlot {
    * wglp.addLine(line);
    * ```
    */
-  public addLine(line: WebglLine | WebglStep | WebglPolar): void {
+  private _addLine(line: WebglLine | WebglStep | WebglPolar): void {
     //line.initProgram(this.webgl);
     line._vbuffer = this.webgl.createBuffer() as WebGLBuffer;
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
@@ -222,8 +237,18 @@ export default class WebGLPlot {
     line._coord = this.webgl.getAttribLocation(this.progThinLine, "coordinates");
     this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
     this.webgl.enableVertexAttribArray(line._coord);
+  }
 
-    this.lines.push(line);
+  public addDataLine(line: WebglLine | WebglStep | WebglPolar): void {
+    this._addLine(line);
+    this.linesData.push(line);
+  }
+
+  public addLine = this.addDataLine;
+
+  public addAuxLine(line: WebglLine | WebglStep | WebglPolar): void {
+    this._addLine(line);
+    this.linesAux.push(line);
   }
 
   private initThinLineProgram() {
@@ -262,17 +287,32 @@ export default class WebGLPlot {
   }
 
   /**
-   * remove the last line
+   * remove the last data line
    */
-  public popLine(): void {
-    this.lines.pop();
+  public popDataLine(): void {
+    this.linesData.pop();
   }
 
   /**
    * remove all the lines
    */
   public removeAllLines(): void {
-    this._lines = [];
+    this._linesData = [];
+    this._linesAux = [];
+  }
+
+  /**
+   * remove all data lines
+   */
+  public removeDataLines(): void {
+    this._linesData = [];
+  }
+
+  /**
+   * remove all auxiliary lines
+   */
+  public removeAuxLines(): void {
+    this._linesAux = [];
   }
 
   /**

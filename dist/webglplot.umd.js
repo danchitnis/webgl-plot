@@ -332,6 +332,7 @@
              * log debug output
              */
             this.debug = false;
+            this.addLine = this.addDataLine;
             if (options == undefined) {
                 this.webgl = canvas.getContext("webgl", {
                     antialias: true,
@@ -350,7 +351,8 @@
             }
             this.log("canvas type is: " + canvas.constructor.name);
             this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
-            this._lines = [];
+            this._linesData = [];
+            this._linesAux = [];
             //this.webgl = webgl;
             this.gScaleX = 1;
             this.gScaleY = 1;
@@ -364,15 +366,18 @@
             this.progThinLine = this.webgl.createProgram();
             this.initThinLineProgram();
         }
-        get lines() {
-            return this._lines;
+        get linesData() {
+            return this._linesData;
+        }
+        get linesAux() {
+            return this._linesAux;
         }
         /**
          * updates and redraws the content of the plot
          */
-        update() {
+        updateLines(lines) {
             const webgl = this.webgl;
-            this.lines.forEach((line) => {
+            lines.forEach((line) => {
                 if (line.visible) {
                     webgl.useProgram(this.progThinLine);
                     const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
@@ -391,6 +396,10 @@
                 }
             });
         }
+        update() {
+            this.updateLines(this.linesData);
+            this.updateLines(this.linesAux);
+        }
         clear() {
             // Clear the canvas  //??????????????????
             //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
@@ -406,7 +415,7 @@
          * wglp.addLine(line);
          * ```
          */
-        addLine(line) {
+        _addLine(line) {
             //line.initProgram(this.webgl);
             line._vbuffer = this.webgl.createBuffer();
             this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
@@ -415,7 +424,14 @@
             line._coord = this.webgl.getAttribLocation(this.progThinLine, "coordinates");
             this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
             this.webgl.enableVertexAttribArray(line._coord);
-            this.lines.push(line);
+        }
+        addDataLine(line) {
+            this._addLine(line);
+            this.linesData.push(line);
+        }
+        addAuxLine(line) {
+            this._addLine(line);
+            this.linesAux.push(line);
         }
         initThinLineProgram() {
             const vertCode = `
@@ -447,16 +463,29 @@
             this.webgl.linkProgram(this.progThinLine);
         }
         /**
-         * remove the last line
+         * remove the last data line
          */
-        popLine() {
-            this.lines.pop();
+        popDataLine() {
+            this.linesData.pop();
         }
         /**
          * remove all the lines
          */
         removeAllLines() {
-            this._lines = [];
+            this._linesData = [];
+            this._linesAux = [];
+        }
+        /**
+         * remove all data lines
+         */
+        removeDataLines() {
+            this._linesData = [];
+        }
+        /**
+         * remove all auxiliary lines
+         */
+        removeAuxLines() {
+            this._linesAux = [];
         }
         /**
          * Change the WbGL viewport

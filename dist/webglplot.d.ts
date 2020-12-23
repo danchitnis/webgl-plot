@@ -53,10 +53,15 @@ export default class WebGLPlot {
      */
     gOffsetY: number;
     /**
-     * collection of lines in the plot
+     * collection of data lines in the plot
      */
-    private _lines;
-    get lines(): WebglBaseLine[];
+    private _linesData;
+    /**
+     * collection of auxiliary lines (grids, markers, etc) in the plot
+     */
+    private _linesAux;
+    get linesData(): WebglBaseLine[];
+    get linesAux(): WebglBaseLine[];
     private progThinLine;
     /**
      * log debug output
@@ -104,6 +109,7 @@ export default class WebGLPlot {
     /**
      * updates and redraws the content of the plot
      */
+    private updateLines;
     update(): void;
     clear(): void;
     /**
@@ -116,16 +122,27 @@ export default class WebGLPlot {
      * wglp.addLine(line);
      * ```
      */
-    addLine(line: WebglLine | WebglStep | WebglPolar): void;
+    private _addLine;
+    addDataLine(line: WebglLine | WebglStep | WebglPolar): void;
+    addLine: (line: WebglLine | WebglStep | WebglPolar) => void;
+    addAuxLine(line: WebglLine | WebglStep | WebglPolar): void;
     private initThinLineProgram;
     /**
-     * remove the last line
+     * remove the last data line
      */
-    popLine(): void;
+    popDataLine(): void;
     /**
      * remove all the lines
      */
     removeAllLines(): void;
+    /**
+     * remove all data lines
+     */
+    removeDataLines(): void;
+    /**
+     * remove all auxiliary lines
+     */
+    removeAuxLines(): void;
     /**
      * Change the WbGL viewport
      * @param a

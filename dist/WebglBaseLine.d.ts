@@ -24,12 +24,12 @@ export declare class WebglBaseLine {
      */
     scaleX: number;
     /**
-     * The vertical sclae of the line
+     * The vertical scale of the line
      * @default = 1
      */
     scaleY: number;
     /**
-     * The horixontal offset of the line
+     * The horizontal offset of the line
      * @default = 0
      */
     offsetX: number;
