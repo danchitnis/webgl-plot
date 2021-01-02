@@ -196,10 +196,10 @@ export default class WebGLPlot {
           uscale,
           false,
           new Float32Array([
-            line.scaleX * this.gScaleX,
+            line.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
             0,
             0,
-            line.scaleY * this.gScaleY * this.gXYratio,
+            line.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
           ])
         );
 
