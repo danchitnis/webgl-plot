@@ -53,6 +53,16 @@ export default class WebGLPlot {
      */
     gOffsetY: number;
     /**
+     * Global log10 of x-axis
+     * @default = false
+     */
+    gLog10X: boolean;
+    /**
+     * Global log10 of y-axis
+     * @default = false
+     */
+    gLog10Y: boolean;
+    /**
      * collection of data lines in the plot
      */
     private _linesData;
