@@ -148,6 +148,10 @@ Notice that this method is only recommended for test and small codes.
 [Skypack](https://www.skypack.dev/view/webgl-plot) is the new exciting CDN for ESM Javascript. See the example below on how to use it:
 [JSfiddle](https://jsfiddle.net/danchitnis/tu1svwbp/)
 
+## Benchmark
+
+[Line generation and Frame rate](https://danchitnis.github.io/webgl-plot/benchmark/bench1.html)
+
 ## API Documentation
 
 See [here 📑](https://webgl-plot.now.sh/)
