@@ -57,7 +57,7 @@ function update() {
   }
   //console.log(yFinal);
 
-  wglp.lines.forEach((line) => {
+  wglp.linesData.forEach((line) => {
     for (let i = 0; i < yFinal.length; i++) {
       line.setY(i, yFinal[i]);
     }

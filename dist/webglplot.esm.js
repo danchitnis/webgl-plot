@@ -353,6 +353,8 @@ class WebGLPlot {
         this.gXYratio = 1;
         this.gOffsetX = 0;
         this.gOffsetY = 0;
+        this.gLog10X = false;
+        this.gLog10Y = false;
         // Clear the color
         this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
         // Set the view port
@@ -383,6 +385,8 @@ class WebGLPlot {
                 ]));
                 const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
                 webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
+                const isLog = webgl.getUniformLocation(this.progThinLine, "is_log");
+                webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
                 const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
                 webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
                 webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
@@ -432,8 +436,13 @@ class WebGLPlot {
       attribute vec2 coordinates;
       uniform mat2 uscale;
       uniform vec2 uoffset;
+      uniform ivec2 is_log;
+
       void main(void) {
-         gl_Position = vec4(uscale*coordinates + uoffset, 0.0, 1.0);
+         float x = (is_log[0]==1) ? log(coordinates.x) : coordinates.x;
+         float y = (is_log[1]==1) ? log(coordinates.y) : coordinates.y;
+         vec2 line = vec2(x, y);
+         gl_Position = vec4(uscale*line + uoffset, 0.0, 1.0);
       }`;
         // Create a vertex shader object
         const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
