@@ -384,10 +384,10 @@
                     webgl.useProgram(this.progThinLine);
                     const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
                     webgl.uniformMatrix2fv(uscale, false, new Float32Array([
-                        line.scaleX * this.gScaleX,
+                        line.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
                         0,
                         0,
-                        line.scaleY * this.gScaleY * this.gXYratio,
+                        line.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
                     ]));
                     const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
                     webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
