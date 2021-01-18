@@ -273,6 +273,34 @@ class WebglPolar extends WebglBaseLine {
 }
 
 /**
+ * The standard Line class
+ */
+class WebglSquare extends WebglBaseLine {
+    /**
+     * Create a new line
+     * @param c - the color of the line
+     * @param numPoints - number of data pints
+     * @example
+     * ```typescript
+     * x= [0,1]
+     * y= [1,2]
+     * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
+     * ```
+     */
+    constructor(c) {
+        super();
+        this.webglNumPoints = 4;
+        this.numPoints = 4;
+        this.color = c;
+        this.xy = new Float32Array(2 * this.webglNumPoints);
+    }
+    setSquare(points) {
+        if (points.length == 8)
+            this.xy = new Float32Array(points);
+    }
+}
+
+/**
  * Author Danial Chitnis 2019-20
  *
  * inspired by:
@@ -347,6 +375,7 @@ class WebGLPlot {
         this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
         this._linesData = [];
         this._linesAux = [];
+        this._surfaces = [];
         //this.webgl = webgl;
         this.gScaleX = 1;
         this.gScaleY = 1;
@@ -361,12 +390,18 @@ class WebGLPlot {
         this.webgl.viewport(0, 0, canvas.width, canvas.height);
         this.progThinLine = this.webgl.createProgram();
         this.initThinLineProgram();
+        //https://learnopengl.com/Advanced-OpenGL/Blending
+        this.webgl.enable(this.webgl.BLEND);
+        this.webgl.blendFunc(this.webgl.SRC_ALPHA, this.webgl.ONE_MINUS_SRC_ALPHA);
     }
     get linesData() {
         return this._linesData;
     }
     get linesAux() {
         return this._linesAux;
+    }
+    get surfaces() {
+        return this._surfaces;
     }
     /**
      * updates and redraws the content of the plot
@@ -394,9 +429,33 @@ class WebGLPlot {
             }
         });
     }
+    updateSurfaces(lines) {
+        const webgl = this.webgl;
+        lines.forEach((line) => {
+            if (line.visible) {
+                webgl.useProgram(this.progThinLine);
+                const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
+                webgl.uniformMatrix2fv(uscale, false, new Float32Array([
+                    line.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
+                    0,
+                    0,
+                    line.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
+                ]));
+                const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
+                webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
+                const isLog = webgl.getUniformLocation(this.progThinLine, "is_log");
+                webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
+                const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
+                webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
+                webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
+                webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, line.webglNumPoints);
+            }
+        });
+    }
     update() {
         this.updateLines(this.linesData);
         this.updateLines(this.linesAux);
+        this.updateSurfaces(this.surfaces);
     }
     clear() {
         // Clear the canvas  //??????????????????
@@ -430,6 +489,10 @@ class WebGLPlot {
     addAuxLine(line) {
         this._addLine(line);
         this.linesAux.push(line);
+    }
+    addSurface(surface) {
+        this._addLine(surface);
+        this.surfaces.push(surface);
     }
     initThinLineProgram() {
         const vertCode = `
@@ -508,4 +571,4 @@ class WebGLPlot {
 }
 
 export default WebGLPlot;
-export { ColorRGBA, WebglLine, WebglPolar, WebglStep };
+export { ColorRGBA, WebglLine, WebglPolar, WebglSquare, WebglStep };
