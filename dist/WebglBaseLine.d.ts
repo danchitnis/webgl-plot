@@ -2,7 +2,7 @@ import { ColorRGBA } from "./ColorRGBA";
 /**
  * Baseline class
  */
-export declare class WebglBaseLine {
+export declare abstract class WebglBaseLine {
     intensity: number;
     visible: boolean;
     /**
