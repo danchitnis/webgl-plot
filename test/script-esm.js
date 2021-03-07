@@ -18,7 +18,7 @@ line.lineSpaceX(-1, 2 / numX);
 wglp.addLine(line);
 
 const sq = new WebglSquare(new ColorRGBA(0.5, 0.5, 0, 0.5));
-sq.setSquare([-1, -1, -1, 0, 0, -1, 0, 0]);
+sq.setSquare(-0.5, 0.2, 0.5, 0.5);
 wglp.addSurface(sq);
 
 function newFrame() {

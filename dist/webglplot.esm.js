@@ -273,18 +273,15 @@ class WebglPolar extends WebglBaseLine {
 }
 
 /**
- * The standard Line class
+ * The Square class
  */
 class WebglSquare extends WebglBaseLine {
     /**
      * Create a new line
      * @param c - the color of the line
-     * @param numPoints - number of data pints
      * @example
      * ```typescript
-     * x= [0,1]
-     * y= [1,2]
-     * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
+     * line = new WebglSquare( new ColorRGBA(0.1,0.1,0.1,0.5) );
      * ```
      */
     constructor(c) {
@@ -294,9 +291,15 @@ class WebglSquare extends WebglBaseLine {
         this.color = c;
         this.xy = new Float32Array(2 * this.webglNumPoints);
     }
-    setSquare(points) {
-        if (points.length == 8)
-            this.xy = new Float32Array(points);
+    /**
+     * draw a square
+     * @param x1 start x
+     * @param y1 start y
+     * @param x2 end x
+     * @param y2 end y
+     */
+    setSquare(x1, y1, x2, y2) {
+        this.xy = new Float32Array([x1, y1, x1, y2, x2, y1, x2, y2]);
     }
 }
 
