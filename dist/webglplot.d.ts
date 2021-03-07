@@ -9,8 +9,9 @@ import { ColorRGBA } from "./ColorRGBA";
 import { WebglLine } from "./WbglLine";
 import { WebglStep } from "./WbglStep";
 import { WebglPolar } from "./WbglPolar";
+import { WebglSquare } from "./WbglSquare";
 import type { WebglBaseLine } from "./WebglBaseLine";
-export { WebglLine, ColorRGBA, WebglStep, WebglPolar };
+export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare };
 declare type WebGLPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;
@@ -70,8 +71,10 @@ export default class WebGLPlot {
      * collection of auxiliary lines (grids, markers, etc) in the plot
      */
     private _linesAux;
+    private _surfaces;
     get linesData(): WebglBaseLine[];
     get linesAux(): WebglBaseLine[];
+    get surfaces(): WebglSquare[];
     private progThinLine;
     /**
      * log debug output
@@ -120,6 +123,7 @@ export default class WebGLPlot {
      * updates and redraws the content of the plot
      */
     private updateLines;
+    private updateSurfaces;
     update(): void;
     clear(): void;
     /**
@@ -136,6 +140,7 @@ export default class WebGLPlot {
     addDataLine(line: WebglLine | WebglStep | WebglPolar): void;
     addLine: (line: WebglLine | WebglStep | WebglPolar) => void;
     addAuxLine(line: WebglLine | WebglStep | WebglPolar): void;
+    addSurface(surface: WebglSquare): void;
     private initThinLineProgram;
     /**
      * remove the last data line

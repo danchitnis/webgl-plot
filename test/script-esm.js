@@ -1,4 +1,4 @@
-import WebGLplot, { WebglLine, ColorRGBA } from "../dist/webglplot.esm.js";
+import WebGLplot, { WebglLine, ColorRGBA, WebglSquare } from "../dist/webglplot.esm.js";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -16,6 +16,10 @@ const wglp = new WebGLplot(canvas);
 
 line.lineSpaceX(-1, 2 / numX);
 wglp.addLine(line);
+
+const sq = new WebglSquare(new ColorRGBA(0.5, 0.5, 0, 0.5));
+sq.setSquare(-0.5, 0.2, 0.5, 0.5);
+wglp.addSurface(sq);
 
 function newFrame() {
   update();
