@@ -1,7 +1,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.WebGLPlotBundle = {}));
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.WebglPlotBundle = {}));
 }(this, (function (exports) { 'use strict';
 
     class ColorRGBA {
@@ -319,7 +319,7 @@
     /**
      * The main class for the webgl-plot library
      */
-    class WebGLPlot {
+    class WebglPlot {
         /**
          * Create a webgl-plot instance
          * @param canvas - the canvas in which the plot appears
@@ -581,10 +581,10 @@
 
     exports.ColorRGBA = ColorRGBA;
     exports.WebglLine = WebglLine;
+    exports.WebglPlot = WebglPlot;
     exports.WebglPolar = WebglPolar;
     exports.WebglSquare = WebglSquare;
     exports.WebglStep = WebglStep;
-    exports.default = WebGLPlot;
 
     Object.defineProperty(exports, '__esModule', { value: true });
 

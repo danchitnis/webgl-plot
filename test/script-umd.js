@@ -6,11 +6,11 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 const numX = canvas.width;
 
-const color = new WebGLPlotBundle.ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
+const color = new WebglPlotBundle.ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
 
-const line = new WebGLPlotBundle.WebglLine(color, numX);
+const line = new WebglPlotBundle.WebglLine(color, numX);
 
-const wglp = new WebGLPlotBundle.default(canvas);
+const wglp = new WebglPlotBundle.WebglPlot(canvas);
 
 line.lineSpaceX(-1, 2 / numX);
 wglp.addLine(line);

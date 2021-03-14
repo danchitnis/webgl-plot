@@ -18,11 +18,11 @@
     }
   },
   "include": ["src/**/*"],
-  "typedocOptions": {
+  /*"typedocOptions": {
     "mode": "file",
     "excludePrivate": true,
     "out": "./docs",
     "plugin": "typedoc-plugin-markdown",
     "theme": "docusaurus2"
-  }
+  }*/
 }

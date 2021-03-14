@@ -39,7 +39,7 @@ Create an HTML canvas with an appropriate width or height:
 Import WebGL-Plot library using ES6 modules:
 
 ```javascript
-import WebGLplot, { WebglLine, ColorRGBA } from "webgl-plot";
+import { WebGLplot, WebglLine, ColorRGBA } from "webgl-plot";
 ```
 
 Prepare the canvas
@@ -57,7 +57,7 @@ Initialization:
 const numX = canvas.width;
 const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
 const line = new WebglLine(color, numX);
-const wglp = new WebGLplot(canvas);
+const wglp = new WebglPlot(canvas);
 ```
 
 Add the line to webgl canvas:
@@ -133,7 +133,8 @@ For ES6 module and direct browser import use:
 and in your-code.js:
 
 ```javascript
-import WebGLplot, {
+import {
+  WebglPlot,
   WebglLine,
   ColorRGBA,
 } from "https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/webglplot.esm.min.js";
@@ -151,6 +152,10 @@ Notice that this method is only recommended for test and small codes.
 ## Benchmark
 
 [Line generation and Frame rate](https://danchitnis.github.io/webgl-plot/benchmark/bench1.html)
+
+## Internal test
+
+[ESM](https://danchitnis.github.io/webgl-plot/test/index-esm.html), [off-screen](https://danchitnis.github.io/webgl-plot/test/index-esm-off.html), [UMD](https://danchitnis.github.io/webgl-plot/test/index-umd.html)
 
 ## API Documentation
 

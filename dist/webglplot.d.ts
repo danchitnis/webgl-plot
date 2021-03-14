@@ -12,7 +12,7 @@ import { WebglPolar } from "./WbglPolar";
 import { WebglSquare } from "./WbglSquare";
 import type { WebglBaseLine } from "./WebglBaseLine";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare };
-declare type WebGLPlotConfig = {
+declare type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;
     powerPerformance?: "default" | "high-performance" | "low-power";
@@ -23,7 +23,7 @@ declare type WebGLPlotConfig = {
 /**
  * The main class for the webgl-plot library
  */
-export default class WebGLPlot {
+export declare class WebglPlot {
     /**
      * @private
      */
@@ -118,7 +118,7 @@ export default class WebGLPlot {
      * }
      * ```
      */
-    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebGLPlotConfig);
+    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebglPlotConfig);
     /**
      * updates and redraws the content of the plot
      */

@@ -1,4 +1,4 @@
-import WebGLplot, { WebglLine, ColorRGBA, WebglSquare } from "../dist/webglplot.esm.js";
+import { WebglPlot, WebglLine, ColorRGBA, WebglSquare } from "../dist/webglplot.js";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -12,7 +12,7 @@ const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
 
 const line = new WebglLine(color, numX);
 
-const wglp = new WebGLplot(canvas);
+const wglp = new WebglPlot(canvas);
 
 line.lineSpaceX(-1, 2 / numX);
 wglp.addLine(line);

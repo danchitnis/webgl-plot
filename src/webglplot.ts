@@ -15,7 +15,7 @@ import type { WebglBaseLine } from "./WebglBaseLine";
 
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare };
 
-type WebGLPlotConfig = {
+type WebglPlotConfig = {
   antialias?: boolean;
   transparent?: boolean;
   powerPerformance?: "default" | "high-performance" | "low-power";
@@ -27,7 +27,7 @@ type WebGLPlotConfig = {
 /**
  * The main class for the webgl-plot library
  */
-export default class WebGLPlot {
+export class WebglPlot {
   /**
    * @private
    */
@@ -144,7 +144,7 @@ export default class WebGLPlot {
    * }
    * ```
    */
-  constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebGLPlotConfig) {
+  constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebglPlotConfig) {
     if (options == undefined) {
       this.webgl = canvas.getContext("webgl", {
         antialias: true,

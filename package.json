@@ -1,17 +1,19 @@
 {
   "name": "webgl-plot",
-  "version": "0.5.6",
+  "version": "0.6.0",
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
-  "exports": "./dist/webglplot.esm.js",
-  "module": "./dist/webglplot.esm.js",
+  "exports": "./dist/webglplot.js",
+  "module": "./dist/webglplot.js",
   "typings": "./dist/webglplot.d.ts",
   "types": "./dist/webglplot.d.ts",
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.16.1",
-    "@typescript-eslint/parser": "^4.16.1",
-    "eslint": "^7.21.0",
-    "rollup": "^2.40.0",
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0",
+    "eslint": "^7.22.0",
+    "rollup": "^2.41.2",
+    "typedoc": "^0.20.31",
+    "typedoc-plugin-markdown": "^3.6.0",
     "typescript": "^4.2.3"
   },
   "scripts": {
