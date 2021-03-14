@@ -39,7 +39,7 @@ Create an HTML canvas with an appropriate width or height:
 Import WebGL-Plot library using ES6 modules:
 
 ```javascript
-import { WebGLplot, WebglLine, ColorRGBA } from "webgl-plot";
+import { WebglPlot, WebglLine, ColorRGBA } from "webgl-plot";
 ```
 
 Prepare the canvas
