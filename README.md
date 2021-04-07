@@ -1,4 +1,4 @@
-![Npm Build](https://github.com/danchitnis/webgl-plot/workflows/Npm%20Build/badge.svg) ![Yarn Build](https://github.com/danchitnis/webgl-plot/workflows/Yarn%20Build/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) ![Build](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg)
+![Npm Build](https://github.com/danchitnis/webgl-plot/workflows/Npm%20Build/badge.svg) ![Yarn Build](https://github.com/danchitnis/webgl-plot/workflows/Yarn%20Build/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) ![Build](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg) [![DOI](https://zenodo.org/badge/205590760.svg)](https://zenodo.org/badge/latestdoi/205590760)
 
 ## [Live demo 🚀](https://danchitnis.github.io/webgl-plot-examples/vanilla/)
 
