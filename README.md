@@ -8,7 +8,7 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 - Simple and efficient 2D WebGL library
 - Using WebGL native line drawing
-- High update rate which matches the screen's refresh rate
+- High update rate which matches the screen's refresh rate (FPS)
 - Works for both dynamic and static data
 - Full control over the color of each line in each frame
 - No dependencies
@@ -24,7 +24,7 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 ## Limitations
 
-cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of the data vector and take a hit on the performance. Top performance (refresh rate, memory, etc) is the top priority for this library.
+It cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of the data vector and take a hit on the performance. Top performance (refresh rate, memory, etc) is the top priority for this library.
 
 ## Getting started
 
@@ -60,10 +60,15 @@ const line = new WebglLine(color, numX);
 const wglp = new WebglPlot(canvas);
 ```
 
-Add the line to webgl canvas:
+Automatically arrange X values between [-1,1]:
 
 ```javascript
-line.lineSpaceX(-1, 2 / numX);
+line.arrangeX();
+```
+
+Add the line to the webgl canvas:
+
+```javascript
 wglp.addLine(line);
 ```
 
@@ -93,6 +98,8 @@ function update() {
   }
 }
 ```
+
+Don't forget to update the canvas with `wglp.update()` each time you want to redraw the changes that you have made to the line objects.
 
 [![Edit WebGLplot](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/webglplot-m40u4?fontsize=14&hidenavigation=1&theme=dark)
 
@@ -146,7 +153,7 @@ Notice that this method is only recommended for test and small codes.
 
 ## SkyPack
 
-[Skypack](https://www.skypack.dev/view/webgl-plot) is the new exciting CDN for ESM Javascript. See the example below on how to use it:
+[Skypack](https://www.skypack.dev/view/webgl-plot) is a new exciting CDN for ESM Javascript. See the example below on how to use it:
 [JSfiddle](https://jsfiddle.net/danchitnis/tu1svwbp/)
 
 ## Benchmark
