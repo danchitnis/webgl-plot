@@ -5,6 +5,8 @@ import { WebglBaseLine } from "./WebglBaseLine";
  * The standard Line class
  */
 export class WebglLine extends WebglBaseLine {
+  private currentIndex = 0;
+
   /**
    * Create a new line
    * @param c - the color of the line
@@ -79,6 +81,14 @@ export class WebglLine extends WebglBaseLine {
   }
 
   /**
+   * Automatically generate X between -1 and 1
+   * equal to lineSpaceX(-1, 2/ number of points)
+   */
+  public arrangeX(): void {
+    this.lineSpaceX(-1, 2 / this.numPoints);
+  }
+
+  /**
    * Set a constant value for all Y values in the line
    * @param c - constant value
    */
@@ -108,6 +118,29 @@ export class WebglLine extends WebglBaseLine {
 
     for (let i = 0; i < shiftSize; i++) {
       this.setY(i + this.numPoints - shiftSize, data[i]);
+    }
+  }
+
+  /**
+   * Add new Y values to the line and maintain the position of the last data point
+   */
+  public addArrayY(yArray: number[]): void {
+    if (this.currentIndex + yArray.length <= this.numPoints) {
+      for (let i = 0; i < yArray.length; i++) {
+        this.setY(this.currentIndex, yArray[i]);
+        this.currentIndex++;
+      }
+    }
+  }
+
+  /**
+   * Replace the all Y values of the line
+   */
+  public replaceArrayY(yArray: number[]): void {
+    if (yArray.length == this.numPoints) {
+      for (let i = 0; i < this.numPoints; i++) {
+        this.setY(i, yArray[i]);
+      }
     }
   }
 }

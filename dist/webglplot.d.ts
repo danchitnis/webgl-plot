@@ -122,9 +122,19 @@ export declare class WebglPlot {
     /**
      * updates and redraws the content of the plot
      */
-    private updateLines;
-    private updateSurfaces;
+    private drawLines;
+    private drawSurfaces;
+    /**
+     * Draw and clear the canvas
+     */
     update(): void;
+    /**
+     * Draw without clearing the canvas
+     */
+    draw(): void;
+    /**
+     * Clear the canvas
+     */
     clear(): void;
     /**
      * adds a line to the plot

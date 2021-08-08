@@ -196,7 +196,7 @@ export class WebglPlot {
   /**
    * updates and redraws the content of the plot
    */
-  private updateLines(lines: WebglBaseLine[]): void {
+  private drawLines(lines: WebglBaseLine[]): void {
     const webgl = this.webgl;
 
     lines.forEach((line) => {
@@ -234,7 +234,7 @@ export class WebglPlot {
     });
   }
 
-  private updateSurfaces(lines: WebglSquare[]): void {
+  private drawSurfaces(lines: WebglSquare[]): void {
     const webgl = this.webgl;
 
     lines.forEach((line) => {
@@ -272,15 +272,32 @@ export class WebglPlot {
     });
   }
 
+  /**
+   * Draw and clear the canvas
+   */
   public update(): void {
-    this.updateLines(this.linesData);
-    this.updateLines(this.linesAux);
+    this.clear();
 
-    this.updateSurfaces(this.surfaces);
+    this.drawLines(this.linesData);
+    this.drawLines(this.linesAux);
+
+    this.drawSurfaces(this.surfaces);
   }
 
+  /**
+   * Draw without clearing the canvas
+   */
+  public draw(): void {
+    this.drawLines(this.linesData);
+    this.drawLines(this.linesAux);
+
+    this.drawSurfaces(this.surfaces);
+  }
+
+  /**
+   * Clear the canvas
+   */
   public clear(): void {
-    // Clear the canvas  //??????????????????
     //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
     this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
   }

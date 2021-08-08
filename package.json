@@ -4,7 +4,7 @@
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
   "exports": "./dist/webglplot.js",
-  "module": "./dist/webglplot.js",
+  "module": "./dist/webglplot.esm.js",
   "typings": "./dist/webglplot.d.ts",
   "types": "./dist/webglplot.d.ts",
   "keywords": [
@@ -16,12 +16,12 @@
     "high-performance"
   ],
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.28.1",
-    "@typescript-eslint/parser": "^4.28.1",
-    "eslint": "^7.29.0",
-    "rollup": "^2.52.7",
-    "typedoc": "^0.21.2",
-    "typedoc-plugin-markdown": "^3.10.2",
+    "@typescript-eslint/eslint-plugin": "^4.29.0",
+    "@typescript-eslint/parser": "^4.29.0",
+    "eslint": "^7.32.0",
+    "rollup": "^2.56.0",
+    "typedoc": "^0.21.5",
+    "typedoc-plugin-markdown": "^3.10.4",
     "typescript": "^4.3.5"
   },
   "scripts": {
