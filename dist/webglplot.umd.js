@@ -54,6 +54,7 @@
          */
         constructor(c, numPoints) {
             super();
+            this.currentIndex = 0;
             this.webglNumPoints = numPoints;
             this.numPoints = numPoints;
             this.color = c;
@@ -108,6 +109,13 @@
             }
         }
         /**
+         * Automatically generate X between -1 and 1
+         * equal to lineSpaceX(-1, 2/ number of points)
+         */
+        arrangeX() {
+            this.lineSpaceX(-1, 2 / this.numPoints);
+        }
+        /**
          * Set a constant value for all Y values in the line
          * @param c - constant value
          */
@@ -134,6 +142,27 @@
             }
             for (let i = 0; i < shiftSize; i++) {
                 this.setY(i + this.numPoints - shiftSize, data[i]);
+            }
+        }
+        /**
+         * Add new Y values to the line and maintain the position of the last data point
+         */
+        addArrayY(yArray) {
+            if (this.currentIndex + yArray.length <= this.numPoints) {
+                for (let i = 0; i < yArray.length; i++) {
+                    this.setY(this.currentIndex, yArray[i]);
+                    this.currentIndex++;
+                }
+            }
+        }
+        /**
+         * Replace the all Y values of the line
+         */
+        replaceArrayY(yArray) {
+            if (yArray.length == this.numPoints) {
+                for (let i = 0; i < this.numPoints; i++) {
+                    this.setY(i, yArray[i]);
+                }
             }
         }
     }
@@ -415,7 +444,7 @@
         /**
          * updates and redraws the content of the plot
          */
-        updateLines(lines) {
+        drawLines(lines) {
             const webgl = this.webgl;
             lines.forEach((line) => {
                 if (line.visible) {
@@ -438,7 +467,7 @@
                 }
             });
         }
-        updateSurfaces(lines) {
+        drawSurfaces(lines) {
             const webgl = this.webgl;
             lines.forEach((line) => {
                 if (line.visible) {
@@ -461,13 +490,27 @@
                 }
             });
         }
+        /**
+         * Draw and clear the canvas
+         */
         update() {
-            this.updateLines(this.linesData);
-            this.updateLines(this.linesAux);
-            this.updateSurfaces(this.surfaces);
+            this.clear();
+            this.drawLines(this.linesData);
+            this.drawLines(this.linesAux);
+            this.drawSurfaces(this.surfaces);
         }
+        /**
+         * Draw without clearing the canvas
+         */
+        draw() {
+            this.drawLines(this.linesData);
+            this.drawLines(this.linesAux);
+            this.drawSurfaces(this.surfaces);
+        }
+        /**
+         * Clear the canvas
+         */
         clear() {
-            // Clear the canvas  //??????????????????
             //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
             this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
         }

@@ -4,6 +4,7 @@ import { WebglBaseLine } from "./WebglBaseLine";
  * The standard Line class
  */
 export declare class WebglLine extends WebglBaseLine {
+    private currentIndex;
     /**
      * Create a new line
      * @param c - the color of the line
@@ -52,6 +53,11 @@ export declare class WebglLine extends WebglBaseLine {
      */
     lineSpaceX(start: number, stepSize: number): void;
     /**
+     * Automatically generate X between -1 and 1
+     * equal to lineSpaceX(-1, 2/ number of points)
+     */
+    arrangeX(): void;
+    /**
      * Set a constant value for all Y values in the line
      * @param c - constant value
      */
@@ -67,5 +73,13 @@ export declare class WebglLine extends WebglBaseLine {
      * ```
      */
     shiftAdd(data: Float32Array): void;
+    /**
+     * Add new Y values to the line and maintain the position of the last data point
+     */
+    addArrayY(yArray: number[]): void;
+    /**
+     * Replace the all Y values of the line
+     */
+    replaceArrayY(yArray: number[]): void;
 }
 //# sourceMappingURL=WbglLine.d.ts.map
