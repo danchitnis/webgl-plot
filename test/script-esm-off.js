@@ -5,7 +5,12 @@ const offscreen = htmlCanvas.transferControlToOffscreen();
 offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
 offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
 
+console.log("before calling action");
+
 const worker = new Worker("worker.js", { type: "module" });
+
+console.log(worker);
+
 worker.postMessage({ canvas: offscreen }, [offscreen]);
 
 let i = 0;

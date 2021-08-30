@@ -1,54 +1,56 @@
-**webgl-plot**
+[webgl-plot](../README.md) / [Exports](../modules.md) / WebglPlot
 
-> [README](../README.md) / [Globals](../globals.md) / WebGLPlot
-
-# Class: WebGLPlot
+# Class: WebglPlot
 
 The main class for the webgl-plot library
 
-## Hierarchy
-
-* **WebGLPlot**
-
-## Index
+## Table of contents
 
 ### Constructors
 
-* [constructor](webglplot.md#constructor)
+- [constructor](WebglPlot.md#constructor)
 
 ### Properties
 
-* [debug](webglplot.md#debug)
-* [gOffsetX](webglplot.md#goffsetx)
-* [gOffsetY](webglplot.md#goffsety)
-* [gScaleX](webglplot.md#gscalex)
-* [gScaleY](webglplot.md#gscaley)
-* [gXYratio](webglplot.md#gxyratio)
+- [addLine](WebglPlot.md#addline)
+- [debug](WebglPlot.md#debug)
+- [gLog10X](WebglPlot.md#glog10x)
+- [gLog10Y](WebglPlot.md#glog10y)
+- [gOffsetX](WebglPlot.md#goffsetx)
+- [gOffsetY](WebglPlot.md#goffsety)
+- [gScaleX](WebglPlot.md#gscalex)
+- [gScaleY](WebglPlot.md#gscaley)
+- [gXYratio](WebglPlot.md#gxyratio)
 
 ### Accessors
 
-* [lines](webglplot.md#lines)
+- [linesAux](WebglPlot.md#linesaux)
+- [linesData](WebglPlot.md#linesdata)
+- [surfaces](WebglPlot.md#surfaces)
 
 ### Methods
 
-* [addLine](webglplot.md#addline)
-* [clear](webglplot.md#clear)
-* [popLine](webglplot.md#popline)
-* [removeAllLines](webglplot.md#removealllines)
-* [update](webglplot.md#update)
-* [viewport](webglplot.md#viewport)
+- [addAuxLine](WebglPlot.md#addauxline)
+- [addDataLine](WebglPlot.md#adddataline)
+- [addSurface](WebglPlot.md#addsurface)
+- [clear](WebglPlot.md#clear)
+- [draw](WebglPlot.md#draw)
+- [popDataLine](WebglPlot.md#popdataline)
+- [removeAllLines](WebglPlot.md#removealllines)
+- [removeAuxLines](WebglPlot.md#removeauxlines)
+- [removeDataLines](WebglPlot.md#removedatalines)
+- [update](WebglPlot.md#update)
+- [viewport](WebglPlot.md#viewport)
 
 ## Constructors
 
 ### constructor
 
-\+ **new WebGLPlot**(`canvas`: HTMLCanvasElement \| OffscreenCanvas, `options?`: [WebGLPlotConfig](../globals.md#webglplotconfig)): [WebGLPlot](webglplot.md)
-
-*Defined in [src/webglplot.ts:79](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L79)*
+• **new WebglPlot**(`canvas`, `options?`)
 
 Create a webgl-plot instance
 
-**`example`** 
+**`example`**
 
 For HTMLCanvas
 ```typescript
@@ -62,7 +64,7 @@ const webglp = new WebGLplot(canvas);
 ...
 ```
 
-**`example`** 
+**`example`**
 
 For OffScreenCanvas
 ```typescript
@@ -82,182 +84,386 @@ const wglp = new WebGLplot(evt.data.canvas);
 }
 ```
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`canvas` | HTMLCanvasElement \| OffscreenCanvas | the canvas in which the plot appears |
-`options?` | [WebGLPlotConfig](../globals.md#webglplotconfig) | - |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `canvas` | `HTMLCanvasElement` | the canvas in which the plot appears |
+| `options?` | `WebglPlotConfig` | - |
 
-**Returns:** [WebGLPlot](webglplot.md)
+#### Defined in
+
+[webglplot.ts:147](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L147)
 
 ## Properties
 
+### addLine
+
+• **addLine**: (`line`: [`WebglLine`](WebglLine.md) \| [`WebglStep`](WebglStep.md) \| [`WebglPolar`](WebglPolar.md)) => `void`
+
+#### Type declaration
+
+▸ (`line`): `void`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `line` | [`WebglLine`](WebglLine.md) \| [`WebglStep`](WebglStep.md) \| [`WebglPolar`](WebglPolar.md) |
+
+##### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:333](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L333)
+
+___
+
 ### debug
 
-•  **debug**: boolean = false
-
-*Defined in [src/webglplot.ts:79](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L79)*
+• **debug**: `boolean` = `false`
 
 log debug output
+
+#### Defined in
+
+[webglplot.ts:107](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L107)
+
+___
+
+### gLog10X
+
+• **gLog10X**: `boolean`
+
+Global log10 of x-axis
+
+**`default`** = false
+
+#### Defined in
+
+[webglplot.ts:70](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L70)
+
+___
+
+### gLog10Y
+
+• **gLog10Y**: `boolean`
+
+Global log10 of y-axis
+
+**`default`** = false
+
+#### Defined in
+
+[webglplot.ts:76](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L76)
 
 ___
 
 ### gOffsetX
 
-•  **gOffsetX**: number
-
-*Defined in [src/webglplot.ts:57](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L57)*
+• **gOffsetX**: `number`
 
 Global horizontal offset
 
 **`default`** = 0
 
+#### Defined in
+
+[webglplot.ts:58](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L58)
+
 ___
 
 ### gOffsetY
 
-•  **gOffsetY**: number
-
-*Defined in [src/webglplot.ts:63](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L63)*
+• **gOffsetY**: `number`
 
 Global vertical offset
 
 **`default`** = 0
 
+#### Defined in
+
+[webglplot.ts:64](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L64)
+
 ___
 
 ### gScaleX
 
-•  **gScaleX**: number
-
-*Defined in [src/webglplot.ts:39](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L39)*
+• **gScaleX**: `number`
 
 Global horizontal scale factor
 
 **`default`** = 1.0
 
+#### Defined in
+
+[webglplot.ts:40](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L40)
+
 ___
 
 ### gScaleY
 
-•  **gScaleY**: number
-
-*Defined in [src/webglplot.ts:45](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L45)*
+• **gScaleY**: `number`
 
 Global vertical scale factor
 
 **`default`** = 1.0
 
+#### Defined in
+
+[webglplot.ts:46](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L46)
+
 ___
 
 ### gXYratio
 
-•  **gXYratio**: number
-
-*Defined in [src/webglplot.ts:51](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L51)*
+• **gXYratio**: `number`
 
 Global X/Y scale ratio
 
 **`default`** = 1
 
+#### Defined in
+
+[webglplot.ts:52](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L52)
+
 ## Accessors
 
-### lines
+### linesAux
 
-• get **lines**(): [WebglBaseLine](webglbaseline.md)[]
+• `get` **linesAux**(): `WebglBaseLine`[]
 
-*Defined in [src/webglplot.ts:70](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L70)*
+#### Returns
 
-**Returns:** [WebglBaseLine](webglbaseline.md)[]
+`WebglBaseLine`[]
+
+#### Defined in
+
+[webglplot.ts:94](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L94)
+
+___
+
+### linesData
+
+• `get` **linesData**(): `WebglBaseLine`[]
+
+#### Returns
+
+`WebglBaseLine`[]
+
+#### Defined in
+
+[webglplot.ts:90](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L90)
+
+___
+
+### surfaces
+
+• `get` **surfaces**(): [`WebglSquare`](WebglSquare.md)[]
+
+#### Returns
+
+[`WebglSquare`](WebglSquare.md)[]
+
+#### Defined in
+
+[webglplot.ts:98](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L98)
 
 ## Methods
 
-### addLine
+### addAuxLine
 
-▸ **addLine**(`line`: [WebglLine](webglline.md) \| [WebglStep](webglstep.md) \| [WebglPolar](webglpolar.md)): void
+▸ **addAuxLine**(`line`): `void`
 
-*Defined in [src/webglplot.ts:217](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L217)*
+#### Parameters
 
-adds a line to the plot
+| Name | Type |
+| :------ | :------ |
+| `line` | [`WebglLine`](WebglLine.md) \| [`WebglStep`](WebglStep.md) \| [`WebglPolar`](WebglPolar.md) |
 
-**`example`** 
-```typescript
-const line = new line(color, numPoints);
-wglp.addLine(line);
-```
+#### Returns
 
-#### Parameters:
+`void`
 
-Name | Type | Description |
------- | ------ | ------ |
-`line` | [WebglLine](webglline.md) \| [WebglStep](webglstep.md) \| [WebglPolar](webglpolar.md) | this could be any of line, linestep, histogram, or polar  |
+#### Defined in
 
-**Returns:** void
+[webglplot.ts:335](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L335)
+
+___
+
+### addDataLine
+
+▸ **addDataLine**(`line`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `line` | [`WebglLine`](WebglLine.md) \| [`WebglStep`](WebglStep.md) \| [`WebglPolar`](WebglPolar.md) |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:328](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L328)
+
+___
+
+### addSurface
+
+▸ **addSurface**(`surface`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `surface` | [`WebglSquare`](WebglSquare.md) |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:340](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L340)
 
 ___
 
 ### clear
 
-▸ **clear**(): void
+▸ **clear**(): `void`
 
-*Defined in [src/webglplot.ts:201](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L201)*
+Clear the canvas
 
-**Returns:** void
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:300](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L300)
 
 ___
 
-### popLine
+### draw
 
-▸ **popLine**(): void
+▸ **draw**(): `void`
 
-*Defined in [src/webglplot.ts:270](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L270)*
+Draw without clearing the canvas
 
-remove the last line
+#### Returns
 
-**Returns:** void
+`void`
+
+#### Defined in
+
+[webglplot.ts:290](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L290)
+
+___
+
+### popDataLine
+
+▸ **popDataLine**(): `void`
+
+remove the last data line
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:388](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L388)
 
 ___
 
 ### removeAllLines
 
-▸ **removeAllLines**(): void
-
-*Defined in [src/webglplot.ts:277](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L277)*
+▸ **removeAllLines**(): `void`
 
 remove all the lines
 
-**Returns:** void
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:395](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L395)
+
+___
+
+### removeAuxLines
+
+▸ **removeAuxLines**(): `void`
+
+remove all auxiliary lines
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:410](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L410)
+
+___
+
+### removeDataLines
+
+▸ **removeDataLines**(): `void`
+
+remove all data lines
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:403](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L403)
 
 ___
 
 ### update
 
-▸ **update**(): void
+▸ **update**(): `void`
 
-*Defined in [src/webglplot.ts:166](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L166)*
+Draw and clear the canvas
 
-updates and redraws the content of the plot
+#### Returns
 
-**Returns:** void
+`void`
+
+#### Defined in
+
+[webglplot.ts:278](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L278)
 
 ___
 
 ### viewport
 
-▸ **viewport**(`a`: number, `b`: number, `c`: number, `d`: number): void
-
-*Defined in [src/webglplot.ts:288](https://github.com/danchitnis/webgl-plot/blob/b445ae1/src/webglplot.ts#L288)*
+▸ **viewport**(`a`, `b`, `c`, `d`): `void`
 
 Change the WbGL viewport
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`a` | number |  |
-`b` | number |  |
-`c` | number |  |
-`d` | number |   |
+| Name | Type |
+| :------ | :------ |
+| `a` | `number` |
+| `b` | `number` |
+| `c` | `number` |
+| `d` | `number` |
 
-**Returns:** void
+#### Returns
+
+`void`
+
+#### Defined in
+
+[webglplot.ts:421](https://github.com/danchitnis/webgl-plot/blob/8cb7c36/src/webglplot.ts#L421)

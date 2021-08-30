@@ -1,6 +1,6 @@
 {
   "name": "webgl-plot",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
   "exports": "./dist/webglplot.js",
@@ -16,13 +16,13 @@
     "high-performance"
   ],
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.29.0",
-    "@typescript-eslint/parser": "^4.29.0",
+    "@typescript-eslint/eslint-plugin": "^4.29.3",
+    "@typescript-eslint/parser": "^4.29.3",
     "eslint": "^7.32.0",
-    "rollup": "^2.56.0",
-    "typedoc": "^0.21.5",
+    "rollup": "^2.56.3",
+    "typedoc": "^0.21.8",
     "typedoc-plugin-markdown": "^3.10.4",
-    "typescript": "^4.3.5"
+    "typescript": "^4.4.2"
   },
   "scripts": {
     "build": "tsc && rollup -c",
@@ -37,6 +37,5 @@
   "bugs": {
     "url": "https://github.com/danchitnis/webgl-plot/issues"
   },
-  "homepage": "https://github.com/danchitnis/webgl-plot",
-  "dependencies": {}
+  "homepage": "https://github.com/danchitnis/webgl-plot"
 }

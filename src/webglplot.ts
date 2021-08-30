@@ -144,7 +144,7 @@ export class WebglPlot {
    * }
    * ```
    */
-  constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebglPlotConfig) {
+  constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig) {
     if (options == undefined) {
       this.webgl = canvas.getContext("webgl", {
         antialias: true,

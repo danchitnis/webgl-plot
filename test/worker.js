@@ -1,4 +1,4 @@
-import WebGLplot, { WebglLine, ColorRGBA } from "../dist/webglplot.esm.js";
+import { WebglPlot, WebglLine, ColorRGBA } from "../dist/webglplot.esm.js";
 
 onmessage = function (evt) {
   const canvas = evt.data.canvas;
@@ -9,9 +9,9 @@ onmessage = function (evt) {
 
   const line = new WebglLine(color, numX);
 
-  const wglp = new WebGLplot(canvas);
+  const wglp = new WebglPlot(canvas);
 
-  line.lineSpaceX(-1, 2 / numX);
+  line.arrangeX();
   wglp.addLine(line);
 
   function newFrame() {

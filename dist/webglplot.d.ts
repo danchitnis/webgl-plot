@@ -118,7 +118,7 @@ export declare class WebglPlot {
      * }
      * ```
      */
-    constructor(canvas: HTMLCanvasElement | OffscreenCanvas, options?: WebglPlotConfig);
+    constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig);
     /**
      * updates and redraws the content of the plot
      */

@@ -1,8 +1,12 @@
 node_modules
 temp
 .now
-.yarn
-.pnp.js
-.yarnrc.yml
 .vscode
 docs
+.yarn/*
+.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
