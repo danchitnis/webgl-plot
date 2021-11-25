@@ -1,15 +1,19 @@
 {
   "name": "webgl-plot",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "High-performance 2D plotting library based on native WebGL",
-  "main": "./dist/webglplot.umd.js",
+  "main": "./dist/webglplot.umd.cjs",
   "exports": {
-    "require": "./dist/webglplot.umd.js",
-    "import": "./dist/webglplot.esm.js"
+    ".": {
+      "require": "./dist/webglplot.umd.cjs",
+      "import": "./dist/webglplot.esm.js"
+    },
+    "./package.json": "./package.json"
   },
   "module": "./dist/webglplot.esm.js",
   "typings": "./dist/webglplot.d.ts",
   "types": "./dist/webglplot.d.ts",
+  "type": "module",
   "keywords": [
     "webgl",
     "plot",
@@ -20,13 +24,13 @@
   ],
   "devDependencies": {
     "@skypack/package-check": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^5.3.1",
-    "@typescript-eslint/parser": "^5.3.1",
-    "eslint": "^8.2.0",
-    "rollup": "^2.59.0",
-    "typedoc": "^0.22.8",
-    "typedoc-plugin-markdown": "^3.11.3",
-    "typescript": "^4.4.4"
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "eslint": "^8.3.0",
+    "rollup": "^2.60.1",
+    "typedoc": "^0.22.10",
+    "typedoc-plugin-markdown": "^3.11.7",
+    "typescript": "^4.5.2"
   },
   "scripts": {
     "build": "tsc && rollup -c",
