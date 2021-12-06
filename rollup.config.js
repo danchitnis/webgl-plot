@@ -8,5 +8,7 @@ export default {
   output: [
     { file: pkg.main, format: "umd", name: "WebglPlotBundle", exports: "named" },
     { file: pkg.module, format: "es" },
+    { file: pkg.exports["."].import, format: "es" },
+    { file: pkg.exports["."].require, format: "cjs" },
   ],
 };
