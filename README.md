@@ -20,7 +20,7 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 **Dynamic**: When plotting real-time multiple waveforms are required. For example, software-based oscilloscopes, Arduino, microcontrollers, FPGA user interfaces. This framework also can be used in combination with ElectronJS.
 
-**Static**: Enables rapid pan and zoom capability for inspecting very large datasets. See the [static example](https://danchitnis.github.io/webgl-plot-examples/static.html)
+**Static**: Enables rapid pan and zoom capability for inspecting very large datasets. See the [static example](https://danchitnis.github.io/webgl-plot-examples/vanilla/static.html)
 
 ## Limitations
 
