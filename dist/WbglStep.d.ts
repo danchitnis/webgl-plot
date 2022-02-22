@@ -1,9 +1,9 @@
 import type { ColorRGBA } from "./ColorRGBA";
-import { WebglBaseLine } from "./WebglBaseLine";
+import { WebglBase } from "./WebglBase";
 /**
  * The step based line plot
  */
-export declare class WebglStep extends WebglBaseLine {
+export declare class WebglStep extends WebglBase {
     /**
      * Create a new step line
      * @param c - the color of the line

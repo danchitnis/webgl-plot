@@ -1,11 +1,14 @@
 import type { ColorRGBA } from "./ColorRGBA";
+import { PolyLine } from "./thick";
+import type { Vec2 } from "./vecTools";
 import { WebglBase } from "./WebglBase";
 
 /**
  * The standard Line class
  */
-export class WebglLine extends WebglBase {
+export class WebglThickLine extends WebglBase {
   private currentIndex = 0;
+  protected triPoints: Float32Array;
 
   /**
    * Create a new line
@@ -24,8 +27,20 @@ export class WebglLine extends WebglBase {
     this.numPoints = numPoints;
     this.color = c;
 
+    this.triPoints = new Float32Array(this.numPoints * 2);
     this.xy = new Float32Array(2 * this.webglNumPoints);
   }
+
+  /*private convertToTriPoints(): void {
+    const normals = PolyLine(lineThick);
+    for (let i = 0; i < this.numPoints; i++) {
+      const point = { x: this.getX(i), y: this.getY(i) } as Vec2;
+      const top = scaleAndAdd(point, point.vec2, normal.miterLength * halfThick);
+      //const bot = scaleAndAdd(lineThick[i], normals[i].vec2, -normals[i].miterLength * halfThick);
+      this.triPoints[i * 2] = 0;
+      this.triPoints[i * 2 + 1] = 0;
+    }
+  }*/
 
   /**
    * Set the X value at a specific index

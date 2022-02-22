@@ -1,8 +1,8 @@
-import { WebglBaseLine } from "./WebglBaseLine";
+import { WebglBase } from "./WebglBase";
 /**
  * The step based line plot
  */
-export class WebglStep extends WebglBaseLine {
+export class WebglStep extends WebglBase {
     /**
      * Create a new step line
      * @param c - the color of the line

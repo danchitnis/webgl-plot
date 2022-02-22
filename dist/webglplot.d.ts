@@ -10,7 +10,7 @@ import { WebglLine } from "./WbglLine";
 import { WebglStep } from "./WbglStep";
 import { WebglPolar } from "./WbglPolar";
 import { WebglSquare } from "./WbglSquare";
-import type { WebglBaseLine } from "./WebglBaseLine";
+import type { WebglBase } from "./WebglBase";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare };
 declare type WebglPlotConfig = {
     antialias?: boolean;
@@ -72,8 +72,8 @@ export declare class WebglPlot {
      */
     private _linesAux;
     private _surfaces;
-    get linesData(): WebglBaseLine[];
-    get linesAux(): WebglBaseLine[];
+    get linesData(): WebglBase[];
+    get linesAux(): WebglBase[];
     get surfaces(): WebglSquare[];
     private progThinLine;
     /**
@@ -124,6 +124,7 @@ export declare class WebglPlot {
      */
     private drawLines;
     private drawSurfaces;
+    drawTriangles(triPoints: Float32Array): void;
     /**
      * Draw and clear the canvas
      */

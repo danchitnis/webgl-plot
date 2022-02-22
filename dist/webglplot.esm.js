@@ -10,7 +10,7 @@ class ColorRGBA {
 /**
  * Baseline class
  */
-class WebglBaseLine {
+class WebglBase {
     /**
      * @internal
      */
@@ -34,7 +34,7 @@ class WebglBaseLine {
 /**
  * The standard Line class
  */
-class WebglLine extends WebglBaseLine {
+class WebglLine extends WebglBase {
     /**
      * Create a new line
      * @param c - the color of the line
@@ -164,7 +164,7 @@ class WebglLine extends WebglBaseLine {
 /**
  * The step based line plot
  */
-class WebglStep extends WebglBaseLine {
+class WebglStep extends WebglBase {
     /**
      * Create a new step line
      * @param c - the color of the line
@@ -252,7 +252,7 @@ class WebglStep extends WebglBaseLine {
     }
 }
 
-class WebglPolar extends WebglBaseLine {
+class WebglPolar extends WebglBase {
     constructor(c, numPoints) {
         super();
         this.webglNumPoints = numPoints;
@@ -304,7 +304,7 @@ class WebglPolar extends WebglBaseLine {
 /**
  * The Square class
  */
-class WebglSquare extends WebglBaseLine {
+class WebglSquare extends WebglBase {
     /**
      * Create a new line
      * @param c - the color of the line
@@ -461,28 +461,42 @@ class WebglPlot {
             }
         });
     }
-    drawSurfaces(lines) {
+    drawSurfaces(squares) {
         const webgl = this.webgl;
-        lines.forEach((line) => {
-            if (line.visible) {
+        squares.forEach((square) => {
+            if (square.visible) {
                 webgl.useProgram(this.progThinLine);
                 const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
                 webgl.uniformMatrix2fv(uscale, false, new Float32Array([
-                    line.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
+                    square.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
                     0,
                     0,
-                    line.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
+                    square.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
                 ]));
                 const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
-                webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
+                webgl.uniform2fv(uoffset, new Float32Array([square.offsetX + this.gOffsetX, square.offsetY + this.gOffsetY]));
                 const isLog = webgl.getUniformLocation(this.progThinLine, "is_log");
                 webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
                 const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
-                webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
-                webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
-                webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, line.webglNumPoints);
+                webgl.uniform4fv(uColor, [square.color.r, square.color.g, square.color.b, square.color.a]);
+                webgl.bufferData(webgl.ARRAY_BUFFER, square.xy, webgl.STREAM_DRAW);
+                webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, square.webglNumPoints);
             }
         });
+    }
+    drawTriangles(triPoints) {
+        const webgl = this.webgl;
+        webgl.bufferData(webgl.ARRAY_BUFFER, triPoints, webgl.STREAM_DRAW);
+        webgl.useProgram(this.progThinLine);
+        const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
+        webgl.uniformMatrix2fv(uscale, false, new Float32Array([1, 0, 0, 1]));
+        const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
+        webgl.uniform2fv(uoffset, new Float32Array([0, 0]));
+        const isLog = webgl.getUniformLocation(this.progThinLine, "is_log");
+        webgl.uniform2iv(isLog, new Int32Array([0, 0]));
+        const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
+        webgl.uniform4fv(uColor, [0.9, 0.9, 0.9, 0.9]);
+        webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, triPoints.length / 2);
     }
     /**
      * Draw and clear the canvas
