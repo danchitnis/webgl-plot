@@ -1,4 +1,4 @@
-import { WebglPlot, WebglLine, ColorRGBA } from "../dist/webglplot.esm.js";
+import { WebglPlot, ColorRGBA, WebglThickLine } from "../dist/webglplot.esm.js";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -14,10 +14,10 @@ const createLines = (num) => {
   wglp.removeAllLines();
   for (let i = 0; i < num; i++) {
     const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
-    const line = new WebglLine(color, numX);
-    line.lineSpaceX(-1, 2 / numX);
-    line.offsetY = (i - Math.floor(num / 2)) / num;
-    wglp.addLine(line);
+    const thickLine = new WebglThickLine(color, numX, 0.01);
+    thickLine.lineSpaceX(-1, 2 / numX);
+    thickLine.offsetY = (i - Math.floor(num / 2)) / num;
+    wglp.addThickLine(thickLine);
   }
 };
 
@@ -26,7 +26,7 @@ createLines(1);
 let frame = 0;
 let prevTime = new Date();
 
-function newFrame() {
+const newFrame = () => {
   //const timeStrat = +new Date();
   update();
   wglp.update();
@@ -40,13 +40,13 @@ function newFrame() {
   }
 
   requestAnimationFrame(newFrame);
-}
+};
 requestAnimationFrame(newFrame);
 
-function update() {
+const update = () => {
   const freq = 0.001;
   const amp = 0.5;
-  const noise = 0.1;
+  const noise = 0.01;
 
   let yFinal = new Float32Array(numX);
 
@@ -57,12 +57,12 @@ function update() {
   }
   //console.log(yFinal);
 
-  wglp.linesData.forEach((line) => {
+  wglp.thickLines.forEach((line) => {
     for (let i = 0; i < yFinal.length; i++) {
       line.setY(i, yFinal[i]);
     }
   });
-}
+};
 
 const btClick = document.getElementById("btClick");
 const inNum = document.getElementById("inNum");

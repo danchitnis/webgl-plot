@@ -9,7 +9,7 @@ export type NormalMiter = {
   miterLength: number;
 };
 
-export const PolyLine = (linePoints: Vec2[]): NormalMiter[] => {
+export const PolyLine = (lineXY: Float32Array): NormalMiter[] => {
   let curNormal: Vec2;
   let lineA = { x: 0, y: 0 } as Vec2;
   let lineB = { x: 0, y: 0 } as Vec2;
@@ -19,15 +19,21 @@ export const PolyLine = (linePoints: Vec2[]): NormalMiter[] => {
     out.push({ vec2: normal, miterLength: length } as NormalMiter);
   };
 
+  const getXY = (index: number): Vec2 => {
+    return { x: lineXY[index * 2], y: lineXY[index * 2 + 1] };
+  };
+
   // add initial normals
-  lineA = direction(linePoints[1], linePoints[0]);
+  lineA = direction(getXY(1), getXY(0));
   curNormal = normal(lineA);
   addNext(curNormal, 1);
 
-  for (let i = 1; i < linePoints.length - 1; i++) {
-    const last = linePoints[i - 1];
-    const cur = linePoints[i];
-    const next = linePoints[i + 1];
+  const numPoints = lineXY.length / 2;
+
+  for (let i = 1; i < numPoints - 1; i++) {
+    const last = getXY(i - 1);
+    const cur = getXY(i);
+    const next = getXY(i + 1);
 
     lineA = direction(cur, last);
 
@@ -43,7 +49,7 @@ export const PolyLine = (linePoints: Vec2[]): NormalMiter[] => {
 
   // add last normal
   // no miter, simple segment
-  lineA = direction(linePoints[linePoints.length - 1], linePoints[linePoints.length - 2]);
+  lineA = direction(getXY(numPoints - 1), getXY(numPoints - 2));
   curNormal = normal(lineA); //reset normal
   addNext(curNormal, 1);
 

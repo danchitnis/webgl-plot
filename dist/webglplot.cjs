@@ -337,6 +337,236 @@ class WebglSquare extends WebglBase {
 }
 
 /**
+ *
+ */
+const scaleAndAdd = (a, b, scale) => {
+    let out = { x: 0, y: 0 };
+    out.x = a.x + b.x * scale;
+    out.y = a.y + b.y * scale;
+    return out;
+};
+const normal = (dir) => {
+    //get perpendicular
+    let out = set(-dir.y, dir.x);
+    return out;
+};
+const direction = (a, b) => {
+    //get unit dir of two lines
+    let out = subtract(a, b);
+    out = normalize(out);
+    return out;
+};
+/**
+ * Adds two vec2's
+ *
+ * @param {vec2} out the receiving vector
+ * @param {vec2} a the first operand
+ * @param {vec2} b the second operand
+ * @returns {vec2} out
+ */
+const add = (a, b) => {
+    let out = { x: 0, y: 0 };
+    out.x = a.x + b.x;
+    out.y = a.y + b.y;
+    return out;
+};
+/**
+ * Calculates the dot product of two vec2's
+ *
+ * @param {vec2} a the first operand
+ * @param {vec2} b the second operand
+ * @returns {Number} dot product of a and b
+ */
+const dot = (a, b) => {
+    return a.x * b.x + a.y * b.y;
+};
+/**
+ * Normalize a vec2
+ *
+ * @param {vec2} out the receiving vector
+ * @param {vec2} a vector to normalize
+ * @returns {vec2} out
+ */
+const normalize = (a) => {
+    let out = { x: 0, y: 0 };
+    let len = a.x * a.x + a.y * a.y;
+    if (len > 0) {
+        //TODO: evaluate use of glm_invsqrt here?
+        len = 1 / Math.sqrt(len);
+        out.x = a.x * len;
+        out.y = a.y * len;
+    }
+    return out;
+};
+/**
+ * Set the components of a vec2 to the given values
+ *
+ * @param {vec2} out the receiving vector
+ * @param {Number} x X component
+ * @param {Number} y Y component
+ * @returns {vec2} out
+ */
+const set = (x, y) => {
+    let out = { x: 0, y: 0 };
+    out.x = x;
+    out.y = y;
+    return out;
+};
+/**
+ * Subtracts vector b from vector a
+ *
+ * @param {vec2} out the receiving vector
+ * @param {vec2} a the first operand
+ * @param {vec2} b the second operand
+ * @returns {vec2} out
+ */
+const subtract = (a, b) => {
+    let out = { x: 0, y: 0 };
+    out.x = a.x - b.x;
+    out.y = a.y - b.y;
+    return out;
+};
+
+/**
+ *
+ */
+const PolyLine = (lineXY) => {
+    let curNormal;
+    let lineA = { x: 0, y: 0 };
+    let lineB = { x: 0, y: 0 };
+    const out = [];
+    const addNext = (normal, length) => {
+        out.push({ vec2: normal, miterLength: length });
+    };
+    const getXY = (index) => {
+        return { x: lineXY[index * 2], y: lineXY[index * 2 + 1] };
+    };
+    // add initial normals
+    lineA = direction(getXY(1), getXY(0));
+    curNormal = normal(lineA);
+    addNext(curNormal, 1);
+    const numPoints = lineXY.length / 2;
+    for (let i = 1; i < numPoints - 1; i++) {
+        const last = getXY(i - 1);
+        const cur = getXY(i);
+        const next = getXY(i + 1);
+        lineA = direction(cur, last);
+        curNormal = normal(lineA);
+        lineB = direction(next, cur);
+        //stores tangent & miter
+        const miter = computeMiter(lineA, lineB);
+        const miterLen = computeMiterLen(lineA, miter, 1);
+        addNext(miter, miterLen);
+    }
+    // add last normal
+    // no miter, simple segment
+    lineA = direction(getXY(numPoints - 1), getXY(numPoints - 2));
+    curNormal = normal(lineA); //reset normal
+    addNext(curNormal, 1);
+    return out;
+};
+const computeMiter = (lineA, lineB) => {
+    //get tangent line
+    let tangent = add(lineA, lineB);
+    tangent = normalize(tangent);
+    //get miter as a unit vector
+    const miter = set(-tangent.y, tangent.x);
+    return miter;
+};
+const computeMiterLen = (lineA, miter, halfThick) => {
+    const tmp = set(-lineA.y, lineA.x);
+    //get the necessary length of our miter
+    return halfThick / dot(miter, tmp);
+};
+
+/**
+ * The standard Line class
+ */
+class WebglThickLine extends WebglBase {
+    /**
+     * Create a new line
+     * @param c - the color of the line
+     * @param numPoints - number of data pints
+     * @example
+     * ```typescript
+     * x= [0,1]
+     * y= [1,2]
+     * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
+     * ```
+     */
+    constructor(c, numPoints, thickness) {
+        super();
+        this.currentIndex = 0;
+        this._thickness = 0;
+        this.webglNumPoints = numPoints * 2;
+        this.numPoints = numPoints;
+        this.color = c;
+        this._thickness = thickness;
+        this._linePoints = new Float32Array(numPoints * 2);
+        //this.triPoints = new Float32Array(this.numPoints * 4);
+        this.xy = new Float32Array(2 * this.webglNumPoints);
+    }
+    convertToTriPoints() {
+        //const thick = 0.01;
+        const halfThick = this._thickness / 2;
+        const normals = PolyLine(this._linePoints);
+        //console.log(this.linePoints);
+        //console.log(normals);
+        for (let i = 0; i < this.numPoints; i++) {
+            const x = this._linePoints[2 * i];
+            const y = this._linePoints[2 * i + 1];
+            const point = { x: x, y: y };
+            const top = scaleAndAdd(point, normals[i].vec2, normals[i].miterLength * halfThick);
+            const bot = scaleAndAdd(point, normals[i].vec2, -normals[i].miterLength * halfThick);
+            this.xy[i * 4] = top.x;
+            this.xy[i * 4 + 1] = top.y;
+            this.xy[i * 4 + 2] = bot.x;
+            this.xy[i * 4 + 3] = bot.y;
+        }
+    }
+    /**
+     * Set the X value at a specific index
+     * @param index - the index of the data point
+     * @param x - the horizontal value of the data point
+     */
+    setX(index, x) {
+        this._linePoints[index * 2] = x;
+    }
+    /**
+     * Set the Y value at a specific index
+     * @param index : the index of the data point
+     * @param y : the vertical value of the data point
+     */
+    setY(index, y) {
+        this._linePoints[index * 2 + 1] = y;
+    }
+    /**
+     * Make an equally spaced array of X points
+     * @param start  - the start of the series
+     * @param stepSize - step size between each data point
+     *
+     * @example
+     * ```typescript
+     * //x = [-1, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
+     * const numX = 10;
+     * line.lineSpaceX(-1, 2 / numX);
+     * ```
+     */
+    lineSpaceX(start, stepSize) {
+        for (let i = 0; i < this.numPoints; i++) {
+            // set x to -num/2:1:+num/2
+            this.setX(i, start + stepSize * i);
+        }
+    }
+    setThickness(thickness) {
+        this._thickness = thickness;
+    }
+    getThickness() {
+        return this._thickness;
+    }
+}
+
+/**
  * Author Danial Chitnis 2019-20
  *
  * inspired by:
@@ -411,6 +641,7 @@ class WebglPlot {
         this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
         this._linesData = [];
         this._linesAux = [];
+        this._thickLines = [];
         this._surfaces = [];
         //this.webgl = webgl;
         this.gScaleX = 1;
@@ -424,7 +655,7 @@ class WebglPlot {
         this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
         // Set the view port
         this.webgl.viewport(0, 0, canvas.width, canvas.height);
-        this.progThinLine = this.webgl.createProgram();
+        this._progLine = this.webgl.createProgram();
         this.initThinLineProgram();
         //https://learnopengl.com/Advanced-OpenGL/Blending
         this.webgl.enable(this.webgl.BLEND);
@@ -436,88 +667,108 @@ class WebglPlot {
     get linesAux() {
         return this._linesAux;
     }
+    get thickLines() {
+        return this._thickLines;
+    }
     get surfaces() {
         return this._surfaces;
     }
     /**
      * updates and redraws the content of the plot
      */
-    drawLines(lines) {
+    _drawLines(lines) {
         const webgl = this.webgl;
         lines.forEach((line) => {
             if (line.visible) {
-                webgl.useProgram(this.progThinLine);
-                const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
+                webgl.useProgram(this._progLine);
+                const uscale = webgl.getUniformLocation(this._progLine, "uscale");
                 webgl.uniformMatrix2fv(uscale, false, new Float32Array([
                     line.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
                     0,
                     0,
                     line.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
                 ]));
-                const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
+                const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
                 webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
-                const isLog = webgl.getUniformLocation(this.progThinLine, "is_log");
+                const isLog = webgl.getUniformLocation(this._progLine, "is_log");
                 webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
-                const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
+                const uColor = webgl.getUniformLocation(this._progLine, "uColor");
                 webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
                 webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
                 webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
             }
         });
     }
-    drawSurfaces(squares) {
+    _drawSurfaces(squares) {
         const webgl = this.webgl;
         squares.forEach((square) => {
             if (square.visible) {
-                webgl.useProgram(this.progThinLine);
-                const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
+                webgl.useProgram(this._progLine);
+                const uscale = webgl.getUniformLocation(this._progLine, "uscale");
                 webgl.uniformMatrix2fv(uscale, false, new Float32Array([
                     square.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
                     0,
                     0,
                     square.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
                 ]));
-                const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
+                const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
                 webgl.uniform2fv(uoffset, new Float32Array([square.offsetX + this.gOffsetX, square.offsetY + this.gOffsetY]));
-                const isLog = webgl.getUniformLocation(this.progThinLine, "is_log");
+                const isLog = webgl.getUniformLocation(this._progLine, "is_log");
                 webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
-                const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
+                const uColor = webgl.getUniformLocation(this._progLine, "uColor");
                 webgl.uniform4fv(uColor, [square.color.r, square.color.g, square.color.b, square.color.a]);
                 webgl.bufferData(webgl.ARRAY_BUFFER, square.xy, webgl.STREAM_DRAW);
                 webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, square.webglNumPoints);
             }
         });
     }
-    drawTriangles(triPoints) {
+    _drawTriangles(thickLine) {
         const webgl = this.webgl;
-        webgl.bufferData(webgl.ARRAY_BUFFER, triPoints, webgl.STREAM_DRAW);
-        webgl.useProgram(this.progThinLine);
-        const uscale = webgl.getUniformLocation(this.progThinLine, "uscale");
-        webgl.uniformMatrix2fv(uscale, false, new Float32Array([1, 0, 0, 1]));
-        const uoffset = webgl.getUniformLocation(this.progThinLine, "uoffset");
-        webgl.uniform2fv(uoffset, new Float32Array([0, 0]));
-        const isLog = webgl.getUniformLocation(this.progThinLine, "is_log");
+        webgl.bufferData(webgl.ARRAY_BUFFER, thickLine.xy, webgl.STREAM_DRAW);
+        webgl.useProgram(this._progLine);
+        const uscale = webgl.getUniformLocation(this._progLine, "uscale");
+        webgl.uniformMatrix2fv(uscale, false, new Float32Array([
+            thickLine.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
+            0,
+            0,
+            thickLine.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
+        ]));
+        const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
+        webgl.uniform2fv(uoffset, new Float32Array([thickLine.offsetX + this.gOffsetX, thickLine.offsetY + this.gOffsetY]));
+        const isLog = webgl.getUniformLocation(this._progLine, "is_log");
         webgl.uniform2iv(isLog, new Int32Array([0, 0]));
-        const uColor = webgl.getUniformLocation(this.progThinLine, "uColor");
-        webgl.uniform4fv(uColor, [0.9, 0.9, 0.9, 0.9]);
-        webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, triPoints.length / 2);
+        const uColor = webgl.getUniformLocation(this._progLine, "uColor");
+        webgl.uniform4fv(uColor, [
+            thickLine.color.r,
+            thickLine.color.g,
+            thickLine.color.b,
+            thickLine.color.a,
+        ]);
+        webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, thickLine.xy.length / 2);
+    }
+    _drawThickLines() {
+        this._thickLines.forEach((thickLine) => {
+            if (thickLine.visible) {
+                thickLine.convertToTriPoints();
+                this._drawTriangles(thickLine);
+            }
+        });
     }
     /**
      * Draw and clear the canvas
      */
     update() {
         this.clear();
-        this.drawLines(this.linesData);
-        this.drawLines(this.linesAux);
-        this.drawSurfaces(this.surfaces);
+        this.draw();
     }
     /**
      * Draw without clearing the canvas
      */
     draw() {
-        this.drawLines(this.linesData);
-        this.drawLines(this.linesAux);
-        this.drawSurfaces(this.surfaces);
+        this._drawLines(this.linesData);
+        this._drawLines(this.linesAux);
+        this._drawThickLines();
+        this._drawSurfaces(this.surfaces);
     }
     /**
      * Clear the canvas
@@ -541,8 +792,8 @@ class WebglPlot {
         line._vbuffer = this.webgl.createBuffer();
         this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
         this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy, this.webgl.STREAM_DRAW);
-        this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
-        line._coord = this.webgl.getAttribLocation(this.progThinLine, "coordinates");
+        //this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
+        line._coord = this.webgl.getAttribLocation(this._progLine, "coordinates");
         this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
         this.webgl.enableVertexAttribArray(line._coord);
     }
@@ -553,6 +804,10 @@ class WebglPlot {
     addAuxLine(line) {
         this._addLine(line);
         this.linesAux.push(line);
+    }
+    addThickLine(thickLine) {
+        this._addLine(thickLine);
+        this._thickLines.push(thickLine);
     }
     addSurface(surface) {
         this._addLine(surface);
@@ -587,10 +842,10 @@ class WebglPlot {
         const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
         this.webgl.shaderSource(fragShader, fragCode);
         this.webgl.compileShader(fragShader);
-        this.progThinLine = this.webgl.createProgram();
-        this.webgl.attachShader(this.progThinLine, vertShader);
-        this.webgl.attachShader(this.progThinLine, fragShader);
-        this.webgl.linkProgram(this.progThinLine);
+        this._progLine = this.webgl.createProgram();
+        this.webgl.attachShader(this._progLine, vertShader);
+        this.webgl.attachShader(this._progLine, fragShader);
+        this.webgl.linkProgram(this._progLine);
     }
     /**
      * remove the last data line
@@ -604,6 +859,8 @@ class WebglPlot {
     removeAllLines() {
         this._linesData = [];
         this._linesAux = [];
+        this._thickLines = [];
+        this._surfaces = [];
     }
     /**
      * remove all data lines
@@ -640,3 +897,4 @@ exports.WebglPlot = WebglPlot;
 exports.WebglPolar = WebglPolar;
 exports.WebglSquare = WebglSquare;
 exports.WebglStep = WebglStep;
+exports.WebglThickLine = WebglThickLine;

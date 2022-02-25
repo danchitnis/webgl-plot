@@ -10,9 +10,10 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 - Using WebGL native line drawing
 - High update rate which matches the screen's refresh rate (FPS)
 - Works for both dynamic and static data
+- supports both thin (native) and thick lines
 - Full control over the color of each line in each frame
 - No dependencies
-- Works on any browser/platform that [supports WebGL](https://caniuse.com/#feat=webgl)
+- Works on any browsers/platforms that [supports WebGL](https://caniuse.com/#feat=webgl)
 - Compatible with [OffScreenCanvas](https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas) and [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) for offloading cpu time from the main thread
 - Ideal for embedded systems with low resources or large datasets
 
@@ -22,13 +23,13 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 **Static**: Enables rapid pan and zoom capability for inspecting very large datasets. See the [static example](https://danchitnis.github.io/webgl-plot-examples/vanilla/static.html)
 
-## Limitations
+## Thick Lines are now supported! 🥳
 
-It cannot change the line width due to the OpenGL implementation of a line. The OpenGL specification only guarantees a minimum of a single pixel line width. There are other solutions to increase the line width however they substantially increase the size of the data vector and take a hit on the performance. Top performance (refresh rate, memory, etc) is the top priority for this library.
+However notice that due to computation of the line data points, the performance of the thick lines is nearly _6 times slower_ than the normal lines. Only use thick lines when you need to see the lines clearly for example when highlighting a specific line. Further information can be found below. For benchmarking, see the [benchmark]() section.
 
 ## Getting started
 
-Create an HTML canvas with an appropriate width or height:
+### Create an HTML canvas with an appropriate width or height:
 
 ```html
 <div>
@@ -36,13 +37,13 @@ Create an HTML canvas with an appropriate width or height:
 </div>
 ```
 
-Import WebGL-Plot library using ES6 modules:
+### Import the `webgl-plot` library using ES6 modules:
 
 ```javascript
 import { WebglPlot, WebglLine, ColorRGBA } from "webgl-plot";
 ```
 
-Prepare the canvas
+### Prepare the canvas:
 
 ```javascript
 const canvas = document.getElementById("my_canvas");
@@ -51,7 +52,9 @@ canvas.width = canvas.clientWidth * devicePixelRatio;
 canvas.height = canvas.clientHeight * devicePixelRatio;
 ```
 
-Initialization:
+Note: The canvas width and height must be set in order to be able to draw on the canvas.
+
+### Initialization:
 
 ```javascript
 const numX = canvas.width;
@@ -72,7 +75,7 @@ Add the line to the webgl canvas:
 wglp.addLine(line);
 ```
 
-Configure the requestAnimationFrame call:
+### Configure the requestAnimationFrame call:
 
 ```javascript
 function newFrame() {
@@ -83,7 +86,7 @@ function newFrame() {
 requestAnimationFrame(newFrame);
 ```
 
-Add the update function:
+### Add the `update` function:
 
 ```javascript
 function update() {
@@ -121,7 +124,7 @@ React website is under development...
 
 [https://webgl-plot-react.vercel.app/](https://webgl-plot-react.vercel.app/) ⚛
 
-## JS Bundle
+## JS Bundles
 
 To use WebGL-Plot as a JS pre-bundled package first import the following in your HTML file:
 
