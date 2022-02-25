@@ -1,8 +1,8 @@
-import { WebglBaseLine } from "./WebglBaseLine";
+import { WebglBase } from "./WebglBase";
 /**
  * The standard Line class
  */
-export class WebglLine extends WebglBaseLine {
+export class WebglLine extends WebglBase {
     /**
      * Create a new line
      * @param c - the color of the line

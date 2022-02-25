@@ -1,9 +1,9 @@
 import type { ColorRGBA } from "./ColorRGBA";
-import { WebglBaseLine } from "./WebglBaseLine";
+import { WebglBase } from "./WebglBase";
 /**
  * The standard Line class
  */
-export declare class WebglLine extends WebglBaseLine {
+export declare class WebglLine extends WebglBase {
     private currentIndex;
     /**
      * Create a new line

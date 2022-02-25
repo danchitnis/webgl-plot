@@ -1,7 +1,7 @@
 import type { ColorRGBA } from "./ColorRGBA";
-import { WebglBaseLine } from "./WebglBaseLine";
+import { WebglBase } from "./WebglBase";
 
-export class WebglPolar extends WebglBaseLine {
+export class WebglPolar extends WebglBase {
   public numPoints: number;
   public xy: Float32Array;
   public color: ColorRGBA;

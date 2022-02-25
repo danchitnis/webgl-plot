@@ -1,4 +1,4 @@
-import WebGLplot, { WebglLine, ColorRGBA } from "../dist/webglplot.esm.js";
+import { WebglPlot, WebglLine, ColorRGBA } from "../dist/webglplot.esm.js";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -8,7 +8,7 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 const numX = canvas.width;
 
-const wglp = new WebGLplot(canvas, { powerPerformance: "high-performance" });
+const wglp = new WebglPlot(canvas, { powerPerformance: "high-performance" });
 
 const createLines = (num) => {
   wglp.removeAllLines();

@@ -3,7 +3,7 @@ import { ColorRGBA } from "./ColorRGBA";
 /**
  * Baseline class
  */
-export abstract class WebglBaseLine {
+export abstract class WebglBase {
   //private static program: WebGLProgram;
 
   public intensity: number;

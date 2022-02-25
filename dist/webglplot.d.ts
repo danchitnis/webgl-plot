@@ -10,8 +10,9 @@ import { WebglLine } from "./WbglLine";
 import { WebglStep } from "./WbglStep";
 import { WebglPolar } from "./WbglPolar";
 import { WebglSquare } from "./WbglSquare";
-import type { WebglBaseLine } from "./WebglBaseLine";
-export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare };
+import type { WebglBase } from "./WebglBase";
+import { WebglThickLine } from "./WbglThickLine";
+export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine };
 declare type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;
@@ -71,11 +72,13 @@ export declare class WebglPlot {
      * collection of auxiliary lines (grids, markers, etc) in the plot
      */
     private _linesAux;
+    private _thickLines;
     private _surfaces;
-    get linesData(): WebglBaseLine[];
-    get linesAux(): WebglBaseLine[];
+    get linesData(): WebglBase[];
+    get linesAux(): WebglBase[];
+    get thickLines(): WebglThickLine[];
     get surfaces(): WebglSquare[];
-    private progThinLine;
+    private _progLine;
     /**
      * log debug output
      */
@@ -122,8 +125,10 @@ export declare class WebglPlot {
     /**
      * updates and redraws the content of the plot
      */
-    private drawLines;
-    private drawSurfaces;
+    private _drawLines;
+    private _drawSurfaces;
+    private _drawTriangles;
+    private _drawThickLines;
     /**
      * Draw and clear the canvas
      */
@@ -150,6 +155,7 @@ export declare class WebglPlot {
     addDataLine(line: WebglLine | WebglStep | WebglPolar): void;
     addLine: (line: WebglLine | WebglStep | WebglPolar) => void;
     addAuxLine(line: WebglLine | WebglStep | WebglPolar): void;
+    addThickLine(thickLine: WebglThickLine): void;
     addSurface(surface: WebglSquare): void;
     private initThinLineProgram;
     /**
