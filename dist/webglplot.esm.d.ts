@@ -268,7 +268,8 @@ declare class WebglSquare extends WebglBase {
 declare class WebglThickLine extends WebglBase {
     private currentIndex;
     private _linePoints;
-    private _thickness;
+    private _thicknessRequested;
+    private _actualThickness;
     /**
      * Create a new line
      * @param c - the color of the line
@@ -309,6 +310,7 @@ declare class WebglThickLine extends WebglBase {
     lineSpaceX(start: number, stepSize: number): void;
     setThickness(thickness: number): void;
     getThickness(): number;
+    setActualThickness(thickness: number): void;
 }
 
 /**

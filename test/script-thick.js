@@ -18,6 +18,9 @@ lineThin.lineSpaceX(-1, 2 / numX);
 
 wglp.addLine(lineThin);
 
+wglp.gScaleX = 1;
+wglp.gScaleY = 1;
+
 const thickness = 0.01;
 
 let lineThick = new WebglThickLine(color, numX, thickness);

@@ -10,7 +10,8 @@ export class WebglThickLine extends WebglBase {
   private currentIndex = 0;
   //protected triPoints: Float32Array;
   private _linePoints: Float32Array;
-  private _thickness = 0;
+  private _thicknessRequested = 0;
+  private _actualThickness = 0;
 
   /**
    * Create a new line
@@ -28,7 +29,7 @@ export class WebglThickLine extends WebglBase {
     this.webglNumPoints = numPoints * 2;
     this.numPoints = numPoints;
     this.color = c;
-    this._thickness = thickness;
+    this._thicknessRequested = thickness;
 
     this._linePoints = new Float32Array(numPoints * 2);
 
@@ -38,7 +39,7 @@ export class WebglThickLine extends WebglBase {
 
   public convertToTriPoints(): void {
     //const thick = 0.01;
-    const halfThick = this._thickness / 2;
+    const halfThick = this._actualThickness / 2;
     const normals = PolyLine(this._linePoints);
     //console.log(this.linePoints);
     //console.log(normals);
@@ -95,10 +96,14 @@ export class WebglThickLine extends WebglBase {
   }
 
   public setThickness(thickness: number): void {
-    this._thickness = thickness;
+    this._thicknessRequested = thickness;
   }
 
   public getThickness(): number {
-    return this._thickness;
+    return this._thicknessRequested;
+  }
+
+  public setActualThickness(thickness: number): void {
+    this._actualThickness = thickness;
   }
 }

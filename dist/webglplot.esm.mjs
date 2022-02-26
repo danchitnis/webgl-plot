@@ -493,18 +493,19 @@ class WebglThickLine extends WebglBase {
     constructor(c, numPoints, thickness) {
         super();
         this.currentIndex = 0;
-        this._thickness = 0;
+        this._thicknessRequested = 0;
+        this._actualThickness = 0;
         this.webglNumPoints = numPoints * 2;
         this.numPoints = numPoints;
         this.color = c;
-        this._thickness = thickness;
+        this._thicknessRequested = thickness;
         this._linePoints = new Float32Array(numPoints * 2);
         //this.triPoints = new Float32Array(this.numPoints * 4);
         this.xy = new Float32Array(2 * this.webglNumPoints);
     }
     convertToTriPoints() {
         //const thick = 0.01;
-        const halfThick = this._thickness / 2;
+        const halfThick = this._actualThickness / 2;
         const normals = PolyLine(this._linePoints);
         //console.log(this.linePoints);
         //console.log(normals);
@@ -555,10 +556,13 @@ class WebglThickLine extends WebglBase {
         }
     }
     setThickness(thickness) {
-        this._thickness = thickness;
+        this._thicknessRequested = thickness;
     }
     getThickness() {
-        return this._thickness;
+        return this._thicknessRequested;
+    }
+    setActualThickness(thickness) {
+        this._actualThickness = thickness;
     }
 }
 
@@ -745,6 +749,10 @@ class WebglPlot {
     _drawThickLines() {
         this._thickLines.forEach((thickLine) => {
             if (thickLine.visible) {
+                const calibFactor = Math.min(this.gScaleX, this.gScaleY);
+                //const calibFactor = 10;
+                //console.log(thickLine.getThickness());
+                thickLine.setActualThickness(thickLine.getThickness() / calibFactor);
                 thickLine.convertToTriPoints();
                 this._drawTriangles(thickLine);
             }

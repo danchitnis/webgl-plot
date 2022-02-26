@@ -188,6 +188,10 @@ export class WebglPlot {
     _drawThickLines() {
         this._thickLines.forEach((thickLine) => {
             if (thickLine.visible) {
+                const calibFactor = Math.min(this.gScaleX, this.gScaleY);
+                //const calibFactor = 10;
+                //console.log(thickLine.getThickness());
+                thickLine.setActualThickness(thickLine.getThickness() / calibFactor);
                 thickLine.convertToTriPoints();
                 this._drawTriangles(thickLine);
             }
