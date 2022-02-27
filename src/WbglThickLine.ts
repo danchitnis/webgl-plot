@@ -1,6 +1,6 @@
 import type { ColorRGBA } from "./ColorRGBA";
-import { PolyLine } from "./tools/thick";
-import { scaleAndAdd, Vec2 } from "./tools/vecTools";
+import { PolyLine } from "./thickTools/thick";
+import { scaleAndAdd, Vec2 } from "./thickTools/vecTools";
 import { WebglBase } from "./WebglBase";
 
 /**

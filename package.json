@@ -1,6 +1,6 @@
 {
   "name": "webgl-plot",
-  "version": "0.6.6",
+  "version": "0.7.0",
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
   "exports": {
@@ -25,7 +25,7 @@
     "@skypack/package-check": "^0.2.2",
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
-    "eslint": "^8.9.0",
+    "eslint": "^8.10.0",
     "rollup": "^2.68.0",
     "rollup-plugin-dts": "^4.1.0",
     "typedoc": "^0.22.12",

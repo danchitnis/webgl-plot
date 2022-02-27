@@ -1,5 +1,5 @@
-import { PolyLine } from "./tools/thick";
-import { scaleAndAdd } from "./tools/vecTools";
+import { PolyLine } from "./thickTools/thick";
+import { scaleAndAdd } from "./thickTools/vecTools";
 import { WebglBase } from "./WebglBase";
 /**
  * The standard Line class

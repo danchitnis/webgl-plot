@@ -333,17 +333,19 @@ class WebglSquare extends WebglBase {
 }
 
 /**
- *
+ * modified functions from:
+ * https://github.com/stackgl/gl-vec2
+ * See License2.md for more info
  */
 const scaleAndAdd = (a, b, scale) => {
-    let out = { x: 0, y: 0 };
+    const out = { x: 0, y: 0 };
     out.x = a.x + b.x * scale;
     out.y = a.y + b.y * scale;
     return out;
 };
 const normal = (dir) => {
     //get perpendicular
-    let out = set(-dir.y, dir.x);
+    const out = set(-dir.y, dir.x);
     return out;
 };
 const direction = (a, b) => {
@@ -361,7 +363,7 @@ const direction = (a, b) => {
  * @returns {vec2} out
  */
 const add = (a, b) => {
-    let out = { x: 0, y: 0 };
+    const out = { x: 0, y: 0 };
     out.x = a.x + b.x;
     out.y = a.y + b.y;
     return out;
@@ -384,7 +386,7 @@ const dot = (a, b) => {
  * @returns {vec2} out
  */
 const normalize = (a) => {
-    let out = { x: 0, y: 0 };
+    const out = { x: 0, y: 0 };
     let len = a.x * a.x + a.y * a.y;
     if (len > 0) {
         //TODO: evaluate use of glm_invsqrt here?
@@ -403,7 +405,7 @@ const normalize = (a) => {
  * @returns {vec2} out
  */
 const set = (x, y) => {
-    let out = { x: 0, y: 0 };
+    const out = { x: 0, y: 0 };
     out.x = x;
     out.y = y;
     return out;
@@ -417,14 +419,16 @@ const set = (x, y) => {
  * @returns {vec2} out
  */
 const subtract = (a, b) => {
-    let out = { x: 0, y: 0 };
+    const out = { x: 0, y: 0 };
     out.x = a.x - b.x;
     out.y = a.y - b.y;
     return out;
 };
 
 /**
- *
+ * inspired and modified from:
+ * https://github.com/mattdesl/polyline-normals
+ * See License1.md for more info
  */
 const PolyLine = (lineXY) => {
     let curNormal;

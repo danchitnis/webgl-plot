@@ -1,5 +1,7 @@
 /**
- *
+ * modified functions from:
+ * https://github.com/stackgl/gl-vec2
+ * See License2.md for more info
  */
 
 export type Vec2 = {
@@ -8,7 +10,7 @@ export type Vec2 = {
 };
 
 export const scaleAndAdd = (a: Vec2, b: Vec2, scale: number): Vec2 => {
-  let out = { x: 0, y: 0 } as Vec2;
+  const out = { x: 0, y: 0 } as Vec2;
   out.x = a.x + b.x * scale;
   out.y = a.y + b.y * scale;
   return out;
@@ -16,7 +18,7 @@ export const scaleAndAdd = (a: Vec2, b: Vec2, scale: number): Vec2 => {
 
 export const normal = (dir: Vec2): Vec2 => {
   //get perpendicular
-  let out = set(-dir.y, dir.x);
+  const out = set(-dir.y, dir.x);
   return out;
 };
 
@@ -36,7 +38,7 @@ export const direction = (a: Vec2, b: Vec2): Vec2 => {
  * @returns {vec2} out
  */
 export const add = (a: Vec2, b: Vec2): Vec2 => {
-  let out = { x: 0, y: 0 } as Vec2;
+  const out = { x: 0, y: 0 } as Vec2;
   out.x = a.x + b.x;
   out.y = a.y + b.y;
   return out;
@@ -61,7 +63,7 @@ export const dot = (a: Vec2, b: Vec2): number => {
  * @returns {vec2} out
  */
 export const normalize = (a: Vec2): Vec2 => {
-  let out = { x: 0, y: 0 } as Vec2;
+  const out = { x: 0, y: 0 } as Vec2;
   let len = a.x * a.x + a.y * a.y;
   if (len > 0) {
     //TODO: evaluate use of glm_invsqrt here?
@@ -81,7 +83,7 @@ export const normalize = (a: Vec2): Vec2 => {
  * @returns {vec2} out
  */
 export const set = (x: number, y: number): Vec2 => {
-  let out = { x: 0, y: 0 } as Vec2;
+  const out = { x: 0, y: 0 } as Vec2;
   out.x = x;
   out.y = y;
   return out;
@@ -96,7 +98,7 @@ export const set = (x: number, y: number): Vec2 => {
  * @returns {vec2} out
  */
 export const subtract = (a: Vec2, b: Vec2): Vec2 => {
-  let out = { x: 0, y: 0 } as Vec2;
+  const out = { x: 0, y: 0 } as Vec2;
   out.x = a.x - b.x;
   out.y = a.y - b.y;
   return out;

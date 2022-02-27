@@ -1,5 +1,7 @@
 /**
- *
+ * inspired and modified from:
+ * https://github.com/mattdesl/polyline-normals
+ * See License1.md for more info
  */
 
 import { Vec2, add, normal, direction, normalize, set, dot } from "./vecTools.js";
