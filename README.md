@@ -25,7 +25,7 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 ## Thick Lines are now supported! 🥳
 
-However notice that due to computation of the line data points, the performance of the thick lines is nearly _6 times slower_ than the normal lines. Only use thick lines when you need to see the lines clearly for example when highlighting a specific line. Further information can be found below. For benchmarking, see the [benchmark]() section.
+However notice that due to computation of the line data points, the performance of the thick lines is nearly _6 times slower_ than the normal lines. Only use thick lines when you need to see the lines clearly for example when highlighting a specific line. Further information can be found below. For benchmarking, see the [benchmark](https://github.com/danchitnis/webgl-plot#benchmark) section.
 
 ## Getting started
 
@@ -161,7 +161,8 @@ Notice that this method is only recommended for test and small codes.
 
 ## Benchmark
 
-[Line generation and Frame rate](https://danchitnis.github.io/webgl-plot/benchmark/bench1.html)
+[Native Line](https://danchitnis.github.io/webgl-plot/benchmark/bench1.html) and
+[Thick Line](https://danchitnis.github.io/webgl-plot/benchmark/bench-thick.html).
 
 ## Internal test
 
