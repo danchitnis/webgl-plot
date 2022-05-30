@@ -23,14 +23,14 @@
   ],
   "devDependencies": {
     "@skypack/package-check": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^5.12.1",
-    "@typescript-eslint/parser": "^5.12.1",
-    "eslint": "^8.10.0",
-    "rollup": "^2.68.0",
-    "rollup-plugin-dts": "^4.1.0",
-    "typedoc": "^0.22.12",
-    "typedoc-plugin-markdown": "^3.11.14",
-    "typescript": "^4.5.5"
+    "@typescript-eslint/eslint-plugin": "^5.27.0",
+    "@typescript-eslint/parser": "^5.27.0",
+    "eslint": "^8.16.0",
+    "rollup": "^2.75.3",
+    "rollup-plugin-dts": "^4.2.2",
+    "typedoc": "^0.22.16",
+    "typedoc-plugin-markdown": "^3.12.1",
+    "typescript": "^4.7.2"
   },
   "scripts": {
     "build": "tsc && rollup -c && rollup --config rollup.config.dts.js",
