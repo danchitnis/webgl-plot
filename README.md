@@ -23,9 +23,13 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 
 **Static**: Enables rapid pan and zoom capability for inspecting very large datasets. See the [static example](https://danchitnis.github.io/webgl-plot-examples/vanilla/static.html)
 
-## Thick Lines are now supported! 🥳
+## Thick Lines
 
 However notice that due to computation of the line data points, the performance of the thick lines is nearly _6 times slower_ than the normal lines. Only use thick lines when you need to see the lines clearly for example when highlighting a specific line. Further information can be found below. For benchmarking, see the [benchmark](https://github.com/danchitnis/webgl-plot#benchmark) section.
+
+## Python vesrion now released!! 🥳
+
+See [pyglplot](https://github.com/danchitnis/pyglplot) for the python equivalent of this library. However, please notice the python version is at its early stages.
 
 ## Getting started
 
