@@ -587,6 +587,18 @@
      * The main class for the webgl-plot library
      */
     class WebglPlot {
+        get linesData() {
+            return this._linesData;
+        }
+        get linesAux() {
+            return this._linesAux;
+        }
+        get thickLines() {
+            return this._thickLines;
+        }
+        get surfaces() {
+            return this._surfaces;
+        }
         /**
          * Create a webgl-plot instance
          * @param canvas - the canvas in which the plot appears
@@ -670,18 +682,6 @@
             //https://learnopengl.com/Advanced-OpenGL/Blending
             this.webgl.enable(this.webgl.BLEND);
             this.webgl.blendFunc(this.webgl.SRC_ALPHA, this.webgl.ONE_MINUS_SRC_ALPHA);
-        }
-        get linesData() {
-            return this._linesData;
-        }
-        get linesAux() {
-            return this._linesAux;
-        }
-        get thickLines() {
-            return this._thickLines;
-        }
-        get surfaces() {
-            return this._surfaces;
         }
         /**
          * updates and redraws the content of the plot
@@ -912,7 +912,5 @@
     exports.WebglSquare = WebglSquare;
     exports.WebglStep = WebglStep;
     exports.WebglThickLine = WebglThickLine;
-
-    Object.defineProperty(exports, '__esModule', { value: true });
 
 }));

@@ -1,7 +1,9 @@
 // rollup.config.js
-import pkg from "./package.json";
+//import pkg from "./package.json" ;
 //import dts from "rollup-plugin-dts";
 //import typescript from "rollup-plugin-typescript2";
+import { readFileSync } from "fs";
+const pkg = JSON.parse(readFileSync("package.json", { encoding: "utf8" }));
 
 export default {
   input: "./dist/webglplot.js",

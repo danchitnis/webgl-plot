@@ -321,7 +321,7 @@ declare class WebglThickLine extends WebglBase {
  * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
  */
 
-declare type WebglPlotConfig = {
+type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;
     powerPerformance?: "default" | "high-performance" | "low-power";

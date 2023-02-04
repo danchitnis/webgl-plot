@@ -3,7 +3,7 @@
  * https://github.com/stackgl/gl-vec2
  * See License2.md for more info
  */
-export declare type Vec2 = {
+export type Vec2 = {
     x: number;
     y: number;
 };

@@ -13,7 +13,7 @@ import { WebglSquare } from "./WbglSquare";
 import type { WebglBase } from "./WebglBase";
 import { WebglThickLine } from "./WbglThickLine";
 export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine };
-declare type WebglPlotConfig = {
+type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;
     powerPerformance?: "default" | "high-performance" | "low-power";

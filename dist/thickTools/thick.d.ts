@@ -4,7 +4,7 @@
  * See License1.md for more info
  */
 import { Vec2 } from "./vecTools.js";
-export declare type NormalMiter = {
+export type NormalMiter = {
     vec2: Vec2;
     miterLength: number;
 };
