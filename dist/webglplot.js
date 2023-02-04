@@ -11,7 +11,8 @@ import { WebglStep } from "./WbglStep";
 import { WebglPolar } from "./WbglPolar";
 import { WebglSquare } from "./WbglSquare";
 import { WebglThickLine } from "./WbglThickLine";
-export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine };
+import { WebglScatterAcc } from "./WbglScatterAcc";
+export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine, WebglScatterAcc };
 /**
  * The main class for the webgl-plot library
  */
