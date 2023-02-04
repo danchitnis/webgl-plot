@@ -314,28 +314,6 @@ declare class WebglThickLine extends WebglBase {
 }
 
 /**
- * The standard Line class
- */
-declare class WebglScatterAcc {
-    private headIndex;
-    private color;
-    private squareSize;
-    private maxSquare;
-    private gl;
-    private program;
-    private width;
-    private height;
-    private squareIndices;
-    constructor(canvas: HTMLCanvasElement, maxSquare: number);
-    setColor(color: ColorRGBA): void;
-    setSquareSize(squareSize: number): void;
-    setScale(scaleX: number, scaleY: number): void;
-    setOffset(offsetX: number, offsetY: number): void;
-    addSquare(pos: Float32Array): void;
-    update(): void;
-}
-
-/**
  * Author Danial Chitnis 2019-20
  *
  * inspired by:
@@ -515,4 +493,4 @@ declare class WebglPlot {
     private log;
 }
 
-export { ColorRGBA, WebglLine, WebglPlot, WebglPolar, WebglScatterAcc, WebglSquare, WebglStep, WebglThickLine };
+export { ColorRGBA, WebglLine, WebglPlot, WebglPolar, WebglSquare, WebglStep, WebglThickLine };

@@ -12,8 +12,7 @@ import { WebglPolar } from "./WbglPolar";
 import { WebglSquare } from "./WbglSquare";
 import type { WebglBase } from "./WebglBase";
 import { WebglThickLine } from "./WbglThickLine";
-import { WebglScatterAcc } from "./WbglScatterAcc";
-export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine, WebglScatterAcc };
+export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine };
 type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;

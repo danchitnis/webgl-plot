@@ -5,7 +5,6 @@
     "target": "es2015",
     //"esModuleInterop": true,
     "isolatedModules": true,
-    "strictNullChecks": false,
     "importsNotUsedAsValues": "error",
     "moduleResolution": "node",
     "noImplicitAny": true,
