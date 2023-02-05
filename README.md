@@ -1,4 +1,4 @@
-![Npm Build](https://github.com/danchitnis/webgl-plot/workflows/Npm%20Build/badge.svg) ![Yarn Build](https://github.com/danchitnis/webgl-plot/workflows/Yarn%20Build/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) ![Build](https://github.com/danchitnis/webgl-plot/workflows/Build/badge.svg) [![DOI](https://zenodo.org/badge/205590760.svg)](https://zenodo.org/badge/latestdoi/205590760)
+![Npm Build](https://github.com/danchitnis/webgl-plot/workflows/Npm%20Build/badge.svg) ![Yarn Build](https://github.com/danchitnis/webgl-plot/workflows/Yarn%20Build/badge.svg) ![Code scanning](https://github.com/danchitnis/webgl-plot/workflows/Code%20scanning/badge.svg) [![DOI](https://zenodo.org/badge/205590760.svg)](https://zenodo.org/badge/latestdoi/205590760)
 
 ## [Live demo 🚀](https://danchitnis.github.io/webgl-plot-examples/vanilla/)
 
@@ -26,6 +26,10 @@ multi-line high-performance 2D plotting library using native WebGL. The advantag
 ## Thick Lines
 
 However notice that due to computation of the line data points, the performance of the thick lines is nearly _6 times slower_ than the normal lines. Only use thick lines when you need to see the lines clearly for example when highlighting a specific line. Further information can be found below. For benchmarking, see the [benchmark](https://github.com/danchitnis/webgl-plot#benchmark) section.
+
+## Version `next` coming soon 🎉
+
+The next version is currently under development. More computation is moved to the GPU, significantly improving performance. These improvements specifically benefit the rolling plot and the scatter plot. However, these changes require a rewrite of the main library and migration to `webgl2`. The current version will remain as no maintenance is needed since it is based on pure javascript. See an example [here](https://codesandbox.io/s/wbglscatteracc-krsvmy).
 
 ## Python vesrion now released!! 🥳
 
@@ -147,21 +151,13 @@ For ES6 module and direct browser import use:
 and in your-code.js:
 
 ```javascript
-import {
-  WebglPlot,
-  WebglLine,
-  ColorRGBA,
-} from "https://cdn.jsdelivr.net/gh/danchitnis/webgl-plot@master/dist/webglplot.esm.min.js";
+import { WebglPlot, WebglLine, ColorRGBA } from "<http source>";
 ```
 
-Thanks to [TimDaub](https://github.com/TimDaub) for testing the ES6 module.
-
-Notice that this method is only recommended for test and small codes.
-
-## SkyPack
-
-[Skypack](https://www.skypack.dev/view/webgl-plot) is a new exciting CDN for ESM Javascript. See the example below on how to use it:
+You can use web-based bundlers such as [esm.sh](https://esm.sh/), [unpkng](https://unpkg.com/), [JSdeliver](https://www.jsdelivr.com/?docs=esm) ,and [jspm](https://jspm.org/) to import the library to get the appropriate `http source`. See an example here:
 [JSfiddle](https://jsfiddle.net/danchitnis/tu1svwbp/)
+
+Thanks to [TimDaub](https://github.com/TimDaub) for testing the ES6 module.
 
 ## Benchmark
 
