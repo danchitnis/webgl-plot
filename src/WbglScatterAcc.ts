@@ -13,12 +13,14 @@ export class WebglScatterAcc {
   private width: number;
   private height: number;
   private squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
+  private colorsBuffer: WebGLBuffer;
+  private positionBuffer: WebGLBuffer;
 
   constructor(canvas: HTMLCanvasElement, maxSquare: number) {
     //super();
     //this.webglNumPoints = numPoints;
     //this.numPoints = numPoints;
-    this.gl = canvas.getContext("webgl2") as WebGL2RenderingContext;
+    this.gl = canvas.getContext("webgl2", { premultipliedAlpha: false }) as WebGL2RenderingContext;
     this.color = new ColorRGBA(1, 1, 1, 1);
     this.squareSize = 0.1;
     this.maxSquare = maxSquare;
@@ -42,12 +44,21 @@ export class WebglScatterAcc {
     gl.vertexAttribDivisor(1, 1);
     gl.enableVertexAttribArray(1);
 
+    // Create the color buffer
+    const colors = new Uint8Array(Array.from({ length: this.maxSquare * 3 }, (_, i) => 255));
+    this.colorsBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
+    gl.vertexAttribPointer(2, 3, gl.UNSIGNED_BYTE, false, 0, 0);
+    gl.vertexAttribDivisor(2, 1);
+    gl.enableVertexAttribArray(2);
+
     // Create the square positions buffer
     const squarePositions = new Float32Array(
       Array.from({ length: this.maxSquare * 2 }, (_, i) => Math.random() * 2 - 1)
     );
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    this.positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);
     gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
     gl.vertexAttribDivisor(0, 1);
@@ -61,11 +72,15 @@ export class WebglScatterAcc {
 
     layout(location = 0) in vec2 position;
     layout(location = 1) in float a_instanceID;
+    layout(location = 2) in vec3 sColor;
     uniform float u_size;
     uniform vec2 u_offset;
     uniform mat2 u_scale;
+
+    out vec3 vColor;
     
     void main() {
+      vColor = sColor / vec3(255.0, 255.0, 255.0);
       vec2 squareVertices[4] = vec2[4](vec2(-1.0, 1.0), vec2(1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0));
       vec2 pos = u_size * squareVertices[gl_VertexID] + position + vec2(0,0) * a_instanceID;
       gl_Position = vec4((u_scale * pos) + u_offset, 0.0, 1.0);
@@ -87,11 +102,12 @@ export class WebglScatterAcc {
       `#version 300 es
     precision mediump float;
 
-    uniform vec4 u_color;
+    //uniform vec4 u_color;
+    in vec3 vColor;
     out vec4 outColor;
 
     void main() {
-      outColor = u_color;
+      outColor = vec4(vColor, 0.7);
     }
 `
     );
@@ -111,13 +127,14 @@ export class WebglScatterAcc {
     this.program = program;
 
     // Set viewport and clear color
+    //gl.enable(gl.DEPTH_TEST);
     gl.viewport(0, 0, canvas.width, canvas.height);
     //https://learnopengl.com/Advanced-OpenGL/Blending
     gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA);
     gl.clearColor(0, 0, 0, 1);
-    gl.enable(gl.DEPTH_TEST);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
   public setColor(color: ColorRGBA): void {
@@ -142,14 +159,22 @@ export class WebglScatterAcc {
     this.gl.uniform2f(offsetUniformLocation, offsetX, offsetY);
   }
 
-  public addSquare(pos: Float32Array): void {
-    this.gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 2 * 4, pos);
+  public addSquare(pos: Float32Array, color: Uint8Array): void {
+    const gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+    gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 2 * 4, pos, 0, pos.length);
+    gl.enableVertexAttribArray(0);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
+    gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 3 * 1, color, 0, color.length);
+    gl.enableVertexAttribArray(2);
+
     this.headIndex = (this.headIndex + pos.length / 2) % this.maxSquare;
     //console.log(this.headIndex);
   }
 
   public update(): void {
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     this.gl.drawElementsInstanced(
       this.gl.TRIANGLES,
       this.squareIndices.length,
