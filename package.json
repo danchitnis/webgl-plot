@@ -1,6 +1,6 @@
 {
   "name": "webgl-plot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
   "type": "module",

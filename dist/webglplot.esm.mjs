@@ -609,7 +609,7 @@ class WebglScatterAcc {
         gl.vertexAttribDivisor(2, 1);
         gl.enableVertexAttribArray(2);
         // Create the square positions buffer
-        const squarePositions = new Float32Array(Array.from({ length: this.maxSquare * 2 }, (_, i) => Math.random() * 2 - 1));
+        const squarePositions = new Float32Array(Array.from({ length: this.maxSquare * 2 }, (_, i) => 0));
         this.positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);

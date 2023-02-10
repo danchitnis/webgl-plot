@@ -8,11 +8,11 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 const screenRatio = canvas.width / canvas.height;
 
-const sqSize = 0.02;
+const sqSize = 0.001;
 
-const sqAcc = new WebglScatterAcc(canvas, 1000);
+const sqAcc = new WebglScatterAcc(canvas, 6000000);
 sqAcc.setSquareSize(sqSize);
-sqAcc.setColor(new ColorRGBA(1, 1, 0, 1));
+sqAcc.setColor(new ColorRGBA(255, 255, 0, 1));
 sqAcc.setScale(1, screenRatio);
 sqAcc.setOffset(0, 0);
 
@@ -40,7 +40,7 @@ function GetMatlabRgb(ordinal) {
 
 const render = () => {
   // newDataSize shouuld be divisible by MaxSquare
-  const newDataSize = 10;
+  const newDataSize = 100000;
 
   const pos = Array(newDataSize * 2);
   const colors = Array(newDataSize * 3);

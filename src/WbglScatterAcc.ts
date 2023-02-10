@@ -55,7 +55,7 @@ export class WebglScatterAcc {
 
     // Create the square positions buffer
     const squarePositions = new Float32Array(
-      Array.from({ length: this.maxSquare * 2 }, (_, i) => Math.random() * 2 - 1)
+      Array.from({ length: this.maxSquare * 2 }, (_, i) => 0)
     );
     this.positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
