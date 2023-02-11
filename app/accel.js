@@ -1,4 +1,4 @@
-import { ColorRGBA, WebglScatterAcc, WebglLine, WebglPlot } from "../dist/webglplot.esm.mjs";
+import { ColorRGBA, WebglScatterAcc, WebglAux, WebglPlot } from "../dist/webglplot.esm.mjs";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -6,25 +6,21 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 canvas.width = canvas.clientWidth * devicePixelRatio;
 canvas.height = canvas.clientHeight * devicePixelRatio;
 
-//const gl = canvas.getContext("webgl2", { premultipliedAlpha: false });
-
 const screenRatio = canvas.width / canvas.height;
-//gl.viewport(0, 0, canvas.width, canvas.height);
 
 const wglp = new WebglPlot(canvas);
+wglp.gScaleX = 1;
+wglp.gScaleY = screenRatio;
 
-const line = new WebglLine(wglp);
+const aux = new WebglAux(wglp);
+aux.addLine({ xy: [-1, 0, 1, 0], color: new ColorRGBA(255, 255, 0, 1) });
+aux.addLine({ xy: [0, -1, 0, 1], color: new ColorRGBA(255, 255, 0, 1) });
+aux.addLine({ xy: [-1, -1, 1, 1], color: new ColorRGBA(255, 0, 0, 1) });
 
 const sqSize = 0.01;
 
 const sqAcc = new WebglScatterAcc(wglp, 100);
 sqAcc.setSquareSize(sqSize);
-sqAcc.setColor(new ColorRGBA(255, 255, 0, 1));
-sqAcc.setScale(1, canvas.width / canvas.height);
-sqAcc.setOffset(0, 0);
-
-//sqAcc.addSquare(new Float32Array([0, 0]));
-//sqAcc.addSquare(new Float32Array([0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5]));
 
 let countX = 0;
 let countY = 0;
@@ -71,7 +67,7 @@ const render = () => {
 
   sqAcc.addSquare(new Float32Array(pos), new Uint8Array(colors));
   sqAcc.draw();
-  line.draw();
+  aux.drawLines();
   requestAnimationFrame(render);
 };
 

@@ -1,13 +1,13 @@
 import { ColorRGBA } from "./ColorRGBA";
-import "./WebglBase";
 /**
  * The standard Line class
  */
 export class WebglScatterAcc {
     constructor(wglp, maxSquare) {
-        //super();
         this.headIndex = 0;
         this.squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
+        //super();
+        this.wglp = wglp;
         this.color = new ColorRGBA(1, 1, 1, 1);
         this.squareSize = 0.1;
         this.maxSquare = maxSquare;
@@ -84,6 +84,8 @@ export class WebglScatterAcc {
         gl.vertexAttribPointer(this.attrColorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
         gl.vertexAttribDivisor(this.attrColorLocation, 1);
         gl.enableVertexAttribArray(this.attrColorLocation);
+        this.setScale(1, 1);
+        this.setOffset(0, 0);
         // Set viewport and clear color
         //gl.enable(gl.DEPTH_TEST);
         //gl.viewport(0, 0, canvas.width, canvas.height);
@@ -106,11 +108,16 @@ export class WebglScatterAcc {
     }
     setScale(scaleX, scaleY) {
         const scaleUniformLocation = this.gl.getUniformLocation(this.prog, "u_scale");
-        this.gl.uniformMatrix2fv(scaleUniformLocation, false, [scaleX, 0, 0, scaleY]);
+        this.gl.uniformMatrix2fv(scaleUniformLocation, false, [
+            scaleX * this.wglp.gScaleX,
+            0,
+            0,
+            scaleY * this.wglp.gScaleY,
+        ]);
     }
     setOffset(offsetX, offsetY) {
         const offsetUniformLocation = this.gl.getUniformLocation(this.prog, "u_offset");
-        this.gl.uniform2f(offsetUniformLocation, offsetX, offsetY);
+        this.gl.uniform2f(offsetUniformLocation, offsetX + this.wglp.gOffsetX, offsetY + this.wglp.gOffsetY);
     }
     addSquare(pos, color) {
         const gl = this.gl;

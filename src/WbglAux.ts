@@ -1,32 +1,29 @@
 import type { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
 
+type Line = {
+  xy: number[];
+  color: ColorRGBA;
+};
+
 /**
  * The standard Line class
  */
-export class WebglLine {
+export class WebglAux {
+  private wglp: WebglPlot;
+  private lines: Line[];
   private color: ColorRGBA;
-  private xy: Float32Array;
   private gl: WebGL2RenderingContext;
   private coord: number;
   private vbuffer: WebGLBuffer;
   public prog: WebGLProgram;
 
-  /**
-   * Create a new line
-   * @param c - the color of the line
-   * @param numPoints - number of data pints
-   * @example
-   * ```typescript
-   * x= [0,1]
-   * y= [1,2]
-   * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
-   * ```
-   */
   constructor(wglp: WebglPlot) {
     //super();
+    this.wglp = wglp;
     this.gl = wglp.gl;
     const gl = this.gl;
+    this.lines = [];
 
     const vertCode = `#version 300 es
 
@@ -74,11 +71,8 @@ export class WebglLine {
     this.gl.linkProgram(this.prog);
     this.gl.useProgram(this.prog);
 
-    this.xy = new Float32Array([-1, -1, 1, 1]);
-
     this.vbuffer = this.gl.createBuffer() as WebGLBuffer;
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, this.xy as ArrayBuffer, gl.STREAM_DRAW);
 
     this.coord = this.gl.getAttribLocation(this.prog, "coord");
     this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
@@ -87,35 +81,31 @@ export class WebglLine {
     gl.useProgram(this.prog);
 
     const uscale = gl.getUniformLocation(this.prog, "uscale");
-    gl.uniformMatrix2fv(uscale, false, new Float32Array([1, 0, 0, 1]));
+    gl.uniformMatrix2fv(
+      uscale,
+      false,
+      new Float32Array([this.wglp.gScaleX, 0, 0, this.wglp.gScaleY])
+    );
 
     const uoffset = gl.getUniformLocation(this.prog, "uoffset");
-    gl.uniform2fv(uoffset, new Float32Array([0, 0]));
+    gl.uniform2fv(uoffset, new Float32Array([this.wglp.gOffsetX, this.wglp.gOffsetY]));
 
     const uColor = gl.getUniformLocation(this.prog, "uColor");
     gl.uniform4fv(uColor, [1, 1, 0, 1]);
-
-    gl.bufferData(gl.ARRAY_BUFFER, this.xy as ArrayBuffer, gl.STREAM_DRAW);
-    //gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-    //gl.viewport(0, 0, 800, 600);
-
-    //gl.drawArrays(gl.LINE_STRIP, 0, this.xy.length / 2);
-
-    // Clear the color
-    //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-
-    // Set the view port
-    //this.gl.viewport(0, 0, canvas.width, canvas.height);
   }
 
-  draw() {
-    this.gl.useProgram(this.prog);
-    //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
-    //this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
-    //this.gl.vertexAttribDivisor(this.coord, 0);
-    //this.gl.enableVertexAttribArray(this.coord);
+  addLine(line: Line) {
+    this.lines.push(line);
+  }
 
-    this.gl.drawArrays(this.gl.LINE_STRIP, 0, this.xy.length / 2);
+  drawLines() {
+    this.gl.useProgram(this.prog);
+    this.lines.forEach((line) => {
+      this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
+      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(line.xy), this.gl.STREAM_DRAW);
+      const uColor = this.gl.getUniformLocation(this.prog, "uColor");
+      this.gl.uniform4f(uColor, line.color.r, line.color.g, line.color.b, line.color.a);
+      this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.xy.length / 2);
+    });
   }
 }

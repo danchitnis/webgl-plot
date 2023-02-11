@@ -4,6 +4,7 @@ import type { WebglPlot } from "./webglplot";
  * The standard Line class
  */
 export declare class WebglScatterAcc {
+    private wglp;
     private headIndex;
     private color;
     private squareSize;

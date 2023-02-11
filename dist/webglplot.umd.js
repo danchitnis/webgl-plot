@@ -16,22 +16,13 @@
     /**
      * The standard Line class
      */
-    class WebglLine {
-        /**
-         * Create a new line
-         * @param c - the color of the line
-         * @param numPoints - number of data pints
-         * @example
-         * ```typescript
-         * x= [0,1]
-         * y= [1,2]
-         * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
-         * ```
-         */
+    class WebglAux {
         constructor(wglp) {
             //super();
+            this.wglp = wglp;
             this.gl = wglp.gl;
             const gl = this.gl;
+            this.lines = [];
             const vertCode = `#version 300 es
 
     layout(location = 0) in vec2 coord;
@@ -71,36 +62,31 @@
             this.gl.attachShader(this.prog, fragShader);
             this.gl.linkProgram(this.prog);
             this.gl.useProgram(this.prog);
-            this.xy = new Float32Array([-1, -1, 1, 1]);
             this.vbuffer = this.gl.createBuffer();
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, this.xy, gl.STREAM_DRAW);
             this.coord = this.gl.getAttribLocation(this.prog, "coord");
             this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
             this.gl.enableVertexAttribArray(this.coord);
             gl.useProgram(this.prog);
             const uscale = gl.getUniformLocation(this.prog, "uscale");
-            gl.uniformMatrix2fv(uscale, false, new Float32Array([1, 0, 0, 1]));
+            gl.uniformMatrix2fv(uscale, false, new Float32Array([this.wglp.gScaleX, 0, 0, this.wglp.gScaleY]));
             const uoffset = gl.getUniformLocation(this.prog, "uoffset");
-            gl.uniform2fv(uoffset, new Float32Array([0, 0]));
+            gl.uniform2fv(uoffset, new Float32Array([this.wglp.gOffsetX, this.wglp.gOffsetY]));
             const uColor = gl.getUniformLocation(this.prog, "uColor");
             gl.uniform4fv(uColor, [1, 1, 0, 1]);
-            gl.bufferData(gl.ARRAY_BUFFER, this.xy, gl.STREAM_DRAW);
-            //gl.bindBuffer(gl.ARRAY_BUFFER, null);
-            //gl.viewport(0, 0, 800, 600);
-            //gl.drawArrays(gl.LINE_STRIP, 0, this.xy.length / 2);
-            // Clear the color
-            //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-            // Set the view port
-            //this.gl.viewport(0, 0, canvas.width, canvas.height);
         }
-        draw() {
+        addLine(line) {
+            this.lines.push(line);
+        }
+        drawLines() {
             this.gl.useProgram(this.prog);
-            //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
-            //this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
-            //this.gl.vertexAttribDivisor(this.coord, 0);
-            //this.gl.enableVertexAttribArray(this.coord);
-            this.gl.drawArrays(this.gl.LINE_STRIP, 0, this.xy.length / 2);
+            this.lines.forEach((line) => {
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(line.xy), this.gl.STREAM_DRAW);
+                const uColor = this.gl.getUniformLocation(this.prog, "uColor");
+                this.gl.uniform4f(uColor, line.color.r, line.color.g, line.color.b, line.color.a);
+                this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.xy.length / 2);
+            });
         }
     }
 
@@ -109,9 +95,10 @@
      */
     class WebglScatterAcc {
         constructor(wglp, maxSquare) {
-            //super();
             this.headIndex = 0;
             this.squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
+            //super();
+            this.wglp = wglp;
             this.color = new ColorRGBA(1, 1, 1, 1);
             this.squareSize = 0.1;
             this.maxSquare = maxSquare;
@@ -188,6 +175,8 @@
             gl.vertexAttribPointer(this.attrColorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
             gl.vertexAttribDivisor(this.attrColorLocation, 1);
             gl.enableVertexAttribArray(this.attrColorLocation);
+            this.setScale(1, 1);
+            this.setOffset(0, 0);
             // Set viewport and clear color
             //gl.enable(gl.DEPTH_TEST);
             //gl.viewport(0, 0, canvas.width, canvas.height);
@@ -210,11 +199,16 @@
         }
         setScale(scaleX, scaleY) {
             const scaleUniformLocation = this.gl.getUniformLocation(this.prog, "u_scale");
-            this.gl.uniformMatrix2fv(scaleUniformLocation, false, [scaleX, 0, 0, scaleY]);
+            this.gl.uniformMatrix2fv(scaleUniformLocation, false, [
+                scaleX * this.wglp.gScaleX,
+                0,
+                0,
+                scaleY * this.wglp.gScaleY,
+            ]);
         }
         setOffset(offsetX, offsetY) {
             const offsetUniformLocation = this.gl.getUniformLocation(this.prog, "u_offset");
-            this.gl.uniform2f(offsetUniformLocation, offsetX, offsetY);
+            this.gl.uniform2f(offsetUniformLocation, offsetX + this.wglp.gOffsetX, offsetY + this.wglp.gOffsetY);
         }
         addSquare(pos, color) {
             const gl = this.gl;
@@ -408,7 +402,7 @@
     }
 
     exports.ColorRGBA = ColorRGBA;
-    exports.WebglLine = WebglLine;
+    exports.WebglAux = WebglAux;
     exports.WebglPlot = WebglPlot;
     exports.WebglScatterAcc = WebglScatterAcc;
 

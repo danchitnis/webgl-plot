@@ -6,9 +6,9 @@
  * https://www.tutorialspoint.com/webgl/webgl_modes_of_drawing.htm
  */
 import { ColorRGBA } from "./ColorRGBA";
-import { WebglLine } from "./WbglLine";
+import { WebglAux } from "./WbglAux";
 import { WebglScatterAcc } from "./WbglScatterAcc";
-export { WebglLine, ColorRGBA, WebglScatterAcc };
+export { WebglAux, ColorRGBA, WebglScatterAcc };
 type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;

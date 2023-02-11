@@ -6,35 +6,31 @@ declare class ColorRGBA {
     constructor(r: number, g: number, b: number, a: number);
 }
 
+type Line = {
+    xy: number[];
+    color: ColorRGBA;
+};
 /**
  * The standard Line class
  */
-declare class WebglLine {
+declare class WebglAux {
+    private wglp;
+    private lines;
     private color;
-    private xy;
     private gl;
     private coord;
     private vbuffer;
     prog: WebGLProgram;
-    /**
-     * Create a new line
-     * @param c - the color of the line
-     * @param numPoints - number of data pints
-     * @example
-     * ```typescript
-     * x= [0,1]
-     * y= [1,2]
-     * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
-     * ```
-     */
     constructor(wglp: WebglPlot);
-    draw(): void;
+    addLine(line: Line): void;
+    drawLines(): void;
 }
 
 /**
  * The standard Line class
  */
 declare class WebglScatterAcc {
+    private wglp;
     private headIndex;
     private color;
     private squareSize;
@@ -148,4 +144,4 @@ declare class WebglPlot {
     private log;
 }
 
-export { ColorRGBA, WebglLine, WebglPlot, WebglScatterAcc };
+export { ColorRGBA, WebglAux, WebglPlot, WebglScatterAcc };
