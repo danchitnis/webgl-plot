@@ -7,13 +7,8 @@
  */
 import { ColorRGBA } from "./ColorRGBA";
 import { WebglLine } from "./WbglLine";
-import { WebglStep } from "./WbglStep";
-import { WebglPolar } from "./WbglPolar";
-import { WebglSquare } from "./WbglSquare";
-import type { WebglBase } from "./WebglBase";
-import { WebglThickLine } from "./WbglThickLine";
 import { WebglScatterAcc } from "./WbglScatterAcc";
-export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine, WebglScatterAcc };
+export { WebglLine, ColorRGBA, WebglScatterAcc };
 type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;
@@ -72,13 +67,6 @@ export declare class WebglPlot {
     /**
      * collection of auxiliary lines (grids, markers, etc) in the plot
      */
-    private _linesAux;
-    private _thickLines;
-    private _surfaces;
-    get linesData(): WebglBase[];
-    get linesAux(): WebglBase[];
-    get thickLines(): WebglThickLine[];
-    get surfaces(): WebglSquare[];
     private _progLine;
     /**
      * log debug output
@@ -127,9 +115,6 @@ export declare class WebglPlot {
      * updates and redraws the content of the plot
      */
     private _drawLines;
-    private _drawSurfaces;
-    private _drawTriangles;
-    private _drawThickLines;
     /**
      * Draw and clear the canvas
      */
@@ -137,7 +122,6 @@ export declare class WebglPlot {
     /**
      * Draw without clearing the canvas
      */
-    draw(): void;
     /**
      * Clear the canvas
      */
@@ -152,29 +136,10 @@ export declare class WebglPlot {
      * wglp.addLine(line);
      * ```
      */
-    private _addLine;
-    addDataLine(line: WebglLine | WebglStep | WebglPolar): void;
-    addLine: (line: WebglLine | WebglStep | WebglPolar) => void;
-    addAuxLine(line: WebglLine | WebglStep | WebglPolar): void;
-    addThickLine(thickLine: WebglThickLine): void;
-    addSurface(surface: WebglSquare): void;
-    private initThinLineProgram;
-    /**
-     * remove the last data line
-     */
-    popDataLine(): void;
-    /**
-     * remove all the lines
-     */
-    removeAllLines(): void;
     /**
      * remove all data lines
      */
     removeDataLines(): void;
-    /**
-     * remove all auxiliary lines
-     */
-    removeAuxLines(): void;
     /**
      * Change the WbGL viewport
      * @param a

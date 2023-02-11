@@ -8,14 +8,10 @@
 
 import { ColorRGBA } from "./ColorRGBA";
 import { WebglLine } from "./WbglLine";
-import { WebglStep } from "./WbglStep";
-import { WebglPolar } from "./WbglPolar";
-import { WebglSquare } from "./WbglSquare";
 import type { WebglBase } from "./WebglBase";
-import { WebglThickLine } from "./WbglThickLine";
 import { WebglScatterAcc } from "./WbglScatterAcc";
 
-export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine, WebglScatterAcc };
+export { WebglLine, ColorRGBA, WebglScatterAcc };
 
 type WebglPlotConfig = {
   antialias?: boolean;
@@ -85,27 +81,6 @@ export class WebglPlot {
   /**
    * collection of auxiliary lines (grids, markers, etc) in the plot
    */
-  private _linesAux: WebglBase[];
-
-  private _thickLines: WebglThickLine[];
-
-  private _surfaces: WebglSquare[];
-
-  get linesData(): WebglBase[] {
-    return this._linesData;
-  }
-
-  get linesAux(): WebglBase[] {
-    return this._linesAux;
-  }
-
-  get thickLines(): WebglThickLine[] {
-    return this._thickLines;
-  }
-
-  get surfaces(): WebglSquare[] {
-    return this._surfaces;
-  }
 
   private _progLine: WebGLProgram;
 
@@ -172,11 +147,6 @@ export class WebglPlot {
     this.log("canvas type is: " + canvas.constructor.name);
     this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
 
-    this._linesData = [];
-    this._linesAux = [];
-    this._thickLines = [];
-    this._surfaces = [];
-
     //this.webgl = webgl;
 
     this.gScaleX = 1;
@@ -195,7 +165,7 @@ export class WebglPlot {
 
     this._progLine = this.webgl.createProgram() as WebGLProgram;
 
-    this.initThinLineProgram();
+    //this.initThinLineProgram();
 
     //https://learnopengl.com/Advanced-OpenGL/Blending
     this.webgl.enable(this.webgl.BLEND);
@@ -207,130 +177,6 @@ export class WebglPlot {
    */
   private _drawLines(lines: WebglBase[]): void {
     const webgl = this.webgl;
-
-    lines.forEach((line) => {
-      if (line.visible) {
-        webgl.useProgram(this._progLine);
-
-        const uscale = webgl.getUniformLocation(this._progLine, "uscale");
-        webgl.uniformMatrix2fv(
-          uscale,
-          false,
-          new Float32Array([
-            line.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
-            0,
-            0,
-            line.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
-          ])
-        );
-
-        const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
-        webgl.uniform2fv(
-          uoffset,
-          new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY])
-        );
-
-        const isLog = webgl.getUniformLocation(this._progLine, "is_log");
-        webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
-
-        const uColor = webgl.getUniformLocation(this._progLine, "uColor");
-        webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
-
-        webgl.bufferData(webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, webgl.STREAM_DRAW);
-
-        webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
-      }
-    });
-  }
-
-  private _drawSurfaces(squares: WebglSquare[]): void {
-    const webgl = this.webgl;
-
-    squares.forEach((square) => {
-      if (square.visible) {
-        webgl.useProgram(this._progLine);
-
-        const uscale = webgl.getUniformLocation(this._progLine, "uscale");
-        webgl.uniformMatrix2fv(
-          uscale,
-          false,
-          new Float32Array([
-            square.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
-            0,
-            0,
-            square.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
-          ])
-        );
-
-        const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
-        webgl.uniform2fv(
-          uoffset,
-          new Float32Array([square.offsetX + this.gOffsetX, square.offsetY + this.gOffsetY])
-        );
-
-        const isLog = webgl.getUniformLocation(this._progLine, "is_log");
-        webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
-
-        const uColor = webgl.getUniformLocation(this._progLine, "uColor");
-        webgl.uniform4fv(uColor, [square.color.r, square.color.g, square.color.b, square.color.a]);
-
-        webgl.bufferData(webgl.ARRAY_BUFFER, square.xy as ArrayBuffer, webgl.STREAM_DRAW);
-
-        webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, square.webglNumPoints);
-      }
-    });
-  }
-
-  private _drawTriangles(thickLine: WebglThickLine): void {
-    const webgl = this.webgl;
-
-    webgl.bufferData(webgl.ARRAY_BUFFER, thickLine.xy as ArrayBuffer, webgl.STREAM_DRAW);
-
-    webgl.useProgram(this._progLine);
-
-    const uscale = webgl.getUniformLocation(this._progLine, "uscale");
-    webgl.uniformMatrix2fv(
-      uscale,
-      false,
-      new Float32Array([
-        thickLine.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
-        0,
-        0,
-        thickLine.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
-      ])
-    );
-
-    const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
-    webgl.uniform2fv(
-      uoffset,
-      new Float32Array([thickLine.offsetX + this.gOffsetX, thickLine.offsetY + this.gOffsetY])
-    );
-
-    const isLog = webgl.getUniformLocation(this._progLine, "is_log");
-    webgl.uniform2iv(isLog, new Int32Array([0, 0]));
-
-    const uColor = webgl.getUniformLocation(this._progLine, "uColor");
-    webgl.uniform4fv(uColor, [
-      thickLine.color.r,
-      thickLine.color.g,
-      thickLine.color.b,
-      thickLine.color.a,
-    ]);
-
-    webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, thickLine.xy.length / 2);
-  }
-
-  private _drawThickLines(): void {
-    this._thickLines.forEach((thickLine) => {
-      if (thickLine.visible) {
-        const calibFactor = Math.min(this.gScaleX, this.gScaleY);
-        //const calibFactor = 10;
-        //console.log(thickLine.getThickness());
-        thickLine.setActualThickness(thickLine.getThickness() / calibFactor);
-        thickLine.convertToTriPoints();
-        this._drawTriangles(thickLine);
-      }
-    });
   }
 
   /**
@@ -338,18 +184,12 @@ export class WebglPlot {
    */
   public update(): void {
     this.clear();
-    this.draw();
+    //this.draw();
   }
 
   /**
    * Draw without clearing the canvas
    */
-  public draw(): void {
-    this._drawLines(this.linesData);
-    this._drawLines(this.linesAux);
-    this._drawThickLines();
-    this._drawSurfaces(this.surfaces);
-  }
 
   /**
    * Clear the canvas
@@ -369,7 +209,7 @@ export class WebglPlot {
    * wglp.addLine(line);
    * ```
    */
-  private _addLine(line: WebglLine | WebglStep | WebglPolar | WebglSquare | WebglThickLine): void {
+  /*private _addLine(line: WebglLine | WebglStep | WebglPolar | WebglSquare | WebglThickLine): void {
     //line.initProgram(this.webgl);
     line._vbuffer = this.webgl.createBuffer() as WebGLBuffer;
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
@@ -442,37 +282,13 @@ export class WebglPlot {
     this.webgl.attachShader(this._progLine, vertShader as WebGLShader);
     this.webgl.attachShader(this._progLine, fragShader as WebGLShader);
     this.webgl.linkProgram(this._progLine);
-  }
-
-  /**
-   * remove the last data line
-   */
-  public popDataLine(): void {
-    this.linesData.pop();
-  }
-
-  /**
-   * remove all the lines
-   */
-  public removeAllLines(): void {
-    this._linesData = [];
-    this._linesAux = [];
-    this._thickLines = [];
-    this._surfaces = [];
-  }
+  }*/
 
   /**
    * remove all data lines
    */
   public removeDataLines(): void {
     this._linesData = [];
-  }
-
-  /**
-   * remove all auxiliary lines
-   */
-  public removeAuxLines(): void {
-    this._linesAux = [];
   }
 
   /**

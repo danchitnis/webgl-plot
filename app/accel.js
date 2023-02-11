@@ -1,4 +1,4 @@
-import { ColorRGBA, WebglScatterAcc } from "../dist/webglplot.esm.mjs";
+import { ColorRGBA, WebglScatterAcc, WebglLine } from "../dist/webglplot.esm.mjs";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -6,14 +6,19 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 canvas.width = canvas.clientWidth * devicePixelRatio;
 canvas.height = canvas.clientHeight * devicePixelRatio;
 
+const gl = canvas.getContext("webgl2", { premultipliedAlpha: false });
+
 const screenRatio = canvas.width / canvas.height;
+gl.viewport(0, 0, canvas.width, canvas.height);
 
-const sqSize = 0.001;
+const line = new WebglLine(gl, 100, 100);
 
-const sqAcc = new WebglScatterAcc(canvas, 6000000);
+const sqSize = 0.01;
+
+const sqAcc = new WebglScatterAcc(gl, 100);
 sqAcc.setSquareSize(sqSize);
 sqAcc.setColor(new ColorRGBA(255, 255, 0, 1));
-sqAcc.setScale(1, screenRatio);
+sqAcc.setScale(1, 1);
 sqAcc.setOffset(0, 0);
 
 //sqAcc.addSquare(new Float32Array([0, 0]));
@@ -40,7 +45,7 @@ function GetMatlabRgb(ordinal) {
 
 const render = () => {
   // newDataSize shouuld be divisible by MaxSquare
-  const newDataSize = 100000;
+  const newDataSize = 10;
 
   const pos = Array(newDataSize * 2);
   const colors = Array(newDataSize * 3);
@@ -62,27 +67,9 @@ const render = () => {
     colors[i * 3 + 2] = rgb[2];
   }
 
-  /*const pos = Array.from({ length: newDataSize * 2 }, (_, i) => {
-    if (i % 2 === 0) {
-      return getPos(i).countX;
-    } else {
-      return getPos(i).countY;
-    }
-  });*/
-
-  /*let r = Array.from({ length: newDataSize }, (_, i) => countX * 255);
-  let g = Array.from({ length: newDataSize }, (_, i) => countY * 255);
-  let b = Array.from({ length: newDataSize }, (_, i) => countZ * 255);
-
-  const colors = r.reduce((acc, curr, i) => {
-    acc.push(curr);
-    acc.push(g[i]);
-    acc.push(b[i]);
-    return acc;
-  }, []);*/
-
   sqAcc.addSquare(new Float32Array(pos), new Uint8Array(colors));
   sqAcc.update();
+  line.draw();
   requestAnimationFrame(render);
 };
 

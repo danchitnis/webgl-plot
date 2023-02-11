@@ -7,28 +7,12 @@
  */
 import { ColorRGBA } from "./ColorRGBA";
 import { WebglLine } from "./WbglLine";
-import { WebglStep } from "./WbglStep";
-import { WebglPolar } from "./WbglPolar";
-import { WebglSquare } from "./WbglSquare";
-import { WebglThickLine } from "./WbglThickLine";
 import { WebglScatterAcc } from "./WbglScatterAcc";
-export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLine, WebglScatterAcc };
+export { WebglLine, ColorRGBA, WebglScatterAcc };
 /**
  * The main class for the webgl-plot library
  */
 export class WebglPlot {
-    get linesData() {
-        return this._linesData;
-    }
-    get linesAux() {
-        return this._linesAux;
-    }
-    get thickLines() {
-        return this._thickLines;
-    }
-    get surfaces() {
-        return this._surfaces;
-    }
     /**
      * Create a webgl-plot instance
      * @param canvas - the canvas in which the plot appears
@@ -72,7 +56,6 @@ export class WebglPlot {
          * log debug output
          */
         this.debug = false;
-        this.addLine = this.addDataLine;
         if (options == undefined) {
             this.webgl = canvas.getContext("webgl", {
                 antialias: true,
@@ -91,10 +74,6 @@ export class WebglPlot {
         }
         this.log("canvas type is: " + canvas.constructor.name);
         this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
-        this._linesData = [];
-        this._linesAux = [];
-        this._thickLines = [];
-        this._surfaces = [];
         //this.webgl = webgl;
         this.gScaleX = 1;
         this.gScaleY = 1;
@@ -108,7 +87,7 @@ export class WebglPlot {
         // Set the view port
         this.webgl.viewport(0, 0, canvas.width, canvas.height);
         this._progLine = this.webgl.createProgram();
-        this.initThinLineProgram();
+        //this.initThinLineProgram();
         //https://learnopengl.com/Advanced-OpenGL/Blending
         this.webgl.enable(this.webgl.BLEND);
         this.webgl.blendFunc(this.webgl.SRC_ALPHA, this.webgl.ONE_MINUS_SRC_ALPHA);
@@ -118,102 +97,17 @@ export class WebglPlot {
      */
     _drawLines(lines) {
         const webgl = this.webgl;
-        lines.forEach((line) => {
-            if (line.visible) {
-                webgl.useProgram(this._progLine);
-                const uscale = webgl.getUniformLocation(this._progLine, "uscale");
-                webgl.uniformMatrix2fv(uscale, false, new Float32Array([
-                    line.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
-                    0,
-                    0,
-                    line.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
-                ]));
-                const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
-                webgl.uniform2fv(uoffset, new Float32Array([line.offsetX + this.gOffsetX, line.offsetY + this.gOffsetY]));
-                const isLog = webgl.getUniformLocation(this._progLine, "is_log");
-                webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
-                const uColor = webgl.getUniformLocation(this._progLine, "uColor");
-                webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
-                webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
-                webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
-            }
-        });
-    }
-    _drawSurfaces(squares) {
-        const webgl = this.webgl;
-        squares.forEach((square) => {
-            if (square.visible) {
-                webgl.useProgram(this._progLine);
-                const uscale = webgl.getUniformLocation(this._progLine, "uscale");
-                webgl.uniformMatrix2fv(uscale, false, new Float32Array([
-                    square.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
-                    0,
-                    0,
-                    square.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
-                ]));
-                const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
-                webgl.uniform2fv(uoffset, new Float32Array([square.offsetX + this.gOffsetX, square.offsetY + this.gOffsetY]));
-                const isLog = webgl.getUniformLocation(this._progLine, "is_log");
-                webgl.uniform2iv(isLog, new Int32Array([this.gLog10X ? 1 : 0, this.gLog10Y ? 1 : 0]));
-                const uColor = webgl.getUniformLocation(this._progLine, "uColor");
-                webgl.uniform4fv(uColor, [square.color.r, square.color.g, square.color.b, square.color.a]);
-                webgl.bufferData(webgl.ARRAY_BUFFER, square.xy, webgl.STREAM_DRAW);
-                webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, square.webglNumPoints);
-            }
-        });
-    }
-    _drawTriangles(thickLine) {
-        const webgl = this.webgl;
-        webgl.bufferData(webgl.ARRAY_BUFFER, thickLine.xy, webgl.STREAM_DRAW);
-        webgl.useProgram(this._progLine);
-        const uscale = webgl.getUniformLocation(this._progLine, "uscale");
-        webgl.uniformMatrix2fv(uscale, false, new Float32Array([
-            thickLine.scaleX * this.gScaleX * (this.gLog10X ? 1 / Math.log(10) : 1),
-            0,
-            0,
-            thickLine.scaleY * this.gScaleY * this.gXYratio * (this.gLog10Y ? 1 / Math.log(10) : 1),
-        ]));
-        const uoffset = webgl.getUniformLocation(this._progLine, "uoffset");
-        webgl.uniform2fv(uoffset, new Float32Array([thickLine.offsetX + this.gOffsetX, thickLine.offsetY + this.gOffsetY]));
-        const isLog = webgl.getUniformLocation(this._progLine, "is_log");
-        webgl.uniform2iv(isLog, new Int32Array([0, 0]));
-        const uColor = webgl.getUniformLocation(this._progLine, "uColor");
-        webgl.uniform4fv(uColor, [
-            thickLine.color.r,
-            thickLine.color.g,
-            thickLine.color.b,
-            thickLine.color.a,
-        ]);
-        webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, thickLine.xy.length / 2);
-    }
-    _drawThickLines() {
-        this._thickLines.forEach((thickLine) => {
-            if (thickLine.visible) {
-                const calibFactor = Math.min(this.gScaleX, this.gScaleY);
-                //const calibFactor = 10;
-                //console.log(thickLine.getThickness());
-                thickLine.setActualThickness(thickLine.getThickness() / calibFactor);
-                thickLine.convertToTriPoints();
-                this._drawTriangles(thickLine);
-            }
-        });
     }
     /**
      * Draw and clear the canvas
      */
     update() {
         this.clear();
-        this.draw();
+        //this.draw();
     }
     /**
      * Draw without clearing the canvas
      */
-    draw() {
-        this._drawLines(this.linesData);
-        this._drawLines(this.linesAux);
-        this._drawThickLines();
-        this._drawSurfaces(this.surfaces);
-    }
     /**
      * Clear the canvas
      */
@@ -231,92 +125,85 @@ export class WebglPlot {
      * wglp.addLine(line);
      * ```
      */
-    _addLine(line) {
-        //line.initProgram(this.webgl);
-        line._vbuffer = this.webgl.createBuffer();
-        this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
-        this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy, this.webgl.STREAM_DRAW);
-        //this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
-        line._coord = this.webgl.getAttribLocation(this._progLine, "coordinates");
-        this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
-        this.webgl.enableVertexAttribArray(line._coord);
+    /*private _addLine(line: WebglLine | WebglStep | WebglPolar | WebglSquare | WebglThickLine): void {
+      //line.initProgram(this.webgl);
+      line._vbuffer = this.webgl.createBuffer() as WebGLBuffer;
+      this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
+      this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, this.webgl.STREAM_DRAW);
+  
+      //this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
+  
+      line._coord = this.webgl.getAttribLocation(this._progLine, "coordinates");
+      this.webgl.vertexAttribPointer(line._coord, 2, this.webgl.FLOAT, false, 0, 0);
+      this.webgl.enableVertexAttribArray(line._coord);
     }
-    addDataLine(line) {
-        this._addLine(line);
-        this.linesData.push(line);
+  
+    public addDataLine(line: WebglLine | WebglStep | WebglPolar): void {
+      this._addLine(line);
+      this.linesData.push(line);
     }
-    addAuxLine(line) {
-        this._addLine(line);
-        this.linesAux.push(line);
+  
+    public addLine = this.addDataLine;
+  
+    public addAuxLine(line: WebglLine | WebglStep | WebglPolar): void {
+      this._addLine(line);
+      this.linesAux.push(line);
     }
-    addThickLine(thickLine) {
-        this._addLine(thickLine);
-        this._thickLines.push(thickLine);
+  
+    public addThickLine(thickLine: WebglThickLine): void {
+      this._addLine(thickLine);
+      this._thickLines.push(thickLine);
     }
-    addSurface(surface) {
-        this._addLine(surface);
-        this.surfaces.push(surface);
+  
+    public addSurface(surface: WebglSquare): void {
+      this._addLine(surface);
+      this.surfaces.push(surface);
     }
-    initThinLineProgram() {
-        const vertCode = `
-      attribute vec2 coordinates;
-      uniform mat2 uscale;
-      uniform vec2 uoffset;
-      uniform ivec2 is_log;
-
-      void main(void) {
-         float x = (is_log[0]==1) ? log(coordinates.x) : coordinates.x;
-         float y = (is_log[1]==1) ? log(coordinates.y) : coordinates.y;
-         vec2 line = vec2(x, y);
-         gl_Position = vec4(uscale*line + uoffset, 0.0, 1.0);
-      }`;
-        // Create a vertex shader object
-        const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
-        // Attach vertex shader source code
-        this.webgl.shaderSource(vertShader, vertCode);
-        // Compile the vertex shader
-        this.webgl.compileShader(vertShader);
-        // Fragment shader source code
-        const fragCode = `
-         precision mediump float;
-         uniform highp vec4 uColor;
-         void main(void) {
-            gl_FragColor =  uColor;
-         }`;
-        const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
-        this.webgl.shaderSource(fragShader, fragCode);
-        this.webgl.compileShader(fragShader);
-        this._progLine = this.webgl.createProgram();
-        this.webgl.attachShader(this._progLine, vertShader);
-        this.webgl.attachShader(this._progLine, fragShader);
-        this.webgl.linkProgram(this._progLine);
-    }
-    /**
-     * remove the last data line
-     */
-    popDataLine() {
-        this.linesData.pop();
-    }
-    /**
-     * remove all the lines
-     */
-    removeAllLines() {
-        this._linesData = [];
-        this._linesAux = [];
-        this._thickLines = [];
-        this._surfaces = [];
-    }
+  
+    private initThinLineProgram() {
+      const vertCode = `
+        attribute vec2 coordinates;
+        uniform mat2 uscale;
+        uniform vec2 uoffset;
+        uniform ivec2 is_log;
+  
+        void main(void) {
+           float x = (is_log[0]==1) ? log(coordinates.x) : coordinates.x;
+           float y = (is_log[1]==1) ? log(coordinates.y) : coordinates.y;
+           vec2 line = vec2(x, y);
+           gl_Position = vec4(uscale*line + uoffset, 0.0, 1.0);
+        }`;
+  
+      // Create a vertex shader object
+      const vertShader = this.webgl.createShader(this.webgl.VERTEX_SHADER);
+  
+      // Attach vertex shader source code
+      this.webgl.shaderSource(vertShader as WebGLShader, vertCode);
+  
+      // Compile the vertex shader
+      this.webgl.compileShader(vertShader as WebGLShader);
+  
+      // Fragment shader source code
+      const fragCode = `
+           precision mediump float;
+           uniform highp vec4 uColor;
+           void main(void) {
+              gl_FragColor =  uColor;
+           }`;
+  
+      const fragShader = this.webgl.createShader(this.webgl.FRAGMENT_SHADER);
+      this.webgl.shaderSource(fragShader as WebGLShader, fragCode);
+      this.webgl.compileShader(fragShader as WebGLShader);
+      this._progLine = this.webgl.createProgram() as WebGLProgram;
+      this.webgl.attachShader(this._progLine, vertShader as WebGLShader);
+      this.webgl.attachShader(this._progLine, fragShader as WebGLShader);
+      this.webgl.linkProgram(this._progLine);
+    }*/
     /**
      * remove all data lines
      */
     removeDataLines() {
         this._linesData = [];
-    }
-    /**
-     * remove all auxiliary lines
-     */
-    removeAuxLines() {
-        this._linesAux = [];
     }
     /**
      * Change the WbGL viewport

@@ -8,13 +8,13 @@ export declare class WebglScatterAcc {
     private squareSize;
     private maxSquare;
     private gl;
-    private program;
     private width;
     private height;
     private squareIndices;
     private colorsBuffer;
     private positionBuffer;
-    constructor(canvas: HTMLCanvasElement, maxSquare: number);
+    private _prog;
+    constructor(gl: WebGL2RenderingContext, maxSquare: number);
     setColor(color: ColorRGBA): void;
     setSquareSize(squareSize: number): void;
     setScale(scaleX: number, scaleY: number): void;

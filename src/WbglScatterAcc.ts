@@ -1,4 +1,5 @@
 import { ColorRGBA } from "./ColorRGBA";
+import { WebglBase } from "./WebglBase";
 
 /**
  * The standard Line class
@@ -9,28 +10,25 @@ export class WebglScatterAcc {
   private squareSize: number;
   private maxSquare: number;
   private gl: WebGL2RenderingContext;
-  private program: WebGLProgram;
+  //private program: WebGLProgram;
   private width: number;
   private height: number;
   private squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
   private colorsBuffer: WebGLBuffer;
   private positionBuffer: WebGLBuffer;
+  private _prog: WebGLProgram;
 
-  constructor(canvas: HTMLCanvasElement, maxSquare: number) {
+  constructor(gl: WebGL2RenderingContext, maxSquare: number) {
     //super();
-    //this.webglNumPoints = numPoints;
-    //this.numPoints = numPoints;
-    this.gl = canvas.getContext("webgl2", { premultipliedAlpha: false }) as WebGL2RenderingContext;
+
     this.color = new ColorRGBA(1, 1, 1, 1);
     this.squareSize = 0.1;
     this.maxSquare = maxSquare;
-    this.width = canvas.width;
-    this.height = canvas.height;
+    //this.width = canvas.width;
+    //this.height = canvas.height;
 
-    const gl = this.gl;
+    this.gl = gl;
 
-    // Create the square indices buffer
-    //const squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.squareIndices, gl.STATIC_DRAW);
@@ -60,9 +58,9 @@ export class WebglScatterAcc {
     this.positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);
-    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    gl.vertexAttribDivisor(0, 1);
-    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribDivisor(3, 1);
+    gl.enableVertexAttribArray(3);
 
     // Create vertex shader
     const vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -70,7 +68,7 @@ export class WebglScatterAcc {
       vertexShader,
       `#version 300 es
 
-    layout(location = 0) in vec2 position;
+    layout(location = 3) in vec2 position;
     layout(location = 1) in float a_instanceID;
     layout(location = 2) in vec3 sColor;
     uniform float u_size;
@@ -124,46 +122,50 @@ export class WebglScatterAcc {
     gl.attachShader(program, fragmentShader);
     gl.linkProgram(program);
     gl.useProgram(program);
-    this.program = program;
+    this._prog = program;
 
     // Set viewport and clear color
     //gl.enable(gl.DEPTH_TEST);
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    //gl.viewport(0, 0, canvas.width, canvas.height);
+    //gl.viewport(0, 0, 800, 600);
     //https://learnopengl.com/Advanced-OpenGL/Blending
-    gl.enable(gl.BLEND);
-    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    //gl.enable(gl.BLEND);
+
+    //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA);
+    //gl.clearColor(0, 0, 0, 1);
+    //gl.clear(gl.COLOR_BUFFER_BIT);
+    //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    //gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
   public setColor(color: ColorRGBA): void {
     this.color = color;
-    const colorUniformLocation = this.gl.getUniformLocation(this.program, "u_color");
+    const colorUniformLocation = this.gl.getUniformLocation(this._prog, "u_color");
     this.gl.uniform4f(colorUniformLocation, color.r, color.g, color.b, color.a);
   }
 
   public setSquareSize(squareSize: number): void {
     this.squareSize = squareSize;
-    const sizeUniformLocation = this.gl.getUniformLocation(this.program, "u_size");
+    const sizeUniformLocation = this.gl.getUniformLocation(this._prog, "u_size");
     this.gl.uniform1f(sizeUniformLocation, this.squareSize);
   }
 
   public setScale(scaleX: number, scaleY: number): void {
-    const scaleUniformLocation = this.gl.getUniformLocation(this.program, "u_scale");
+    const scaleUniformLocation = this.gl.getUniformLocation(this._prog, "u_scale");
     this.gl.uniformMatrix2fv(scaleUniformLocation, false, [scaleX, 0, 0, scaleY]);
   }
 
   public setOffset(offsetX: number, offsetY: number): void {
-    const offsetUniformLocation = this.gl.getUniformLocation(this.program, "u_offset");
+    const offsetUniformLocation = this.gl.getUniformLocation(this._prog, "u_offset");
     this.gl.uniform2f(offsetUniformLocation, offsetX, offsetY);
   }
 
   public addSquare(pos: Float32Array, color: Uint8Array): void {
     const gl = this.gl;
+    gl.useProgram(this._prog);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
     gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 2 * 4, pos, 0, pos.length);
-    gl.enableVertexAttribArray(0);
+    gl.enableVertexAttribArray(3);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
     gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 3 * 1, color, 0, color.length);
@@ -171,10 +173,12 @@ export class WebglScatterAcc {
 
     this.headIndex = (this.headIndex + pos.length / 2) % this.maxSquare;
     //console.log(this.headIndex);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
   public update(): void {
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    this.gl.useProgram(this._prog);
+    //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     this.gl.drawElementsInstanced(
       this.gl.TRIANGLES,
       this.squareIndices.length,
