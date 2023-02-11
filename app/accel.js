@@ -1,4 +1,4 @@
-import { ColorRGBA, WebglScatterAcc, WebglLine } from "../dist/webglplot.esm.mjs";
+import { ColorRGBA, WebglScatterAcc, WebglLine, WebglPlot } from "../dist/webglplot.esm.mjs";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -6,19 +6,21 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 canvas.width = canvas.clientWidth * devicePixelRatio;
 canvas.height = canvas.clientHeight * devicePixelRatio;
 
-const gl = canvas.getContext("webgl2", { premultipliedAlpha: false });
+//const gl = canvas.getContext("webgl2", { premultipliedAlpha: false });
 
 const screenRatio = canvas.width / canvas.height;
-gl.viewport(0, 0, canvas.width, canvas.height);
+//gl.viewport(0, 0, canvas.width, canvas.height);
 
-const line = new WebglLine(gl);
+const wglp = new WebglPlot(canvas);
+
+const line = new WebglLine(wglp);
 
 const sqSize = 0.01;
 
-const sqAcc = new WebglScatterAcc(gl, 100);
+const sqAcc = new WebglScatterAcc(wglp, 100);
 sqAcc.setSquareSize(sqSize);
 sqAcc.setColor(new ColorRGBA(255, 255, 0, 1));
-sqAcc.setScale(1, 1);
+sqAcc.setScale(1, canvas.width / canvas.height);
 sqAcc.setOffset(0, 0);
 
 //sqAcc.addSquare(new Float32Array([0, 0]));
@@ -68,7 +70,7 @@ const render = () => {
   }
 
   sqAcc.addSquare(new Float32Array(pos), new Uint8Array(colors));
-  sqAcc.update();
+  sqAcc.draw();
   line.draw();
   requestAnimationFrame(render);
 };

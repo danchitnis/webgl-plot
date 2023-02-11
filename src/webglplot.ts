@@ -29,7 +29,7 @@ export class WebglPlot {
   /**
    * @private
    */
-  private readonly webgl: WebGLRenderingContext;
+  public readonly gl: WebGL2RenderingContext;
 
   /**
    * Global horizontal scale factor
@@ -62,121 +62,52 @@ export class WebglPlot {
   public gOffsetY: number;
 
   /**
-   * Global log10 of x-axis
-   * @default = false
-   */
-  public gLog10X: boolean;
-
-  /**
-   * Global log10 of y-axis
-   * @default = false
-   */
-  public gLog10Y: boolean;
-
-  /**
-   * collection of data lines in the plot
-   */
-  private _linesData: WebglBase[];
-
-  /**
-   * collection of auxiliary lines (grids, markers, etc) in the plot
-   */
-
-  private _progLine: WebGLProgram;
-
-  /**
    * log debug output
    */
   public debug = false;
 
-  /**
-   * Create a webgl-plot instance
-   * @param canvas - the canvas in which the plot appears
-   * @param debug - (Optional) log debug messages to console
-   *
-   * @example
-   *
-   * For HTMLCanvas
-   * ```typescript
-   * const canvas = document.getElementbyId("canvas");
-   *
-   * const devicePixelRatio = window.devicePixelRatio || 1;
-   * canvas.width = canvas.clientWidth * devicePixelRatio;
-   * canvas.height = canvas.clientHeight * devicePixelRatio;
-   *
-   * const webglp = new WebGLplot(canvas);
-   * ...
-   * ```
-   * @example
-   *
-   * For OffScreenCanvas
-   * ```typescript
-   * const offscreen = htmlCanvas.transferControlToOffscreen();
-   *
-   * offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
-   * offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
-   *
-   * const worker = new Worker("offScreenCanvas.js", { type: "module" });
-   * worker.postMessage({ canvas: offscreen }, [offscreen]);
-   * ```
-   * Then in offScreenCanvas.js
-   * ```typescript
-   * onmessage = function (evt) {
-   * const wglp = new WebGLplot(evt.data.canvas);
-   * ...
-   * }
-   * ```
-   */
   constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig) {
     if (options == undefined) {
-      this.webgl = canvas.getContext("webgl", {
+      this.gl = canvas.getContext("webgl2", {
         antialias: true,
         transparent: false,
-      }) as WebGLRenderingContext;
+      }) as WebGL2RenderingContext;
     } else {
-      this.webgl = canvas.getContext("webgl", {
+      this.gl = canvas.getContext("webgl2", {
         antialias: options.antialias,
         transparent: options.transparent,
         desynchronized: options.deSync,
         powerPerformance: options.powerPerformance,
         preserveDrawing: options.preserveDrawing,
-      }) as WebGLRenderingContext;
+      }) as WebGL2RenderingContext;
       this.debug = options.debug == undefined ? false : options.debug;
     }
 
     this.log("canvas type is: " + canvas.constructor.name);
     this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
 
-    //this.webgl = webgl;
+    const gl = this.gl;
 
     this.gScaleX = 1;
     this.gScaleY = 1;
     this.gXYratio = 1;
     this.gOffsetX = 0;
     this.gOffsetY = 0;
-    this.gLog10X = false;
-    this.gLog10Y = false;
-
-    // Clear the color
-    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
 
     // Set the view port
-    this.webgl.viewport(0, 0, canvas.width, canvas.height);
-
-    this._progLine = this.webgl.createProgram() as WebGLProgram;
-
-    //this.initThinLineProgram();
+    gl.viewport(0, 0, canvas.width, canvas.height);
 
     //https://learnopengl.com/Advanced-OpenGL/Blending
-    this.webgl.enable(this.webgl.BLEND);
-    this.webgl.blendFunc(this.webgl.SRC_ALPHA, this.webgl.ONE_MINUS_SRC_ALPHA);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
   }
 
   /**
    * updates and redraws the content of the plot
    */
   private _drawLines(lines: WebglBase[]): void {
-    const webgl = this.webgl;
+    const webgl = this.gl;
   }
 
   /**
@@ -196,7 +127,7 @@ export class WebglPlot {
    */
   public clear(): void {
     //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
-    this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
 
   /**
@@ -287,9 +218,6 @@ export class WebglPlot {
   /**
    * remove all data lines
    */
-  public removeDataLines(): void {
-    this._linesData = [];
-  }
 
   /**
    * Change the WbGL viewport
@@ -299,7 +227,7 @@ export class WebglPlot {
    * @param d
    */
   public viewport(a: number, b: number, c: number, d: number): void {
-    this.webgl.viewport(a, b, c, d);
+    this.gl.viewport(a, b, c, d);
   }
 
   private log(str: string): void {

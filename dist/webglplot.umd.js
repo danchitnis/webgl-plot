@@ -14,25 +14,9 @@
     }
 
     /**
-     * Baseline class
-     */
-    class WebglBase {
-        /**
-         * @internal
-         */
-        constructor() {
-            this.scaleX = 1;
-            this.scaleY = 1;
-            this.offsetX = 0;
-            this.offsetY = 0;
-            this.visible = true;
-        }
-    }
-
-    /**
      * The standard Line class
      */
-    class WebglLine extends WebglBase {
+    class WebglLine {
         /**
          * Create a new line
          * @param c - the color of the line
@@ -44,10 +28,10 @@
          * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
          * ```
          */
-        constructor(gl) {
-            super();
-            this.currentIndex = 0;
-            this.gl = gl;
+        constructor(wglp) {
+            //super();
+            this.gl = wglp.gl;
+            const gl = this.gl;
             const vertCode = `#version 300 es
 
     layout(location = 0) in vec2 coord;
@@ -82,24 +66,24 @@
                 // there was an error
                 console.error(gl.getShaderInfoLog(fragShader));
             }
-            this._prog = this.gl.createProgram();
-            this.gl.attachShader(this._prog, vertShader);
-            this.gl.attachShader(this._prog, fragShader);
-            this.gl.linkProgram(this._prog);
-            this.gl.useProgram(this._prog);
+            this.prog = this.gl.createProgram();
+            this.gl.attachShader(this.prog, vertShader);
+            this.gl.attachShader(this.prog, fragShader);
+            this.gl.linkProgram(this.prog);
+            this.gl.useProgram(this.prog);
             this.xy = new Float32Array([-1, -1, 1, 1]);
             this.vbuffer = this.gl.createBuffer();
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
             this.gl.bufferData(this.gl.ARRAY_BUFFER, this.xy, gl.STREAM_DRAW);
-            this.coord = this.gl.getAttribLocation(this._prog, "coord");
+            this.coord = this.gl.getAttribLocation(this.prog, "coord");
             this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
             this.gl.enableVertexAttribArray(this.coord);
-            gl.useProgram(this._prog);
-            const uscale = gl.getUniformLocation(this._prog, "uscale");
+            gl.useProgram(this.prog);
+            const uscale = gl.getUniformLocation(this.prog, "uscale");
             gl.uniformMatrix2fv(uscale, false, new Float32Array([1, 0, 0, 1]));
-            const uoffset = gl.getUniformLocation(this._prog, "uoffset");
+            const uoffset = gl.getUniformLocation(this.prog, "uoffset");
             gl.uniform2fv(uoffset, new Float32Array([0, 0]));
-            const uColor = gl.getUniformLocation(this._prog, "uColor");
+            const uColor = gl.getUniformLocation(this.prog, "uColor");
             gl.uniform4fv(uColor, [1, 1, 0, 1]);
             gl.bufferData(gl.ARRAY_BUFFER, this.xy, gl.STREAM_DRAW);
             //gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -111,7 +95,7 @@
             //this.gl.viewport(0, 0, canvas.width, canvas.height);
         }
         draw() {
-            this.gl.useProgram(this._prog);
+            this.gl.useProgram(this.prog);
             //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
             //this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
             //this.gl.vertexAttribDivisor(this.coord, 0);
@@ -124,16 +108,15 @@
      * The standard Line class
      */
     class WebglScatterAcc {
-        constructor(gl, maxSquare) {
+        constructor(wglp, maxSquare) {
             //super();
             this.headIndex = 0;
             this.squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
             this.color = new ColorRGBA(1, 1, 1, 1);
             this.squareSize = 0.1;
             this.maxSquare = maxSquare;
-            //this.width = canvas.width;
-            //this.height = canvas.height;
-            this.gl = gl;
+            this.gl = wglp.gl;
+            const gl = this.gl;
             // Create vertex shader
             const vertexShader = gl.createShader(gl.VERTEX_SHADER);
             gl.shaderSource(vertexShader, `#version 300 es
@@ -183,7 +166,7 @@
             gl.attachShader(program, fragmentShader);
             gl.linkProgram(program);
             gl.useProgram(program);
-            this._prog = program;
+            this.prog = program;
             const indexBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
             gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.squareIndices, gl.STATIC_DRAW);
@@ -192,7 +175,7 @@
             this.positionBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);
-            this.attrPosLocation = gl.getAttribLocation(this._prog, "position");
+            this.attrPosLocation = gl.getAttribLocation(this.prog, "position");
             gl.vertexAttribPointer(this.attrPosLocation, 2, gl.FLOAT, false, 0, 0);
             gl.vertexAttribDivisor(this.attrPosLocation, 1);
             gl.enableVertexAttribArray(this.attrPosLocation);
@@ -201,7 +184,7 @@
             this.colorsBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
-            this.attrColorLocation = gl.getAttribLocation(this._prog, "sColor");
+            this.attrColorLocation = gl.getAttribLocation(this.prog, "sColor");
             gl.vertexAttribPointer(this.attrColorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
             gl.vertexAttribDivisor(this.attrColorLocation, 1);
             gl.enableVertexAttribArray(this.attrColorLocation);
@@ -214,30 +197,28 @@
             //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA);
             //gl.clearColor(0, 0, 0, 1);
             //gl.clear(gl.COLOR_BUFFER_BIT);
-            //gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-            //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         }
         setColor(color) {
             this.color = color;
-            const colorUniformLocation = this.gl.getUniformLocation(this._prog, "u_color");
+            const colorUniformLocation = this.gl.getUniformLocation(this.prog, "u_color");
             this.gl.uniform4f(colorUniformLocation, color.r, color.g, color.b, color.a);
         }
         setSquareSize(squareSize) {
             this.squareSize = squareSize;
-            const sizeUniformLocation = this.gl.getUniformLocation(this._prog, "u_size");
+            const sizeUniformLocation = this.gl.getUniformLocation(this.prog, "u_size");
             this.gl.uniform1f(sizeUniformLocation, this.squareSize);
         }
         setScale(scaleX, scaleY) {
-            const scaleUniformLocation = this.gl.getUniformLocation(this._prog, "u_scale");
+            const scaleUniformLocation = this.gl.getUniformLocation(this.prog, "u_scale");
             this.gl.uniformMatrix2fv(scaleUniformLocation, false, [scaleX, 0, 0, scaleY]);
         }
         setOffset(offsetX, offsetY) {
-            const offsetUniformLocation = this.gl.getUniformLocation(this._prog, "u_offset");
+            const offsetUniformLocation = this.gl.getUniformLocation(this.prog, "u_offset");
             this.gl.uniform2f(offsetUniformLocation, offsetX, offsetY);
         }
         addSquare(pos, color) {
             const gl = this.gl;
-            gl.useProgram(this._prog);
+            gl.useProgram(this.prog);
             gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
             gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 2 * 4, pos, 0, pos.length);
             gl.enableVertexAttribArray(this.attrPosLocation);
@@ -245,12 +226,9 @@
             gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 3 * 1, color, 0, color.length);
             gl.enableVertexAttribArray(this.attrColorLocation);
             this.headIndex = (this.headIndex + pos.length / 2) % this.maxSquare;
-            //console.log(this.headIndex);
-            //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         }
-        update() {
-            this.gl.useProgram(this._prog);
-            //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+        draw() {
+            this.gl.useProgram(this.prog);
             this.gl.drawElementsInstanced(this.gl.TRIANGLES, this.squareIndices.length, this.gl.UNSIGNED_SHORT, 0, this.maxSquare);
         }
     }
@@ -266,57 +244,19 @@
      * The main class for the webgl-plot library
      */
     class WebglPlot {
-        /**
-         * Create a webgl-plot instance
-         * @param canvas - the canvas in which the plot appears
-         * @param debug - (Optional) log debug messages to console
-         *
-         * @example
-         *
-         * For HTMLCanvas
-         * ```typescript
-         * const canvas = document.getElementbyId("canvas");
-         *
-         * const devicePixelRatio = window.devicePixelRatio || 1;
-         * canvas.width = canvas.clientWidth * devicePixelRatio;
-         * canvas.height = canvas.clientHeight * devicePixelRatio;
-         *
-         * const webglp = new WebGLplot(canvas);
-         * ...
-         * ```
-         * @example
-         *
-         * For OffScreenCanvas
-         * ```typescript
-         * const offscreen = htmlCanvas.transferControlToOffscreen();
-         *
-         * offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
-         * offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
-         *
-         * const worker = new Worker("offScreenCanvas.js", { type: "module" });
-         * worker.postMessage({ canvas: offscreen }, [offscreen]);
-         * ```
-         * Then in offScreenCanvas.js
-         * ```typescript
-         * onmessage = function (evt) {
-         * const wglp = new WebGLplot(evt.data.canvas);
-         * ...
-         * }
-         * ```
-         */
         constructor(canvas, options) {
             /**
              * log debug output
              */
             this.debug = false;
             if (options == undefined) {
-                this.webgl = canvas.getContext("webgl", {
+                this.gl = canvas.getContext("webgl2", {
                     antialias: true,
                     transparent: false,
                 });
             }
             else {
-                this.webgl = canvas.getContext("webgl", {
+                this.gl = canvas.getContext("webgl2", {
                     antialias: options.antialias,
                     transparent: options.transparent,
                     desynchronized: options.deSync,
@@ -327,29 +267,24 @@
             }
             this.log("canvas type is: " + canvas.constructor.name);
             this.log(`[webgl-plot]:width=${canvas.width}, height=${canvas.height}`);
-            //this.webgl = webgl;
+            const gl = this.gl;
             this.gScaleX = 1;
             this.gScaleY = 1;
             this.gXYratio = 1;
             this.gOffsetX = 0;
             this.gOffsetY = 0;
-            this.gLog10X = false;
-            this.gLog10Y = false;
-            // Clear the color
-            this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
             // Set the view port
-            this.webgl.viewport(0, 0, canvas.width, canvas.height);
-            this._progLine = this.webgl.createProgram();
-            //this.initThinLineProgram();
+            gl.viewport(0, 0, canvas.width, canvas.height);
             //https://learnopengl.com/Advanced-OpenGL/Blending
-            this.webgl.enable(this.webgl.BLEND);
-            this.webgl.blendFunc(this.webgl.SRC_ALPHA, this.webgl.ONE_MINUS_SRC_ALPHA);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA);
+            gl.clearColor(0, 0, 0, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT);
         }
         /**
          * updates and redraws the content of the plot
          */
         _drawLines(lines) {
-            this.webgl;
+            this.gl;
         }
         /**
          * Draw and clear the canvas
@@ -366,7 +301,7 @@
          */
         clear() {
             //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
-            this.webgl.clear(this.webgl.COLOR_BUFFER_BIT);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         }
         /**
          * adds a line to the plot
@@ -455,9 +390,6 @@
         /**
          * remove all data lines
          */
-        removeDataLines() {
-            this._linesData = [];
-        }
         /**
          * Change the WbGL viewport
          * @param a
@@ -466,7 +398,7 @@
          * @param d
          */
         viewport(a, b, c, d) {
-            this.webgl.viewport(a, b, c, d);
+            this.gl.viewport(a, b, c, d);
         }
         log(str) {
             if (this.debug) {

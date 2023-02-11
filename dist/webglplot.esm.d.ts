@@ -7,53 +7,15 @@ declare class ColorRGBA {
 }
 
 /**
- * Baseline class
- */
-declare abstract class WebglBase {
-    visible: boolean;
-    /**
-     * The horizontal scale of the line
-     * @default = 1
-     */
-    scaleX: number;
-    /**
-     * The vertical scale of the line
-     * @default = 1
-     */
-    scaleY: number;
-    /**
-     * The horizontal offset of the line
-     * @default = 0
-     */
-    offsetX: number;
-    /**
-     * the vertical offset of the line
-     * @default = 0
-     */
-    offsetY: number;
-    /**
-     * @private
-     * @internal
-     */
-    _prog: WebGLProgram;
-    /**
-     * @internal
-     */
-    constructor();
-}
-
-/**
  * The standard Line class
  */
-declare class WebglLine extends WebglBase {
-    private currentIndex;
+declare class WebglLine {
     private color;
     private xy;
-    private numPoints;
-    private webglNumPoints;
     private gl;
     private coord;
     private vbuffer;
+    prog: WebGLProgram;
     /**
      * Create a new line
      * @param c - the color of the line
@@ -65,7 +27,7 @@ declare class WebglLine extends WebglBase {
      * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
      * ```
      */
-    constructor(gl: WebGL2RenderingContext);
+    constructor(wglp: WebglPlot);
     draw(): void;
 }
 
@@ -78,21 +40,19 @@ declare class WebglScatterAcc {
     private squareSize;
     private maxSquare;
     private gl;
-    private width;
-    private height;
     private squareIndices;
     private colorsBuffer;
     private positionBuffer;
-    private _prog;
+    prog: WebGLProgram;
     private attrPosLocation;
     private attrColorLocation;
-    constructor(gl: WebGL2RenderingContext, maxSquare: number);
+    constructor(wglp: WebglPlot, maxSquare: number);
     setColor(color: ColorRGBA): void;
     setSquareSize(squareSize: number): void;
     setScale(scaleX: number, scaleY: number): void;
     setOffset(offsetX: number, offsetY: number): void;
     addSquare(pos: Float32Array, color: Uint8Array): void;
-    update(): void;
+    draw(): void;
 }
 
 /**
@@ -118,7 +78,7 @@ declare class WebglPlot {
     /**
      * @private
      */
-    private readonly webgl;
+    readonly gl: WebGL2RenderingContext;
     /**
      * Global horizontal scale factor
      * @default = 1.0
@@ -145,65 +105,9 @@ declare class WebglPlot {
      */
     gOffsetY: number;
     /**
-     * Global log10 of x-axis
-     * @default = false
-     */
-    gLog10X: boolean;
-    /**
-     * Global log10 of y-axis
-     * @default = false
-     */
-    gLog10Y: boolean;
-    /**
-     * collection of data lines in the plot
-     */
-    private _linesData;
-    /**
-     * collection of auxiliary lines (grids, markers, etc) in the plot
-     */
-    private _progLine;
-    /**
      * log debug output
      */
     debug: boolean;
-    /**
-     * Create a webgl-plot instance
-     * @param canvas - the canvas in which the plot appears
-     * @param debug - (Optional) log debug messages to console
-     *
-     * @example
-     *
-     * For HTMLCanvas
-     * ```typescript
-     * const canvas = document.getElementbyId("canvas");
-     *
-     * const devicePixelRatio = window.devicePixelRatio || 1;
-     * canvas.width = canvas.clientWidth * devicePixelRatio;
-     * canvas.height = canvas.clientHeight * devicePixelRatio;
-     *
-     * const webglp = new WebGLplot(canvas);
-     * ...
-     * ```
-     * @example
-     *
-     * For OffScreenCanvas
-     * ```typescript
-     * const offscreen = htmlCanvas.transferControlToOffscreen();
-     *
-     * offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
-     * offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
-     *
-     * const worker = new Worker("offScreenCanvas.js", { type: "module" });
-     * worker.postMessage({ canvas: offscreen }, [offscreen]);
-     * ```
-     * Then in offScreenCanvas.js
-     * ```typescript
-     * onmessage = function (evt) {
-     * const wglp = new WebGLplot(evt.data.canvas);
-     * ...
-     * }
-     * ```
-     */
     constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig);
     /**
      * updates and redraws the content of the plot
@@ -233,7 +137,6 @@ declare class WebglPlot {
     /**
      * remove all data lines
      */
-    removeDataLines(): void;
     /**
      * Change the WbGL viewport
      * @param a

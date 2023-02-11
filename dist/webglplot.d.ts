@@ -24,7 +24,7 @@ export declare class WebglPlot {
     /**
      * @private
      */
-    private readonly webgl;
+    readonly gl: WebGL2RenderingContext;
     /**
      * Global horizontal scale factor
      * @default = 1.0
@@ -51,65 +51,9 @@ export declare class WebglPlot {
      */
     gOffsetY: number;
     /**
-     * Global log10 of x-axis
-     * @default = false
-     */
-    gLog10X: boolean;
-    /**
-     * Global log10 of y-axis
-     * @default = false
-     */
-    gLog10Y: boolean;
-    /**
-     * collection of data lines in the plot
-     */
-    private _linesData;
-    /**
-     * collection of auxiliary lines (grids, markers, etc) in the plot
-     */
-    private _progLine;
-    /**
      * log debug output
      */
     debug: boolean;
-    /**
-     * Create a webgl-plot instance
-     * @param canvas - the canvas in which the plot appears
-     * @param debug - (Optional) log debug messages to console
-     *
-     * @example
-     *
-     * For HTMLCanvas
-     * ```typescript
-     * const canvas = document.getElementbyId("canvas");
-     *
-     * const devicePixelRatio = window.devicePixelRatio || 1;
-     * canvas.width = canvas.clientWidth * devicePixelRatio;
-     * canvas.height = canvas.clientHeight * devicePixelRatio;
-     *
-     * const webglp = new WebGLplot(canvas);
-     * ...
-     * ```
-     * @example
-     *
-     * For OffScreenCanvas
-     * ```typescript
-     * const offscreen = htmlCanvas.transferControlToOffscreen();
-     *
-     * offscreen.width = htmlCanvas.clientWidth * window.devicePixelRatio;
-     * offscreen.height = htmlCanvas.clientHeight * window.devicePixelRatio;
-     *
-     * const worker = new Worker("offScreenCanvas.js", { type: "module" });
-     * worker.postMessage({ canvas: offscreen }, [offscreen]);
-     * ```
-     * Then in offScreenCanvas.js
-     * ```typescript
-     * onmessage = function (evt) {
-     * const wglp = new WebGLplot(evt.data.canvas);
-     * ...
-     * }
-     * ```
-     */
     constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig);
     /**
      * updates and redraws the content of the plot
@@ -139,7 +83,6 @@ export declare class WebglPlot {
     /**
      * remove all data lines
      */
-    removeDataLines(): void;
     /**
      * Change the WbGL viewport
      * @param a

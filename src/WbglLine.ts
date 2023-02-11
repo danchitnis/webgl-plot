@@ -1,18 +1,16 @@
 import type { ColorRGBA } from "./ColorRGBA";
-import { WebglBase } from "./WebglBase";
+import type { WebglPlot } from "./webglplot";
 
 /**
  * The standard Line class
  */
-export class WebglLine extends WebglBase {
-  private currentIndex = 0;
+export class WebglLine {
   private color: ColorRGBA;
   private xy: Float32Array;
-  private numPoints: number;
-  private webglNumPoints: number;
   private gl: WebGL2RenderingContext;
   private coord: number;
   private vbuffer: WebGLBuffer;
+  public prog: WebGLProgram;
 
   /**
    * Create a new line
@@ -25,9 +23,10 @@ export class WebglLine extends WebglBase {
    * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
    * ```
    */
-  constructor(gl: WebGL2RenderingContext) {
-    super();
-    this.gl = gl;
+  constructor(wglp: WebglPlot) {
+    //super();
+    this.gl = wglp.gl;
+    const gl = this.gl;
 
     const vertCode = `#version 300 es
 
@@ -69,11 +68,11 @@ export class WebglLine extends WebglBase {
       console.error(gl.getShaderInfoLog(fragShader));
     }
 
-    this._prog = this.gl.createProgram() as WebGLProgram;
-    this.gl.attachShader(this._prog, vertShader);
-    this.gl.attachShader(this._prog, fragShader);
-    this.gl.linkProgram(this._prog);
-    this.gl.useProgram(this._prog);
+    this.prog = this.gl.createProgram() as WebGLProgram;
+    this.gl.attachShader(this.prog, vertShader);
+    this.gl.attachShader(this.prog, fragShader);
+    this.gl.linkProgram(this.prog);
+    this.gl.useProgram(this.prog);
 
     this.xy = new Float32Array([-1, -1, 1, 1]);
 
@@ -81,19 +80,19 @@ export class WebglLine extends WebglBase {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
     this.gl.bufferData(this.gl.ARRAY_BUFFER, this.xy as ArrayBuffer, gl.STREAM_DRAW);
 
-    this.coord = this.gl.getAttribLocation(this._prog, "coord");
+    this.coord = this.gl.getAttribLocation(this.prog, "coord");
     this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
     this.gl.enableVertexAttribArray(this.coord);
 
-    gl.useProgram(this._prog);
+    gl.useProgram(this.prog);
 
-    const uscale = gl.getUniformLocation(this._prog, "uscale");
+    const uscale = gl.getUniformLocation(this.prog, "uscale");
     gl.uniformMatrix2fv(uscale, false, new Float32Array([1, 0, 0, 1]));
 
-    const uoffset = gl.getUniformLocation(this._prog, "uoffset");
+    const uoffset = gl.getUniformLocation(this.prog, "uoffset");
     gl.uniform2fv(uoffset, new Float32Array([0, 0]));
 
-    const uColor = gl.getUniformLocation(this._prog, "uColor");
+    const uColor = gl.getUniformLocation(this.prog, "uColor");
     gl.uniform4fv(uColor, [1, 1, 0, 1]);
 
     gl.bufferData(gl.ARRAY_BUFFER, this.xy as ArrayBuffer, gl.STREAM_DRAW);
@@ -111,7 +110,7 @@ export class WebglLine extends WebglBase {
   }
 
   draw() {
-    this.gl.useProgram(this._prog);
+    this.gl.useProgram(this.prog);
     //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
     //this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
     //this.gl.vertexAttribDivisor(this.coord, 0);
