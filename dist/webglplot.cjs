@@ -40,49 +40,56 @@ class WebglLine extends WebglBase {
      * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
      * ```
      */
-    constructor(gl, c, numPoints) {
+    constructor(gl) {
         super();
         this.currentIndex = 0;
-        this.webglNumPoints = numPoints;
-        this.numPoints = numPoints;
-        this.color = c;
         this.gl = gl;
-        const vertCode = `
-      attribute vec2 coor;
-      uniform mat2 uscale;
-      uniform vec2 uoffset;
+        const vertCode = `#version 300 es
 
-      void main(void) {
-         vec2 line = vec2(coor.x, coor.y);
-         gl_Position = vec4(uscale*line + uoffset, 0.0, 1.0);
-      }`;
-        // Create a vertex shader object
+    layout(location = 0) in vec2 coord;
+    uniform mat2 uscale;
+    uniform vec2 uoffset;
+
+    void main(void) {
+      vec2 line = vec2(coord.x, coord.y);
+      gl_Position = vec4(uscale*line + uoffset, 0.0, 1.0);
+    }`;
         const vertShader = this.gl.createShader(this.gl.VERTEX_SHADER);
-        // Attach vertex shader source code
         this.gl.shaderSource(vertShader, vertCode);
-        // Compile the vertex shader
         this.gl.compileShader(vertShader);
+        if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+            // there was an error
+            console.error(gl.getShaderInfoLog(vertShader));
+        }
         // Fragment shader source code
-        const fragCode = `
+        const fragCode = `#version 300 es
+
          precision mediump float;
          uniform highp vec4 uColor;
+         out vec4 outColor;
+         
          void main(void) {
-            gl_FragColor =  uColor;
+            outColor=  uColor;
          }`;
         const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
         this.gl.shaderSource(fragShader, fragCode);
         this.gl.compileShader(fragShader);
+        if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+            // there was an error
+            console.error(gl.getShaderInfoLog(fragShader));
+        }
         this._prog = this.gl.createProgram();
         this.gl.attachShader(this._prog, vertShader);
         this.gl.attachShader(this._prog, fragShader);
         this.gl.linkProgram(this._prog);
+        this.gl.useProgram(this._prog);
         this.xy = new Float32Array([-1, -1, 1, 1]);
-        const vbuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, vbuffer);
+        this.vbuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
         this.gl.bufferData(this.gl.ARRAY_BUFFER, this.xy, gl.STREAM_DRAW);
-        const coord = this.gl.getAttribLocation(this._prog, "coor");
-        this.gl.vertexAttribPointer(coord, 2, this.gl.FLOAT, false, 0, 0);
-        this.gl.enableVertexAttribArray(coord);
+        this.coord = this.gl.getAttribLocation(this._prog, "coord");
+        this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.enableVertexAttribArray(this.coord);
         gl.useProgram(this._prog);
         const uscale = gl.getUniformLocation(this._prog, "uscale");
         gl.uniformMatrix2fv(uscale, false, new Float32Array([1, 0, 0, 1]));
@@ -93,7 +100,7 @@ class WebglLine extends WebglBase {
         gl.bufferData(gl.ARRAY_BUFFER, this.xy, gl.STREAM_DRAW);
         //gl.bindBuffer(gl.ARRAY_BUFFER, null);
         //gl.viewport(0, 0, 800, 600);
-        gl.drawArrays(gl.LINE_STRIP, 0, this.xy.length / 2);
+        //gl.drawArrays(gl.LINE_STRIP, 0, this.xy.length / 2);
         // Clear the color
         //this.gl.clear(this.gl.COLOR_BUFFER_BIT);
         // Set the view port
@@ -101,6 +108,10 @@ class WebglLine extends WebglBase {
     }
     draw() {
         this.gl.useProgram(this._prog);
+        //this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
+        //this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
+        //this.gl.vertexAttribDivisor(this.coord, 0);
+        //this.gl.enableVertexAttribArray(this.coord);
         this.gl.drawArrays(this.gl.LINE_STRIP, 0, this.xy.length / 2);
     }
 }
@@ -119,39 +130,11 @@ class WebglScatterAcc {
         //this.width = canvas.width;
         //this.height = canvas.height;
         this.gl = gl;
-        const indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.squareIndices, gl.STATIC_DRAW);
-        // Create the instance IDs buffer
-        const instanceIDs = new Float32Array(Array.from({ length: this.maxSquare }, (_, i) => i));
-        const instanceIDBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, instanceIDBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, instanceIDs, gl.STATIC_DRAW);
-        gl.vertexAttribPointer(1, 1, gl.FLOAT, false, 0, 0);
-        gl.vertexAttribDivisor(1, 1);
-        gl.enableVertexAttribArray(1);
-        // Create the color buffer
-        const colors = new Uint8Array(Array.from({ length: this.maxSquare * 3 }, (_, i) => 255));
-        this.colorsBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
-        gl.vertexAttribPointer(2, 3, gl.UNSIGNED_BYTE, false, 0, 0);
-        gl.vertexAttribDivisor(2, 1);
-        gl.enableVertexAttribArray(2);
-        // Create the square positions buffer
-        const squarePositions = new Float32Array(Array.from({ length: this.maxSquare * 2 }, (_, i) => 0));
-        this.positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);
-        gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 0, 0);
-        gl.vertexAttribDivisor(3, 1);
-        gl.enableVertexAttribArray(3);
         // Create vertex shader
         const vertexShader = gl.createShader(gl.VERTEX_SHADER);
         gl.shaderSource(vertexShader, `#version 300 es
 
-    layout(location = 3) in vec2 position;
-    layout(location = 1) in float a_instanceID;
+    layout(location = 1) in vec2 position;
     layout(location = 2) in vec3 sColor;
     uniform float u_size;
     uniform vec2 u_offset;
@@ -162,7 +145,7 @@ class WebglScatterAcc {
     void main() {
       vColor = sColor / vec3(255.0, 255.0, 255.0);
       vec2 squareVertices[4] = vec2[4](vec2(-1.0, 1.0), vec2(1.0, 1.0), vec2(-1.0, -1.0), vec2(1.0, -1.0));
-      vec2 pos = u_size * squareVertices[gl_VertexID] + position + vec2(0,0) * a_instanceID;
+      vec2 pos = u_size * squareVertices[gl_VertexID] + position;
       gl_Position = vec4((u_scale * pos) + u_offset, 0.0, 1.0);
     }
 
@@ -197,6 +180,27 @@ class WebglScatterAcc {
         gl.linkProgram(program);
         gl.useProgram(program);
         this._prog = program;
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.squareIndices, gl.STATIC_DRAW);
+        // Create the square positions buffer
+        const squarePositions = new Float32Array(Array.from({ length: this.maxSquare * 2 }, (_, i) => 0));
+        this.positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);
+        this.attrPosLocation = gl.getAttribLocation(this._prog, "position");
+        gl.vertexAttribPointer(this.attrPosLocation, 2, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribDivisor(this.attrPosLocation, 1);
+        gl.enableVertexAttribArray(this.attrPosLocation);
+        // Create the color buffer
+        const colors = new Uint8Array(Array.from({ length: this.maxSquare * 3 }, (_, i) => 255));
+        this.colorsBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
+        this.attrColorLocation = gl.getAttribLocation(this._prog, "sColor");
+        gl.vertexAttribPointer(this.attrColorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
+        gl.vertexAttribDivisor(this.attrColorLocation, 1);
+        gl.enableVertexAttribArray(this.attrColorLocation);
         // Set viewport and clear color
         //gl.enable(gl.DEPTH_TEST);
         //gl.viewport(0, 0, canvas.width, canvas.height);
@@ -232,13 +236,13 @@ class WebglScatterAcc {
         gl.useProgram(this._prog);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 2 * 4, pos, 0, pos.length);
-        gl.enableVertexAttribArray(3);
+        gl.enableVertexAttribArray(this.attrPosLocation);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
         gl.bufferSubData(this.gl.ARRAY_BUFFER, this.headIndex * 3 * 1, color, 0, color.length);
-        gl.enableVertexAttribArray(2);
+        gl.enableVertexAttribArray(this.attrColorLocation);
         this.headIndex = (this.headIndex + pos.length / 2) % this.maxSquare;
         //console.log(this.headIndex);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
+        //gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
     update() {
         this.gl.useProgram(this._prog);

@@ -1,4 +1,3 @@
-import type { ColorRGBA } from "./ColorRGBA";
 import { WebglBase } from "./WebglBase";
 /**
  * The standard Line class
@@ -10,6 +9,8 @@ export declare class WebglLine extends WebglBase {
     private numPoints;
     private webglNumPoints;
     private gl;
+    private coord;
+    private vbuffer;
     /**
      * Create a new line
      * @param c - the color of the line
@@ -21,7 +22,7 @@ export declare class WebglLine extends WebglBase {
      * line = new WebglLine( new ColorRGBA(0.1,0.1,0.1,1), 2);
      * ```
      */
-    constructor(gl: WebGL2RenderingContext, c: ColorRGBA, numPoints: number);
+    constructor(gl: WebGL2RenderingContext);
     draw(): void;
 }
 //# sourceMappingURL=WbglLine.d.ts.map

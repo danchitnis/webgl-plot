@@ -11,7 +11,7 @@ const gl = canvas.getContext("webgl2", { premultipliedAlpha: false });
 const screenRatio = canvas.width / canvas.height;
 gl.viewport(0, 0, canvas.width, canvas.height);
 
-const line = new WebglLine(gl, 100, 100);
+const line = new WebglLine(gl);
 
 const sqSize = 0.01;
 

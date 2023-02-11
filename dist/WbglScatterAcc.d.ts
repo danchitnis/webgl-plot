@@ -14,6 +14,8 @@ export declare class WebglScatterAcc {
     private colorsBuffer;
     private positionBuffer;
     private _prog;
+    private attrPosLocation;
+    private attrColorLocation;
     constructor(gl: WebGL2RenderingContext, maxSquare: number);
     setColor(color: ColorRGBA): void;
     setSquareSize(squareSize: number): void;
