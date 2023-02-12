@@ -6,10 +6,11 @@ declare class ColorRGBA {
     constructor(r: number, g: number, b: number, a: number);
 }
 
-type Line = {
+declare class WebglAuxLine {
     xy: number[];
     color: ColorRGBA;
-};
+    constructor(xy: number[], color: ColorRGBA);
+}
 /**
  * The standard Line class
  */
@@ -22,8 +23,8 @@ declare class WebglAux {
     private vbuffer;
     prog: WebGLProgram;
     constructor(wglp: WebglPlot);
-    addLine(line: Line): void;
-    drawLines(): void;
+    addLine(line: WebglAuxLine): void;
+    draw(): void;
 }
 
 /**
@@ -52,7 +53,7 @@ declare class WebglScatterAcc {
 }
 
 /**
- * Author Danial Chitnis 2019-20
+ * Author Danial Chitnis 2019-23
  *
  * inspired by:
  * https://codepen.io/AzazelN28
@@ -75,6 +76,9 @@ declare class WebglPlot {
      * @private
      */
     readonly gl: WebGL2RenderingContext;
+    width: number;
+    height: number;
+    devicePixelRatio: number;
     /**
      * Global horizontal scale factor
      * @default = 1.0
@@ -106,30 +110,13 @@ declare class WebglPlot {
     debug: boolean;
     constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig);
     /**
-     * updates and redraws the content of the plot
-     */
-    private _drawLines;
-    /**
      * Draw and clear the canvas
      */
     update(): void;
     /**
-     * Draw without clearing the canvas
-     */
-    /**
      * Clear the canvas
      */
     clear(): void;
-    /**
-     * adds a line to the plot
-     * @param line - this could be any of line, linestep, histogram, or polar
-     *
-     * @example
-     * ```typescript
-     * const line = new line(color, numPoints);
-     * wglp.addLine(line);
-     * ```
-     */
     /**
      * remove all data lines
      */
@@ -144,4 +131,4 @@ declare class WebglPlot {
     private log;
 }
 
-export { ColorRGBA, WebglAux, WebglPlot, WebglScatterAcc };
+export { ColorRGBA, WebglAux, WebglAuxLine, WebglPlot, WebglScatterAcc };

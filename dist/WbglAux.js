@@ -1,3 +1,13 @@
+/*type Line = {
+  xy: number[];
+  color: ColorRGBA;
+};*/
+export class WebglAuxLine {
+    constructor(xy, color) {
+        this.xy = xy;
+        this.color = color;
+    }
+}
 /**
  * The standard Line class
  */
@@ -63,7 +73,7 @@ export class WebglAux {
     addLine(line) {
         this.lines.push(line);
     }
-    drawLines() {
+    draw() {
         this.gl.useProgram(this.prog);
         this.lines.forEach((line) => {
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);

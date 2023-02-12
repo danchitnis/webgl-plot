@@ -1,9 +1,10 @@
 import type { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
-type Line = {
+export declare class WebglAuxLine {
     xy: number[];
     color: ColorRGBA;
-};
+    constructor(xy: number[], color: ColorRGBA);
+}
 /**
  * The standard Line class
  */
@@ -16,8 +17,7 @@ export declare class WebglAux {
     private vbuffer;
     prog: WebGLProgram;
     constructor(wglp: WebglPlot);
-    addLine(line: Line): void;
-    drawLines(): void;
+    addLine(line: WebglAuxLine): void;
+    draw(): void;
 }
-export {};
 //# sourceMappingURL=WbglAux.d.ts.map

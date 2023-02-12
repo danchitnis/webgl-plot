@@ -1,17 +1,27 @@
 import type { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
 
-type Line = {
+/*type Line = {
   xy: number[];
   color: ColorRGBA;
-};
+};*/
+
+export class WebglAuxLine {
+  public xy: number[];
+  public color: ColorRGBA;
+
+  constructor(xy: number[], color: ColorRGBA) {
+    this.xy = xy;
+    this.color = color;
+  }
+}
 
 /**
  * The standard Line class
  */
 export class WebglAux {
   private wglp: WebglPlot;
-  private lines: Line[];
+  private lines: WebglAuxLine[];
   private color: ColorRGBA;
   private gl: WebGL2RenderingContext;
   private coord: number;
@@ -94,11 +104,11 @@ export class WebglAux {
     gl.uniform4fv(uColor, [1, 1, 0, 1]);
   }
 
-  addLine(line: Line) {
+  addLine(line: WebglAuxLine) {
     this.lines.push(line);
   }
 
-  drawLines() {
+  draw() {
     this.gl.useProgram(this.prog);
     this.lines.forEach((line) => {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);

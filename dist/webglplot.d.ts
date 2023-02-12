@@ -1,5 +1,5 @@
 /**
- * Author Danial Chitnis 2019-20
+ * Author Danial Chitnis 2019-23
  *
  * inspired by:
  * https://codepen.io/AzazelN28
@@ -8,7 +8,8 @@
 import { ColorRGBA } from "./ColorRGBA";
 import { WebglAux } from "./WbglAux";
 import { WebglScatterAcc } from "./WbglScatterAcc";
-export { WebglAux, ColorRGBA, WebglScatterAcc };
+import { WebglAuxLine } from "./WbglAux";
+export { WebglAux, ColorRGBA, WebglScatterAcc, WebglAuxLine };
 type WebglPlotConfig = {
     antialias?: boolean;
     transparent?: boolean;
@@ -25,6 +26,9 @@ export declare class WebglPlot {
      * @private
      */
     readonly gl: WebGL2RenderingContext;
+    width: number;
+    height: number;
+    devicePixelRatio: number;
     /**
      * Global horizontal scale factor
      * @default = 1.0
@@ -56,30 +60,13 @@ export declare class WebglPlot {
     debug: boolean;
     constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig);
     /**
-     * updates and redraws the content of the plot
-     */
-    private _drawLines;
-    /**
      * Draw and clear the canvas
      */
     update(): void;
     /**
-     * Draw without clearing the canvas
-     */
-    /**
      * Clear the canvas
      */
     clear(): void;
-    /**
-     * adds a line to the plot
-     * @param line - this could be any of line, linestep, histogram, or polar
-     *
-     * @example
-     * ```typescript
-     * const line = new line(color, numPoints);
-     * wglp.addLine(line);
-     * ```
-     */
     /**
      * remove all data lines
      */
