@@ -8,11 +8,11 @@
 
 import { ColorRGBA } from "./ColorRGBA";
 import { WebglAux } from "./WbglAux";
-import type { WebglBase } from "./WebglBase";
 import { WebglScatterAcc } from "./WbglScatterAcc";
 import { WebglAuxLine } from "./WbglAux";
+import { WebglLineRoll } from "./WbglLineRoll";
 
-export { WebglAux, ColorRGBA, WebglScatterAcc, WebglAuxLine };
+export { WebglAux, ColorRGBA, WebglScatterAcc, WebglAuxLine, WebglLineRoll };
 
 type WebglPlotConfig = {
   antialias?: boolean;

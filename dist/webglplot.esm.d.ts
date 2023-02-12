@@ -52,6 +52,22 @@ declare class WebglScatterAcc {
     draw(): void;
 }
 
+declare class WebglLineRoll {
+    private wglp;
+    private color;
+    private gl;
+    private coord;
+    private vbuffer;
+    prog: WebGLProgram;
+    bufferSize: number;
+    private shift;
+    private dataIndex;
+    private dataX;
+    constructor(wglp: WebglPlot, bufferSize: number);
+    addPoint(y: number): void;
+    draw(): void;
+}
+
 /**
  * Author Danial Chitnis 2019-23
  *
@@ -131,4 +147,4 @@ declare class WebglPlot {
     private log;
 }
 
-export { ColorRGBA, WebglAux, WebglAuxLine, WebglPlot, WebglScatterAcc };
+export { ColorRGBA, WebglAux, WebglAuxLine, WebglLineRoll, WebglPlot, WebglScatterAcc };
