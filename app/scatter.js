@@ -64,6 +64,7 @@ const render = () => {
   }
 
   sqAcc.addSquare(new Float32Array(pos), new Uint8Array(colors));
+  wglp.clear();
   sqAcc.draw();
   aux.draw();
   requestAnimationFrame(render);
