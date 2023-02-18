@@ -14,8 +14,14 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
 
+      - name: corepack
+        run: corepack enable
+
+      - name: yarn global
+        run: corepack prepare yarn@stable --activate
+
       - name: Set yarn version
-        run: yarn set version latest
+        run: yarn set version stable
 
       - name: install
         working-directory: .
