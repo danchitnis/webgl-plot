@@ -14,6 +14,9 @@ jobs:
       - name: Run a one-line script
         run: echo Hello, world!
 
+      - name: Set yarn version
+        run: yarn set version latest
+
       - name: install
         working-directory: .
         run: yarn install
