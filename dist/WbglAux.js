@@ -3,6 +3,8 @@
   color: ColorRGBA;
 };*/
 export class WebglAuxLine {
+    xy;
+    color;
     constructor(xy, color) {
         this.xy = xy;
         this.color = color;
@@ -12,6 +14,13 @@ export class WebglAuxLine {
  * The standard Line class
  */
 export class WebglAux {
+    wglp;
+    lines;
+    color;
+    gl;
+    coord;
+    vbuffer;
+    prog;
     constructor(wglp) {
         //super();
         this.wglp = wglp;

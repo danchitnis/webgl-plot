@@ -5,6 +5,10 @@
 })(this, (function (exports) { 'use strict';
 
     class ColorRGBA {
+        r;
+        g;
+        b;
+        a;
         constructor(r, g, b, a) {
             this.r = r;
             this.g = g;
@@ -18,6 +22,8 @@
       color: ColorRGBA;
     };*/
     class WebglAuxLine {
+        xy;
+        color;
         constructor(xy, color) {
             this.xy = xy;
             this.color = color;
@@ -27,6 +33,13 @@
      * The standard Line class
      */
     class WebglAux {
+        wglp;
+        lines;
+        color;
+        gl;
+        coord;
+        vbuffer;
+        prog;
         constructor(wglp) {
             //super();
             this.wglp = wglp;
@@ -104,9 +117,19 @@
      * The standard Line class
      */
     class WebglScatterAcc {
+        wglp;
+        headIndex = 0;
+        color;
+        squareSize;
+        maxSquare;
+        gl;
+        squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
+        colorsBuffer;
+        positionBuffer;
+        prog;
+        attrPosLocation;
+        attrColorLocation;
         constructor(wglp, maxSquare) {
-            this.headIndex = 0;
-            this.squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
             //super();
             this.wglp = wglp;
             this.color = new ColorRGBA(1, 1, 1, 1);
@@ -238,15 +261,31 @@
     }
 
     class WebglLineRoll {
+        wglp;
+        color;
+        gl;
+        coord;
+        vbuffer;
+        prog;
+        rollBufferSize;
+        shift;
+        dataIndex;
+        dataX;
+        lastDataX;
+        lastDataY;
+        colorLocation;
         constructor(wglp, bufferSize) {
             //super();
             this.wglp = wglp;
             this.gl = wglp.gl;
             const gl = this.gl;
-            this.bufferSize = bufferSize;
+            this.rollBufferSize = bufferSize;
             this.shift = 0;
             this.dataIndex = 0;
             this.dataX = 1;
+            this.lastDataX = 0;
+            this.lastDataY = 0;
+            this.colorLocation = null;
             const vertCode = `#version 300 es
     
         layout(location = 1) in vec2 a_position;
@@ -266,11 +305,11 @@
             // Fragment shader source code
             const fragCode = `#version 300 es
         precision mediump float;    
-        //uniform vec4 uColor
-        out vec4 color;
+        uniform vec4 uColor;
+        out vec4 outColor;
     
         void main(void) {
-            color = vec4(1, 1, 0, 1);
+            outColor = uColor;
         }`;
             const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
             this.gl.shaderSource(fragShader, fragCode);
@@ -291,30 +330,157 @@
             // Create a buffer for the vertex coordinates
             this.vbuffer = this.gl.createBuffer();
             this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
-            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.bufferSize), this.gl.STATIC_DRAW);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(this.rollBufferSize * 2 + 4), this.gl.STATIC_DRAW);
             this.coord = gl.getAttribLocation(this.prog, "a_position");
             gl.vertexAttribPointer(this.coord, 2, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(this.coord);
-            //const color = gl.getUniformLocation(this.prog, "uColor");
-            //gl.uniform4fv(color, [1, 1, 0, 1]);
+            this.colorLocation = gl.getUniformLocation(this.prog, "uColor");
         }
         addPoint(y) {
             const gl = this.gl;
-            this.shift += 4 / this.bufferSize;
-            this.dataX += 4 / this.bufferSize;
+            this.shift += 2 / this.rollBufferSize;
+            this.dataX += 2 / this.rollBufferSize;
             gl.useProgram(this.prog);
             gl.uniform1f(gl.getUniformLocation(this.prog, "u_shift"), this.shift);
             gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
             gl.bufferSubData(gl.ARRAY_BUFFER, this.dataIndex * 2 * 4, new Float32Array([this.dataX, y]));
             gl.enableVertexAttribArray(this.coord);
-            this.dataIndex = (this.dataIndex + 1) % (this.bufferSize / 2);
+            if (this.dataIndex === this.rollBufferSize - 1) {
+                this.lastDataX = this.dataX;
+                this.lastDataY = y;
+            }
+            if (this.dataIndex === 0 && this.lastDataX !== 0) {
+                gl.bufferSubData(gl.ARRAY_BUFFER, this.rollBufferSize * 2 * 4, new Float32Array([this.lastDataX, this.lastDataY, this.dataX, y]));
+            }
+            this.dataIndex = (this.dataIndex + 1) % this.rollBufferSize;
         }
         draw() {
             const gl = this.gl;
             this.gl.useProgram(this.prog);
+            gl.uniform4fv(this.colorLocation, [1, 1, 0, 1]);
             gl.drawArrays(gl.LINE_STRIP, 0, this.dataIndex);
-            gl.drawArrays(gl.LINE_STRIP, this.dataIndex, this.bufferSize / 2 - this.dataIndex);
+            gl.drawArrays(gl.LINE_STRIP, this.dataIndex, this.rollBufferSize - this.dataIndex);
+            gl.drawArrays(gl.LINE_STRIP, this.rollBufferSize, 2);
         }
+    }
+
+    class WebglLine {
+        wglp;
+        gl;
+        coord;
+        vertexBuffer;
+        prog;
+        lineSizes;
+        totalLineSizes;
+        lineSizeAccum;
+        indexData;
+        constructor(wglp, lineSizes) {
+            //super();
+            this.wglp = wglp;
+            this.gl = wglp.gl;
+            const gl = this.gl;
+            this.lineSizes = lineSizes;
+            const vertCode = `#version 300 es
+        layout(location = 1) in vec2 a_position;
+        layout(location = 2) in vec3 a_Color;
+      
+        out vec3 vColor;
+      
+        void main() {
+            vColor = a_Color;
+            gl_Position = vec4(a_position, 0, 1);
+        }`;
+            const vertShader = gl.createShader(gl.VERTEX_SHADER);
+            gl.shaderSource(vertShader, vertCode);
+            gl.compileShader(vertShader);
+            if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+                // there was an error
+                console.error(gl.getShaderInfoLog(vertShader));
+            }
+            // Fragment shader source code
+            const fragCode = `#version 300 es
+        precision mediump float;
+        in vec3 vColor;
+        out vec4 outColor;
+    
+        void main() {
+            outColor = vec4(vColor,0.7);
+        }`;
+            const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+            gl.shaderSource(fragShader, fragCode);
+            gl.compileShader(fragShader);
+            if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+                // there was an error
+                console.error(gl.getShaderInfoLog(fragShader));
+            }
+            // Create the shader program
+            this.prog = gl.createProgram();
+            gl.attachShader(this.prog, vertShader);
+            gl.attachShader(this.prog, fragShader);
+            gl.linkProgram(this.prog);
+            gl.useProgram(this.prog);
+            const colorBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
+            this.totalLineSizes = lineSizes.reduce((a, b) => a + b, 0);
+            console.log(this.totalLineSizes);
+            this.lineSizeAccum = lineSizes
+                .reduce((acc, cur) => {
+                acc.push(acc[acc.length - 1] + cur);
+                return acc;
+            }, [0])
+                .splice(0, lineSizes.length);
+            const colors = Array.from({ length: lineSizes.length }, () => [
+                Math.random(),
+                Math.random(),
+                Math.random(),
+            ]);
+            let colorData = Array.from({ length: lineSizes[0] }, (_, i) => i).flatMap((x) => colors[0]);
+            for (let i = 1; i < lineSizes.length; i++) {
+                colorData = colorData.concat(Array.from({ length: lineSizes[i] }, (_, j) => j).flatMap((x) => colors[i]));
+            }
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.DYNAMIC_DRAW);
+            const uColorLocation = gl.getAttribLocation(this.prog, "a_Color");
+            gl.vertexAttribPointer(uColorLocation, 3, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(uColorLocation);
+            // Create a vertex buffer and bind it to the ARRAY_BUFFER target
+            this.vertexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+            this.coord = gl.getAttribLocation(this.prog, "a_position");
+            gl.vertexAttribPointer(this.coord, 2, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(this.coord);
+            // Define the vertex data
+            const vertexData = new Float32Array(this.totalLineSizes * 2);
+            // Upload the vertex data to the GPU
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.DYNAMIC_DRAW);
+            // Create an index buffer and bind it to the ELEMENT_ARRAY_BUFFER target
+            const indexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            // Define the index data
+            this.indexData = Array.from({ length: lineSizes[0] }, (_, i) => i);
+            for (let i = 1; i < lineSizes.length; i++) {
+                this.indexData.push(-1);
+                this.indexData = this.indexData.concat(Array.from({ length: lineSizes[i] }, (_, j) => this.lineSizeAccum[i] + j));
+            }
+            // Upload the index data to the GPU
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indexData), gl.STATIC_DRAW);
+            gl.clearColor(0.1, 0.1, 0.1, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            gl.viewport(0, 0, wglp.width, wglp.height);
+        }
+        setXYbuffer = (xy, index) => {
+            const gl = this.gl;
+            gl.useProgram(this.prog);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+            gl.bufferSubData(gl.ARRAY_BUFFER, 4 * 2 * this.lineSizeAccum[index], new Float32Array(xy));
+            gl.enableVertexAttribArray(this.coord);
+        };
+        draw = () => {
+            const gl = this.gl;
+            gl.useProgram(this.prog);
+            gl.drawElements(gl.LINE_STRIP, this.indexData.length, gl.UNSIGNED_INT, 0);
+        };
     }
 
     /**
@@ -328,11 +494,43 @@
      * The main class for the webgl-plot library
      */
     class WebglPlot {
+        /**
+         * @private
+         */
+        gl;
+        width;
+        height;
+        devicePixelRatio;
+        /**
+         * Global horizontal scale factor
+         * @default = 1.0
+         */
+        gScaleX;
+        /**
+         * Global vertical scale factor
+         * @default = 1.0
+         */
+        gScaleY;
+        /**
+         * Global X/Y scale ratio
+         * @default = 1
+         */
+        gXYratio;
+        /**
+         * Global horizontal offset
+         * @default = 0
+         */
+        gOffsetX;
+        /**
+         * Global vertical offset
+         * @default = 0
+         */
+        gOffsetY;
+        /**
+         * log debug output
+         */
+        debug = false;
         constructor(canvas, options) {
-            /**
-             * log debug output
-             */
-            this.debug = false;
             if (options == undefined) {
                 this.gl = canvas.getContext("webgl2", {
                     antialias: true,
@@ -403,6 +601,7 @@
     exports.ColorRGBA = ColorRGBA;
     exports.WebglAux = WebglAux;
     exports.WebglAuxLine = WebglAuxLine;
+    exports.WebglLine = WebglLine;
     exports.WebglLineRoll = WebglLineRoll;
     exports.WebglPlot = WebglPlot;
     exports.WebglScatterAcc = WebglScatterAcc;

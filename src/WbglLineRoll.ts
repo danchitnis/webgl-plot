@@ -8,20 +8,26 @@ export class WebglLineRoll {
   private coord: number;
   private vbuffer: WebGLBuffer;
   public prog: WebGLProgram;
-  public bufferSize: number;
+  public rollBufferSize: number;
   private shift: number;
   private dataIndex: number;
   private dataX: number;
+  private lastDataX: number;
+  private lastDataY: number;
+  private colorLocation: WebGLUniformLocation;
 
   constructor(wglp: WebglPlot, bufferSize: number) {
     //super();
     this.wglp = wglp;
     this.gl = wglp.gl;
     const gl = this.gl;
-    this.bufferSize = bufferSize;
+    this.rollBufferSize = bufferSize;
     this.shift = 0;
     this.dataIndex = 0;
     this.dataX = 1;
+    this.lastDataX = 0;
+    this.lastDataY = 0;
+    this.colorLocation = null;
 
     const vertCode = `#version 300 es
     
@@ -45,11 +51,11 @@ export class WebglLineRoll {
     // Fragment shader source code
     const fragCode = `#version 300 es
         precision mediump float;    
-        //uniform vec4 uColor
-        out vec4 color;
+        uniform vec4 uColor;
+        out vec4 outColor;
     
         void main(void) {
-            color = vec4(1, 1, 0, 1);
+            outColor = uColor;
         }`;
 
     const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
@@ -78,7 +84,7 @@ export class WebglLineRoll {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
     this.gl.bufferData(
       this.gl.ARRAY_BUFFER,
-      new Float32Array(this.bufferSize),
+      new Float32Array(this.rollBufferSize * 2 + 4),
       this.gl.STATIC_DRAW
     );
 
@@ -86,27 +92,41 @@ export class WebglLineRoll {
     gl.vertexAttribPointer(this.coord, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(this.coord);
 
-    //const color = gl.getUniformLocation(this.prog, "uColor");
-    //gl.uniform4fv(color, [1, 1, 0, 1]);
+    this.colorLocation = gl.getUniformLocation(this.prog, "uColor");
   }
 
   addPoint(y: number) {
     const gl = this.gl;
-    this.shift += 4 / this.bufferSize;
-    this.dataX += 4 / this.bufferSize;
+    this.shift += 2 / this.rollBufferSize;
+    this.dataX += 2 / this.rollBufferSize;
     gl.useProgram(this.prog);
     gl.uniform1f(gl.getUniformLocation(this.prog, "u_shift"), this.shift);
     gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, this.dataIndex * 2 * 4, new Float32Array([this.dataX, y]));
     gl.enableVertexAttribArray(this.coord);
 
-    this.dataIndex = (this.dataIndex + 1) % (this.bufferSize / 2);
+    if (this.dataIndex === this.rollBufferSize - 1) {
+      this.lastDataX = this.dataX;
+      this.lastDataY = y;
+    }
+
+    if (this.dataIndex === 0 && this.lastDataX !== 0) {
+      gl.bufferSubData(
+        gl.ARRAY_BUFFER,
+        this.rollBufferSize * 2 * 4,
+        new Float32Array([this.lastDataX, this.lastDataY, this.dataX, y])
+      );
+    }
+
+    this.dataIndex = (this.dataIndex + 1) % this.rollBufferSize;
   }
 
   draw() {
     const gl = this.gl;
     this.gl.useProgram(this.prog);
+    gl.uniform4fv(this.colorLocation, [1, 1, 0, 1]);
     gl.drawArrays(gl.LINE_STRIP, 0, this.dataIndex);
-    gl.drawArrays(gl.LINE_STRIP, this.dataIndex, this.bufferSize / 2 - this.dataIndex);
+    gl.drawArrays(gl.LINE_STRIP, this.dataIndex, this.rollBufferSize - this.dataIndex);
+    gl.drawArrays(gl.LINE_STRIP, this.rollBufferSize, 2);
   }
 }

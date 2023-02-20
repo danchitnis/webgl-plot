@@ -3,9 +3,19 @@ import { ColorRGBA } from "./ColorRGBA";
  * The standard Line class
  */
 export class WebglScatterAcc {
+    wglp;
+    headIndex = 0;
+    color;
+    squareSize;
+    maxSquare;
+    gl;
+    squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
+    colorsBuffer;
+    positionBuffer;
+    prog;
+    attrPosLocation;
+    attrColorLocation;
     constructor(wglp, maxSquare) {
-        this.headIndex = 0;
-        this.squareIndices = new Uint16Array([0, 1, 2, 2, 1, 3]);
         //super();
         this.wglp = wglp;
         this.color = new ColorRGBA(1, 1, 1, 1);

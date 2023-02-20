@@ -6,10 +6,13 @@ export declare class WebglLineRoll {
     private coord;
     private vbuffer;
     prog: WebGLProgram;
-    bufferSize: number;
+    rollBufferSize: number;
     private shift;
     private dataIndex;
     private dataX;
+    private lastDataX;
+    private lastDataY;
+    private colorLocation;
     constructor(wglp: WebglPlot, bufferSize: number);
     addPoint(y: number): void;
     draw(): void;

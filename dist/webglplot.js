@@ -10,16 +10,49 @@ import { WebglAux } from "./WbglAux";
 import { WebglScatterAcc } from "./WbglScatterAcc";
 import { WebglAuxLine } from "./WbglAux";
 import { WebglLineRoll } from "./WbglLineRoll";
-export { WebglAux, ColorRGBA, WebglScatterAcc, WebglAuxLine, WebglLineRoll };
+import { WebglLine } from "./WbglLine";
+export { WebglAux, ColorRGBA, WebglScatterAcc, WebglAuxLine, WebglLineRoll, WebglLine };
 /**
  * The main class for the webgl-plot library
  */
 export class WebglPlot {
+    /**
+     * @private
+     */
+    gl;
+    width;
+    height;
+    devicePixelRatio;
+    /**
+     * Global horizontal scale factor
+     * @default = 1.0
+     */
+    gScaleX;
+    /**
+     * Global vertical scale factor
+     * @default = 1.0
+     */
+    gScaleY;
+    /**
+     * Global X/Y scale ratio
+     * @default = 1
+     */
+    gXYratio;
+    /**
+     * Global horizontal offset
+     * @default = 0
+     */
+    gOffsetX;
+    /**
+     * Global vertical offset
+     * @default = 0
+     */
+    gOffsetY;
+    /**
+     * log debug output
+     */
+    debug = false;
     constructor(canvas, options) {
-        /**
-         * log debug output
-         */
-        this.debug = false;
         if (options == undefined) {
             this.gl = canvas.getContext("webgl2", {
                 antialias: true,
