@@ -2,14 +2,6 @@
   xy: number[];
   color: ColorRGBA;
 };*/
-export class WebglAuxLine {
-    xy;
-    color;
-    constructor(xy, color) {
-        this.xy = xy;
-        this.color = color;
-    }
-}
 /**
  * The standard Line class
  */

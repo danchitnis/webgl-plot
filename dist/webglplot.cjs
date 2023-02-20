@@ -17,14 +17,6 @@ class ColorRGBA {
   xy: number[];
   color: ColorRGBA;
 };*/
-class WebglAuxLine {
-    xy;
-    color;
-    constructor(xy, color) {
-        this.xy = xy;
-        this.color = color;
-    }
-}
 /**
  * The standard Line class
  */
@@ -256,6 +248,63 @@ class WebglScatterAcc {
     }
 }
 
+class WebglLine {
+    xy = [];
+    color;
+    constructor(xy, color) {
+        if (xy === undefined) {
+            xy = [0, 0, 1, 1];
+        }
+        if (color === undefined) {
+            color = { r: 0, g: 0, b: 0, a: 1 };
+        }
+        this.xy = xy;
+        this.color = color;
+    }
+    getSize() {
+        return this.xy.length / 2;
+    }
+    setY(y) {
+        for (let i = 0; i < this.xy.length; i += 2) {
+            this.xy[i + 1] = y;
+        }
+    }
+    setYs(ys) {
+        for (let i = 0; i < this.xy.length; i += 2) {
+            this.xy[i + 1] = ys[i / 2];
+        }
+    }
+    setXYArray(xy) {
+        this.xy = xy;
+    }
+    setX(x) {
+        for (let i = 0; i < this.xy.length; i += 2) {
+            this.xy[i] = x;
+        }
+    }
+    lineSpaceX(lineSize) {
+        const n = lineSize;
+        this.xy = new Array(n * 2);
+        console.log(this.xy);
+        for (let i = 0; i < n; i++) {
+            this.xy[i * 2] = i / (n - 1);
+            this.xy[i * 2 + 1] = 0;
+        }
+        console.log(this.xy);
+    }
+    emptyLine(lineSize) {
+        const n = lineSize;
+        this.xy = new Array(n * 2);
+        for (let i = 0; i < n; i++) {
+            this.xy[i * 2] = 0;
+            this.xy[i * 2 + 1] = 0;
+        }
+    }
+    setColor(color) {
+        this.color = color;
+    }
+}
+
 class WebglLineRoll {
     wglp;
     color;
@@ -360,8 +409,9 @@ class WebglLineRoll {
     }
 }
 
-class WebglLine {
+class WebglLinePlot {
     wglp;
+    lines;
     gl;
     coord;
     vertexBuffer;
@@ -370,11 +420,13 @@ class WebglLine {
     totalLineSizes;
     lineSizeAccum;
     indexData;
-    constructor(wglp, lineSizes) {
+    constructor(wglp, lines) {
         //super();
         this.wglp = wglp;
         this.gl = wglp.gl;
         const gl = this.gl;
+        this.lines = lines;
+        const lineSizes = lines.map((line) => line.xy.length / 2);
         this.lineSizes = lineSizes;
         const vertCode = `#version 300 es
         layout(location = 1) in vec2 a_position;
@@ -465,11 +517,11 @@ class WebglLine {
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.viewport(0, 0, wglp.width, wglp.height);
     }
-    setXYbuffer = (xy, index) => {
+    updateLine = (lineIndex) => {
         const gl = this.gl;
         gl.useProgram(this.prog);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        gl.bufferSubData(gl.ARRAY_BUFFER, 4 * 2 * this.lineSizeAccum[index], new Float32Array(xy));
+        gl.bufferSubData(gl.ARRAY_BUFFER, 4 * 2 * this.lineSizeAccum[lineIndex], new Float32Array(this.lines[lineIndex].xy));
         gl.enableVertexAttribArray(this.coord);
     };
     draw = () => {
@@ -596,8 +648,8 @@ class WebglPlot {
 
 exports.ColorRGBA = ColorRGBA;
 exports.WebglAux = WebglAux;
-exports.WebglAuxLine = WebglAuxLine;
 exports.WebglLine = WebglLine;
+exports.WebglLinePlot = WebglLinePlot;
 exports.WebglLineRoll = WebglLineRoll;
 exports.WebglPlot = WebglPlot;
 exports.WebglScatterAcc = WebglScatterAcc;

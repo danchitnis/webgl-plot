@@ -6,11 +6,20 @@ declare class ColorRGBA {
     constructor(r: number, g: number, b: number, a: number);
 }
 
-declare class WebglAuxLine {
+declare class WebglLine {
     xy: number[];
     color: ColorRGBA;
-    constructor(xy: number[], color: ColorRGBA);
+    constructor(xy?: number[], color?: ColorRGBA);
+    getSize(): number;
+    setY(y: number): void;
+    setYs(ys: number[]): void;
+    setXYArray(xy: number[]): void;
+    setX(x: number): void;
+    lineSpaceX(lineSize: number): void;
+    emptyLine(lineSize: number): void;
+    setColor(color: ColorRGBA): void;
 }
+
 /**
  * The standard Line class
  */
@@ -23,7 +32,7 @@ declare class WebglAux {
     private vbuffer;
     prog: WebGLProgram;
     constructor(wglp: WebglPlot);
-    addLine(line: WebglAuxLine): void;
+    addLine(line: WebglLine): void;
     draw(): void;
 }
 
@@ -71,8 +80,9 @@ declare class WebglLineRoll {
     draw(): void;
 }
 
-declare class WebglLine {
+declare class WebglLinePlot {
     private wglp;
+    private lines;
     private gl;
     private coord;
     private vertexBuffer;
@@ -81,8 +91,8 @@ declare class WebglLine {
     private totalLineSizes;
     private lineSizeAccum;
     private indexData;
-    constructor(wglp: WebglPlot, lineSizes: number[]);
-    setXYbuffer: (xy: number[], index: number) => void;
+    constructor(wglp: WebglPlot, lines: WebglLine[]);
+    updateLine: (lineIndex: number) => void;
     draw: () => void;
 }
 
@@ -165,4 +175,4 @@ declare class WebglPlot {
     private log;
 }
 
-export { ColorRGBA, WebglAux, WebglAuxLine, WebglLine, WebglLineRoll, WebglPlot, WebglScatterAcc };
+export { ColorRGBA, WebglAux, WebglLine, WebglLinePlot, WebglLineRoll, WebglPlot, WebglScatterAcc };

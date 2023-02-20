@@ -1,27 +1,18 @@
 import type { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
+import type { WebglLine } from "./WbglLine";
 
 /*type Line = {
   xy: number[];
   color: ColorRGBA;
 };*/
 
-export class WebglAuxLine {
-  public xy: number[];
-  public color: ColorRGBA;
-
-  constructor(xy: number[], color: ColorRGBA) {
-    this.xy = xy;
-    this.color = color;
-  }
-}
-
 /**
  * The standard Line class
  */
 export class WebglAux {
   private wglp: WebglPlot;
-  private lines: WebglAuxLine[];
+  private lines: WebglLine[];
   private color: ColorRGBA;
   private gl: WebGL2RenderingContext;
   private coord: number;
@@ -104,7 +95,7 @@ export class WebglAux {
     gl.uniform4fv(uColor, [1, 1, 0, 1]);
   }
 
-  addLine(line: WebglAuxLine) {
+  addLine(line: WebglLine) {
     this.lines.push(line);
   }
 
