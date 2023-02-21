@@ -15,13 +15,14 @@ const wglp = new WebglPlot(canvas);
 wglp.gScaleX = 1;
 wglp.gScaleY = screenRatio;
 
-const roll = new WebglLineRoll(wglp, 600);
+const roll = new WebglLineRoll(wglp, 100);
 
 let y = 0;
 
 const getNewY = () => {
-  y = y + (Math.random() - 0.5) * 0.1;
-  y = Math.min(Math.max(y, -0.9), 0.9);
+  //y = y + (Math.random() - 0.5) * 0.1;
+  //y = Math.min(Math.max(y, -0.9), 0.9);
+  y = Math.sin(Date.now() / 300);
   return y;
 };
 

@@ -5,28 +5,28 @@ export class WebglLineRoll {
   private wglp: WebglPlot;
   private color: ColorRGBA;
   private gl: WebGL2RenderingContext;
-  private coord: number;
-  private vbuffer: WebGLBuffer;
-  public prog: WebGLProgram;
+  private aPosition: number;
+  private vertexBuffer: WebGLBuffer;
+  public program: WebGLProgram;
   public rollBufferSize: number;
   private shift: number;
   private dataIndex: number;
   private dataX: number;
-  private lastDataX: number;
-  private lastDataY: number;
+  private lastDataX: number[];
+  private lastDataY: number[];
   private colorLocation: WebGLUniformLocation;
 
-  constructor(wglp: WebglPlot, bufferSize: number) {
+  constructor(wglp: WebglPlot, rollBufferSize: number) {
     //super();
     this.wglp = wglp;
     this.gl = wglp.gl;
     const gl = this.gl;
-    this.rollBufferSize = bufferSize;
+    this.rollBufferSize = rollBufferSize;
     this.shift = 0;
     this.dataIndex = 0;
     this.dataX = 1;
-    this.lastDataX = 0;
-    this.lastDataY = 0;
+    this.lastDataX = Array(rollBufferSize).fill(0);
+    this.lastDataY = Array(rollBufferSize).fill(0);
     this.colorLocation = null;
 
     const vertCode = `#version 300 es
@@ -68,53 +68,86 @@ export class WebglLineRoll {
     }
 
     // Create the shader program
-    this.prog = this.gl.createProgram();
-    this.gl.attachShader(this.prog, vertShader);
-    this.gl.attachShader(this.prog, fragShader);
-    this.gl.linkProgram(this.prog);
+    this.program = this.gl.createProgram();
+    this.gl.attachShader(this.program, vertShader);
+    this.gl.attachShader(this.program, fragShader);
+    this.gl.linkProgram(this.program);
 
-    if (!gl.getProgramParameter(this.prog, gl.LINK_STATUS)) {
+    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       // there was an error
-      console.error(gl.getProgramInfoLog(this.prog));
+      console.error(gl.getProgramInfoLog(this.program));
     }
 
     // Create a buffer for the vertex coordinates
-    this.vbuffer = this.gl.createBuffer();
+    this.vertexBuffer = this.gl.createBuffer();
 
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
     this.gl.bufferData(
       this.gl.ARRAY_BUFFER,
-      new Float32Array(this.rollBufferSize * 2 + 4),
-      this.gl.STATIC_DRAW
+      new Float32Array((this.rollBufferSize * 2 + 4) * 3),
+      this.gl.DYNAMIC_DRAW
     );
 
-    this.coord = gl.getAttribLocation(this.prog, "a_position");
-    gl.vertexAttribPointer(this.coord, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(this.coord);
+    this.aPosition = gl.getAttribLocation(this.program, "a_position");
+    gl.vertexAttribPointer(this.aPosition, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(this.aPosition);
 
-    this.colorLocation = gl.getUniformLocation(this.prog, "uColor");
+    this.colorLocation = gl.getUniformLocation(this.program, "uColor");
   }
 
   addPoint(y: number) {
     const gl = this.gl;
+    const bfsize = this.rollBufferSize + 2;
     this.shift += 2 / this.rollBufferSize;
     this.dataX += 2 / this.rollBufferSize;
-    gl.useProgram(this.prog);
-    gl.uniform1f(gl.getUniformLocation(this.prog, "u_shift"), this.shift);
-    gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
+    gl.useProgram(this.program);
+    gl.uniform1f(gl.getUniformLocation(this.program, "u_shift"), this.shift);
+
     gl.bufferSubData(gl.ARRAY_BUFFER, this.dataIndex * 2 * 4, new Float32Array([this.dataX, y]));
-    gl.enableVertexAttribArray(this.coord);
+
+    gl.bufferSubData(
+      gl.ARRAY_BUFFER,
+      (this.dataIndex + bfsize) * 2 * 4,
+      new Float32Array([this.dataX, y + 0.2])
+    );
+
+    gl.bufferSubData(
+      gl.ARRAY_BUFFER,
+      (this.dataIndex + bfsize * 2) * 2 * 4,
+      new Float32Array([this.dataX, y - 0.1])
+    );
+
+    gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.enableVertexAttribArray(this.aPosition);
 
     if (this.dataIndex === this.rollBufferSize - 1) {
-      this.lastDataX = this.dataX;
-      this.lastDataY = y;
+      this.lastDataX[0] = this.dataX;
+      this.lastDataY[0] = y;
+
+      this.lastDataX[1] = this.dataX;
+      this.lastDataY[1] = y + 0.2;
+
+      this.lastDataX[2] = this.dataX;
+      this.lastDataY[2] = y - 0.1;
     }
 
-    if (this.dataIndex === 0 && this.lastDataX !== 0) {
+    if (this.dataIndex === 0 && this.lastDataX[0] !== 0) {
       gl.bufferSubData(
         gl.ARRAY_BUFFER,
         this.rollBufferSize * 2 * 4,
-        new Float32Array([this.lastDataX, this.lastDataY, this.dataX, y])
+        new Float32Array([this.lastDataX[0], this.lastDataY[0], this.dataX, y])
+      );
+
+      gl.bufferSubData(
+        gl.ARRAY_BUFFER,
+        (this.rollBufferSize + bfsize) * 2 * 4,
+        new Float32Array([this.lastDataX[1], this.lastDataY[1], this.dataX, y + 0.2])
+      );
+
+      gl.bufferSubData(
+        gl.ARRAY_BUFFER,
+        (this.rollBufferSize + bfsize * 2) * 2 * 4,
+        new Float32Array([this.lastDataX[2], this.lastDataY[2], this.dataX, y - 0.1])
       );
     }
 
@@ -122,11 +155,22 @@ export class WebglLineRoll {
   }
 
   draw() {
+    const bfsize = this.rollBufferSize + 2;
     const gl = this.gl;
-    this.gl.useProgram(this.prog);
+    this.gl.useProgram(this.program);
     gl.uniform4fv(this.colorLocation, [1, 1, 0, 1]);
     gl.drawArrays(gl.LINE_STRIP, 0, this.dataIndex);
     gl.drawArrays(gl.LINE_STRIP, this.dataIndex, this.rollBufferSize - this.dataIndex);
     gl.drawArrays(gl.LINE_STRIP, this.rollBufferSize, 2);
+    //
+    gl.uniform4fv(this.colorLocation, [0, 1, 1, 1]);
+    gl.drawArrays(gl.LINE_STRIP, bfsize, this.dataIndex);
+    gl.drawArrays(gl.LINE_STRIP, bfsize + this.dataIndex, this.rollBufferSize - this.dataIndex);
+    gl.drawArrays(gl.LINE_STRIP, bfsize + this.rollBufferSize, 2);
+    //
+    gl.uniform4fv(this.colorLocation, [1, 0, 1, 1]);
+    gl.drawArrays(gl.LINE_STRIP, bfsize * 2, this.dataIndex);
+    gl.drawArrays(gl.LINE_STRIP, bfsize * 2 + this.dataIndex, this.rollBufferSize - this.dataIndex);
+    gl.drawArrays(gl.LINE_STRIP, bfsize * 2 + this.rollBufferSize, 2);
   }
 }

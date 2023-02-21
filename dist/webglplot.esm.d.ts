@@ -65,9 +65,9 @@ declare class WebglLineRoll {
     private wglp;
     private color;
     private gl;
-    private coord;
-    private vbuffer;
-    prog: WebGLProgram;
+    private aPosition;
+    private vertexBuffer;
+    program: WebGLProgram;
     rollBufferSize: number;
     private shift;
     private dataIndex;
@@ -75,7 +75,7 @@ declare class WebglLineRoll {
     private lastDataX;
     private lastDataY;
     private colorLocation;
-    constructor(wglp: WebglPlot, bufferSize: number);
+    constructor(wglp: WebglPlot, rollBufferSize: number);
     addPoint(y: number): void;
     draw(): void;
 }
