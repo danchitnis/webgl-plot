@@ -37,12 +37,9 @@ console.log("😉", lines);
 
 const plotLine = new WebglLinePlot(wglp, lines);
 
-const newData = Array.from(
-  { length: lines[0].getSize() },
-  (_, j) => (j / lines[0].getSize()) * 2
-).flatMap((x) => [x - 1, 0]);
+const newYData = Array(lines[0].getSize()).fill(0);
 
-console.log("😺", newData);
+console.log("😺", newYData);
 
 const phaseArray = Array.from({ length: lines[0].getSize() }, (_, i) => i / lines[0].getSize());
 console.log("🎉", phaseArray);
@@ -56,14 +53,13 @@ let phase = 0;
 console.log(plotLine.lines);
 
 const render = () => {
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 1; i++) {
     const yOffset = (Math.random() - 0.5) * 1;
-    for (let j = 1; j < newData.length; j += 2) {
-      newData[j] =
-        0.5 * Math.sin(10 * (j / newData.length) + phase + phaseArray[frameIndex]) + 0.2 * yOffset;
+    for (let j = 0; j < newYData.length; j++) {
+      newYData[j] = 0.5 * Math.sin((j / newYData.length) * 10 + phase) + 0.5 * yOffset;
     }
-    lines[i].setXYArray(newData);
-    plotLine.updateLine(i);
+    lines[frameIndex].setYs(newYData);
+    plotLine.updateLine(frameIndex);
     frameIndex = (frameIndex + 1) % lines.length;
   }
   phase += 0.01;

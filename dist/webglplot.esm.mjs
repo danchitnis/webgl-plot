@@ -268,8 +268,13 @@ class WebglLine {
         }
     }
     setYs(ys) {
-        for (let i = 0; i < this.xy.length; i += 2) {
-            this.xy[i + 1] = ys[i / 2];
+        if (ys.length == this.xy.length / 2) {
+            for (let i = 0; i < this.xy.length; i += 2) {
+                this.xy[i + 1] = ys[i / 2];
+            }
+        }
+        else {
+            throw new Error("mismatch in array length");
         }
     }
     setXYArray(xy) {
@@ -285,7 +290,7 @@ class WebglLine {
         this.xy = new Array(n * 2);
         console.log(this.xy);
         for (let i = 0; i < n; i++) {
-            this.xy[i * 2] = i / (n - 1);
+            this.xy[i * 2] = (2 * i) / n - 1;
             this.xy[i * 2 + 1] = 0;
         }
         console.log(this.xy);
