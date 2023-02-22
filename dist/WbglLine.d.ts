@@ -1,4 +1,4 @@
-import type { ColorRGBA } from "./ColorRGBA";
+import { ColorRGBA } from "./ColorRGBA";
 export declare class WebglLine {
     xy: number[];
     color: ColorRGBA;

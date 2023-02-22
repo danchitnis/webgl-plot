@@ -4,6 +4,7 @@ declare class ColorRGBA {
     b: number;
     a: number;
     constructor(r: number, g: number, b: number, a: number);
+    toArray(): number[];
 }
 
 declare class WebglLine {
@@ -74,9 +75,11 @@ declare class WebglLineRoll {
     private lastDataY;
     private colorLocation;
     numLines: number;
+    private colors;
     constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number);
     addPoint(ys: number[]): void;
     draw(): void;
+    setColors(colors: ColorRGBA[]): void;
 }
 
 declare class WebglLinePlot {

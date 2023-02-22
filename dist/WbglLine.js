@@ -1,3 +1,4 @@
+import { ColorRGBA } from "./ColorRGBA";
 export class WebglLine {
     xy = [];
     color;
@@ -6,7 +7,7 @@ export class WebglLine {
             xy = [0, 0, 1, 1];
         }
         if (color === undefined) {
-            color = { r: 0, g: 0, b: 0, a: 1 };
+            color = new ColorRGBA(1, 1, 1, 1);
         }
         this.xy = xy;
         this.color = color;

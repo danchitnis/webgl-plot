@@ -15,19 +15,23 @@ const wglp = new WebglPlot(canvas);
 wglp.gScaleX = 1;
 wglp.gScaleY = screenRatio;
 
-const numLines = 5;
+const numLines = 1000;
 
-const roll = new WebglLineRoll(wglp, 100, numLines);
+const roll = new WebglLineRoll(wglp, 1920, numLines);
 
 const y = Array(numLines).fill(0);
 
+const colors = [];
+for (let i = 0; i < numLines; i++) {
+  colors.push(new ColorRGBA(Math.random(), Math.random(), Math.random(), 1));
+}
+roll.setColors(colors);
+
 const getNewY = () => {
-  //y = y + (Math.random() - 0.5) * 0.1;
-  //y = Math.min(Math.max(y, -0.9), 0.9);
   for (let i = 0; i < y.length; i++) {
-    //y[i] = y[i] + (Math.random() - 0.5) * 0.1;
-    //y[i] = Math.min(Math.max(y[i], -0.9), 0.9);
-    y[i] = Math.sin(Date.now() / 1000 + i);
+    y[i] = y[i] + (Math.random() - 0.5) * 0.05;
+    y[i] = Math.min(Math.max(y[i], -0.9), 0.9);
+    //y[i] = Math.sin(Date.now() / 1000 + i);
   }
 };
 

@@ -1,4 +1,4 @@
-import type { ColorRGBA } from "./ColorRGBA";
+import { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
 
 export class WebglLine {
@@ -10,7 +10,7 @@ export class WebglLine {
       xy = [0, 0, 1, 1];
     }
     if (color === undefined) {
-      color = { r: 0, g: 0, b: 0, a: 1 };
+      color = new ColorRGBA(1, 1, 1, 1);
     }
 
     this.xy = xy;

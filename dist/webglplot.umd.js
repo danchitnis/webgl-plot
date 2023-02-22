@@ -15,6 +15,9 @@
             this.b = b;
             this.a = a;
         }
+        toArray() {
+            return [this.r, this.g, this.b, this.a];
+        }
     }
 
     /*type Line = {
@@ -260,7 +263,7 @@
                 xy = [0, 0, 1, 1];
             }
             if (color === undefined) {
-                color = { r: 0, g: 0, b: 0, a: 1 };
+                color = new ColorRGBA(1, 1, 1, 1);
             }
             this.xy = xy;
             this.color = color;
@@ -327,6 +330,7 @@
         lastDataY;
         colorLocation;
         numLines;
+        colors;
         constructor(wglp, rollBufferSize, numLines) {
             this.gl = wglp.gl;
             this.rollBufferSize = rollBufferSize;
@@ -399,55 +403,17 @@
             for (let i = 0; i < this.numLines; i++) {
                 gl.bufferSubData(gl.ARRAY_BUFFER, (this.dataIndex + bfsize * i) * 2 * 4, new Float32Array([this.dataX, ys[i]]));
             }
-            /*gl.bufferSubData(gl.ARRAY_BUFFER, this.dataIndex * 2 * 4, new Float32Array([this.dataX, y]));
-        
-            gl.bufferSubData(
-              gl.ARRAY_BUFFER,
-              (this.dataIndex + bfsize) * 2 * 4,
-              new Float32Array([this.dataX, y + 0.2])
-            );
-        
-            gl.bufferSubData(
-              gl.ARRAY_BUFFER,
-              (this.dataIndex + bfsize * 2) * 2 * 4,
-              new Float32Array([this.dataX, y - 0.1])
-            );*/
             gl.enableVertexAttribArray(this.aPosition);
             if (this.dataIndex === this.rollBufferSize - 1) {
                 for (let i = 0; i < this.numLines; i++) {
                     this.lastDataX[i] = this.dataX;
                     this.lastDataY[i] = ys[i];
                 }
-                /*this.lastDataX[0] = this.dataX;
-                this.lastDataY[0] = y;
-          
-                this.lastDataX[1] = this.dataX;
-                this.lastDataY[1] = y + 0.2;
-          
-                this.lastDataX[2] = this.dataX;
-                this.lastDataY[2] = y - 0.1;*/
             }
             if (this.dataIndex === 0 && this.lastDataX[0] !== 0) {
                 for (let i = 0; i < this.numLines; i++) {
                     gl.bufferSubData(gl.ARRAY_BUFFER, (this.rollBufferSize + bfsize * i) * 2 * 4, new Float32Array([this.lastDataX[i], this.lastDataY[i], this.dataX, ys[i]]));
                 }
-                /*gl.bufferSubData(
-                  gl.ARRAY_BUFFER,
-                  this.rollBufferSize * 2 * 4,
-                  new Float32Array([this.lastDataX[0], this.lastDataY[0], this.dataX, ys[0]])
-                );
-          
-                gl.bufferSubData(
-                  gl.ARRAY_BUFFER,
-                  (this.rollBufferSize + bfsize) * 2 * 4,
-                  new Float32Array([this.lastDataX[1], this.lastDataY[1], this.dataX, ys[1]])
-                );
-          
-                gl.bufferSubData(
-                  gl.ARRAY_BUFFER,
-                  (this.rollBufferSize + bfsize * 2) * 2 * 4,
-                  new Float32Array([this.lastDataX[2], this.lastDataY[2], this.dataX, ys[2]])
-                );*/
             }
             this.dataIndex = (this.dataIndex + 1) % this.rollBufferSize;
         }
@@ -456,25 +422,14 @@
             const gl = this.gl;
             this.gl.useProgram(this.program);
             for (let i = 0; i < this.numLines; i++) {
-                gl.uniform4fv(this.colorLocation, [1, 1, 0, 1]);
+                gl.uniform4f(this.colorLocation, this.colors[i].r, this.colors[i].g, this.colors[i].b, this.colors[i].a);
                 gl.drawArrays(gl.LINE_STRIP, i * bfsize, this.dataIndex);
                 gl.drawArrays(gl.LINE_STRIP, i * bfsize + this.dataIndex, this.rollBufferSize - this.dataIndex);
                 gl.drawArrays(gl.LINE_STRIP, i * bfsize + this.rollBufferSize, 2);
             }
-            /*gl.uniform4fv(this.colorLocation, [1, 1, 0, 1]);
-            gl.drawArrays(gl.LINE_STRIP, 0, this.dataIndex);
-            gl.drawArrays(gl.LINE_STRIP, this.dataIndex, this.rollBufferSize - this.dataIndex);
-            gl.drawArrays(gl.LINE_STRIP, this.rollBufferSize, 2);
-            //
-            gl.uniform4fv(this.colorLocation, [0, 1, 1, 1]);
-            gl.drawArrays(gl.LINE_STRIP, bfsize, this.dataIndex);
-            gl.drawArrays(gl.LINE_STRIP, bfsize + this.dataIndex, this.rollBufferSize - this.dataIndex);
-            gl.drawArrays(gl.LINE_STRIP, bfsize + this.rollBufferSize, 2);
-            //
-            gl.uniform4fv(this.colorLocation, [1, 0, 1, 1]);
-            gl.drawArrays(gl.LINE_STRIP, bfsize * 2, this.dataIndex);
-            gl.drawArrays(gl.LINE_STRIP, bfsize * 2 + this.dataIndex, this.rollBufferSize - this.dataIndex);
-            gl.drawArrays(gl.LINE_STRIP, bfsize * 2 + this.rollBufferSize, 2);*/
+        }
+        setColors(colors) {
+            this.colors = colors;
         }
     }
 

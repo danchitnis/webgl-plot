@@ -14,6 +14,7 @@ export class WebglLineRoll {
   private lastDataY: number[];
   private colorLocation: WebGLUniformLocation;
   public numLines: number;
+  private colors: ColorRGBA[];
 
   constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number) {
     this.gl = wglp.gl;
@@ -139,7 +140,13 @@ export class WebglLineRoll {
     this.gl.useProgram(this.program);
 
     for (let i = 0; i < this.numLines; i++) {
-      gl.uniform4fv(this.colorLocation, [1, 1, 0, 1]);
+      gl.uniform4f(
+        this.colorLocation,
+        this.colors[i].r,
+        this.colors[i].g,
+        this.colors[i].b,
+        this.colors[i].a
+      );
       gl.drawArrays(gl.LINE_STRIP, i * bfsize, this.dataIndex);
       gl.drawArrays(
         gl.LINE_STRIP,
@@ -148,5 +155,9 @@ export class WebglLineRoll {
       );
       gl.drawArrays(gl.LINE_STRIP, i * bfsize + this.rollBufferSize, 2);
     }
+  }
+
+  setColors(colors: ColorRGBA[]) {
+    this.colors = colors;
   }
 }
