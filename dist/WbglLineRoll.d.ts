@@ -1,7 +1,5 @@
 import type { WebglPlot } from "./webglplot";
 export declare class WebglLineRoll {
-    private wglp;
-    private color;
     private gl;
     private aPosition;
     private vertexBuffer;
@@ -13,8 +11,9 @@ export declare class WebglLineRoll {
     private lastDataX;
     private lastDataY;
     private colorLocation;
-    constructor(wglp: WebglPlot, rollBufferSize: number);
-    addPoint(y: number): void;
+    numLines: number;
+    constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number);
+    addPoint(ys: number[]): void;
     draw(): void;
 }
 //# sourceMappingURL=WbglLineRoll.d.ts.map

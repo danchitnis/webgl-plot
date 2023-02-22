@@ -62,8 +62,6 @@ declare class WebglScatterAcc {
 }
 
 declare class WebglLineRoll {
-    private wglp;
-    private color;
     private gl;
     private aPosition;
     private vertexBuffer;
@@ -75,8 +73,9 @@ declare class WebglLineRoll {
     private lastDataX;
     private lastDataY;
     private colorLocation;
-    constructor(wglp: WebglPlot, rollBufferSize: number);
-    addPoint(y: number): void;
+    numLines: number;
+    constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number);
+    addPoint(ys: number[]): void;
     draw(): void;
 }
 
