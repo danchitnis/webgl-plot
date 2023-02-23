@@ -6,6 +6,7 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 canvas.width = canvas.clientWidth * devicePixelRatio;
 canvas.height = canvas.clientHeight * devicePixelRatio;
 
+console.log("canvas.width", canvas.width, "canvas.height", canvas.height);
 console.log("devicePixelRatio", devicePixelRatio);
 
 const screenRatio = canvas.width / canvas.height;
@@ -15,17 +16,18 @@ const wglp = new WebglPlot(canvas);
 wglp.gScaleX = 1;
 wglp.gScaleY = screenRatio;
 
-const numLines = 1000;
+const numLines = 5000;
 
-const roll = new WebglLineRoll(wglp, 1920, numLines);
+const roll = new WebglLineRoll(wglp, canvas.width, numLines);
 
 const y = Array(numLines).fill(0);
 
-const colors = [];
 for (let i = 0; i < numLines; i++) {
-  colors.push(new ColorRGBA(Math.random(), Math.random(), Math.random(), 1));
+  roll.setLineColor(
+    new ColorRGBA(Math.random() * 255, Math.random() * 255, Math.random() * 255, 1),
+    i
+  );
 }
-roll.setColors(colors);
 
 const getNewY = () => {
   for (let i = 0; i < y.length; i++) {

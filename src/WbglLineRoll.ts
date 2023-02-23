@@ -3,7 +3,7 @@ import type { WebglPlot } from "./webglplot";
 
 export class WebglLineRoll {
   private gl: WebGL2RenderingContext;
-  private aPosition: number;
+  private aPositionLocation: number;
   private vertexBuffer: WebGLBuffer;
   public program: WebGLProgram;
   public rollBufferSize: number;
@@ -12,9 +12,10 @@ export class WebglLineRoll {
   private dataX: number;
   private lastDataX: number[];
   private lastDataY: number[];
-  private colorLocation: WebGLUniformLocation;
   public numLines: number;
-  private colors: ColorRGBA[];
+  private ext: WEBGL_multi_draw;
+  private colorBuffer: WebGLBuffer;
+  private aColorLocation: number;
 
   constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number) {
     this.gl = wglp.gl;
@@ -24,24 +25,31 @@ export class WebglLineRoll {
     this.dataX = 1;
     this.lastDataX = Array(numLines).fill(0);
     this.lastDataY = Array(numLines).fill(0);
-    this.colorLocation = null;
     this.numLines = numLines;
 
     const gl = this.gl;
 
+    this.ext = gl.getExtension("WEBGL_multi_draw");
+
     const vertCode = `#version 300 es
-    
         layout(location = 1) in vec2 a_position;
+        layout(location = 2) in vec3 a_color;
+
         uniform float u_shift;
+        uniform vec4 uColor;
+
+        out vec3 vColor;
     
         void main(void) {
             vec2 shiftedPosition = a_position - vec2(u_shift, 0);
             gl_Position = vec4(shiftedPosition, 0, 1);
+
+            vColor = a_color/ vec3(255.0, 255.0, 255.0);
         }`;
 
-    const vertShader = this.gl.createShader(this.gl.VERTEX_SHADER);
-    this.gl.shaderSource(vertShader, vertCode);
-    this.gl.compileShader(vertShader);
+    const vertShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertShader, vertCode);
+    gl.compileShader(vertShader);
 
     if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
       // there was an error
@@ -51,16 +59,16 @@ export class WebglLineRoll {
     // Fragment shader source code
     const fragCode = `#version 300 es
         precision mediump float;    
-        uniform vec4 uColor;
+        in vec3 vColor;
         out vec4 outColor;
     
         void main(void) {
-            outColor = uColor;
+            outColor = vec4(vColor, 0.7);
         }`;
 
-    const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
-    this.gl.shaderSource(fragShader, fragCode);
-    this.gl.compileShader(fragShader);
+    const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragShader, fragCode);
+    gl.compileShader(fragShader);
 
     if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
       // there was an error
@@ -68,10 +76,10 @@ export class WebglLineRoll {
     }
 
     // Create the shader program
-    this.program = this.gl.createProgram();
-    this.gl.attachShader(this.program, vertShader);
-    this.gl.attachShader(this.program, fragShader);
-    this.gl.linkProgram(this.program);
+    this.program = gl.createProgram();
+    gl.attachShader(this.program, vertShader);
+    gl.attachShader(this.program, fragShader);
+    gl.linkProgram(this.program);
 
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       // there was an error
@@ -79,20 +87,32 @@ export class WebglLineRoll {
     }
 
     // Create a buffer for the vertex coordinates
-    this.vertexBuffer = this.gl.createBuffer();
+    this.vertexBuffer = gl.createBuffer();
 
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-    this.gl.bufferData(
-      this.gl.ARRAY_BUFFER,
-      new Float32Array((this.rollBufferSize * 2 + 4) * numLines),
-      this.gl.DYNAMIC_DRAW
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array((this.rollBufferSize + 2) * 2 * numLines),
+      gl.DYNAMIC_DRAW
     );
 
-    this.aPosition = gl.getAttribLocation(this.program, "a_position");
-    gl.vertexAttribPointer(this.aPosition, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(this.aPosition);
+    this.aPositionLocation = gl.getAttribLocation(this.program, "a_position");
+    gl.vertexAttribPointer(this.aPositionLocation, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(this.aPositionLocation);
 
-    this.colorLocation = gl.getUniformLocation(this.program, "uColor");
+    // Create a buffer for the colors
+    this.colorBuffer = gl.createBuffer();
+
+    const colors = Array((this.rollBufferSize + 2) * 3 * numLines).fill(128);
+
+    gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);
+
+    this.aColorLocation = gl.getAttribLocation(this.program, "a_color");
+    gl.vertexAttribPointer(this.aColorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
+    gl.enableVertexAttribArray(this.aColorLocation);
+
+    //this.uColorLocation = gl.getUniformLocation(this.program, "uColor");
   }
 
   addPoint(ys: number[]) {
@@ -112,7 +132,7 @@ export class WebglLineRoll {
       );
     }
 
-    gl.enableVertexAttribArray(this.aPosition);
+    gl.enableVertexAttribArray(this.aPositionLocation);
 
     if (this.dataIndex === this.rollBufferSize - 1) {
       for (let i = 0; i < this.numLines; i++) {
@@ -134,19 +154,12 @@ export class WebglLineRoll {
     this.dataIndex = (this.dataIndex + 1) % this.rollBufferSize;
   }
 
-  draw() {
+  private drawOld() {
     const bfsize = this.rollBufferSize + 2;
     const gl = this.gl;
     this.gl.useProgram(this.program);
 
     for (let i = 0; i < this.numLines; i++) {
-      gl.uniform4f(
-        this.colorLocation,
-        this.colors[i].r,
-        this.colors[i].g,
-        this.colors[i].b,
-        this.colors[i].a
-      );
       gl.drawArrays(gl.LINE_STRIP, i * bfsize, this.dataIndex);
       gl.drawArrays(
         gl.LINE_STRIP,
@@ -157,7 +170,51 @@ export class WebglLineRoll {
     }
   }
 
-  setColors(colors: ColorRGBA[]) {
-    this.colors = colors;
+  private drawExt() {
+    const bfsize = this.rollBufferSize + 2;
+    const gl = this.gl;
+    this.gl.useProgram(this.program);
+
+    const firsts = [];
+    const counts = [];
+
+    for (let i = 0; i < this.numLines; i++) {
+      firsts.push(i * bfsize);
+      counts.push(this.dataIndex);
+      firsts.push(i * bfsize + this.dataIndex);
+      counts.push(this.rollBufferSize - this.dataIndex);
+      firsts.push(i * bfsize + this.rollBufferSize);
+      counts.push(2);
+    }
+    this.ext.multiDrawArraysWEBGL(gl.LINE_STRIP, firsts, 0, counts, 0, counts.length);
+  }
+
+  draw() {
+    if (this.ext) {
+      this.drawExt();
+    } else {
+      this.drawOld();
+    }
+  }
+
+  setLineColor(colors: ColorRGBA, lineIndex: number) {
+    const gl = this.gl;
+    gl.useProgram(this.program);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+
+    const colorsArray = [];
+    for (let i = 0; i < this.rollBufferSize + 2; i++) {
+      colorsArray.push(colors.r);
+      colorsArray.push(colors.g);
+      colorsArray.push(colors.b);
+    }
+
+    gl.bufferSubData(
+      gl.ARRAY_BUFFER,
+      (this.rollBufferSize + 2) * 3 * lineIndex * 1,
+      new Uint8Array(colorsArray)
+    );
+
+    gl.enableVertexAttribArray(this.aColorLocation);
   }
 }
