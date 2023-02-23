@@ -16,7 +16,7 @@ const wglp = new WebglPlot(canvas);
 wglp.gScaleX = 1;
 wglp.gScaleY = screenRatio;
 
-const numLines = 5000;
+const numLines = 100;
 
 const roll = new WebglLineRoll(wglp, canvas.width, numLines);
 
@@ -39,8 +39,10 @@ const getNewY = () => {
 
 const render = () => {
   getNewY();
-  roll.addPoint(y);
 
+  for (let i = 0; i < 10; i++) {
+    roll.addPoint(y);
+  }
   wglp.clear();
   roll.draw();
 

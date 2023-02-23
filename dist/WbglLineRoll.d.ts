@@ -15,6 +15,7 @@ export declare class WebglLineRoll {
     private ext;
     private colorBuffer;
     private aColorLocation;
+    private uShiftLocation;
     constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number);
     addPoint(ys: number[]): void;
     private drawOld;

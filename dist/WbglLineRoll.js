@@ -13,6 +13,7 @@ export class WebglLineRoll {
     ext;
     colorBuffer;
     aColorLocation;
+    uShiftLocation;
     constructor(wglp, rollBufferSize, numLines) {
         this.gl = wglp.gl;
         this.rollBufferSize = rollBufferSize;
@@ -28,13 +29,13 @@ export class WebglLineRoll {
         layout(location = 1) in vec2 a_position;
         layout(location = 2) in vec3 a_color;
 
-        uniform float u_shift;
+        uniform float uShift;
         uniform vec4 uColor;
 
         out vec3 vColor;
     
         void main(void) {
-            vec2 shiftedPosition = a_position - vec2(u_shift, 0);
+            vec2 shiftedPosition = a_position - vec2(uShift, 0);
             gl_Position = vec4(shiftedPosition, 0, 1);
 
             vColor = a_color/ vec3(255.0, 255.0, 255.0);
@@ -86,6 +87,7 @@ export class WebglLineRoll {
         this.aColorLocation = gl.getAttribLocation(this.program, "a_color");
         gl.vertexAttribPointer(this.aColorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
         gl.enableVertexAttribArray(this.aColorLocation);
+        this.uShiftLocation = gl.getUniformLocation(this.program, "uShift");
         //this.uColorLocation = gl.getUniformLocation(this.program, "uColor");
     }
     addPoint(ys) {
@@ -94,7 +96,7 @@ export class WebglLineRoll {
         this.shift += 2 / this.rollBufferSize;
         this.dataX += 2 / this.rollBufferSize;
         gl.useProgram(this.program);
-        gl.uniform1f(gl.getUniformLocation(this.program, "u_shift"), this.shift);
+        gl.uniform1f(this.uShiftLocation, this.shift);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
         for (let i = 0; i < this.numLines; i++) {
             gl.bufferSubData(gl.ARRAY_BUFFER, (this.dataIndex + bfsize * i) * 2 * 4, new Float32Array([this.dataX, ys[i]]));
