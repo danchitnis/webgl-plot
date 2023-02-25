@@ -18,6 +18,7 @@ export declare class WebglLineRoll {
     private uShiftLocation;
     constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number);
     addPoint(ys: number[]): void;
+    addPoints(ys: number[][]): void;
     private drawOld;
     private drawExt;
     draw(): void;
