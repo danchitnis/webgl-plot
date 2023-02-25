@@ -430,74 +430,51 @@ class WebglLineRoll {
     }
     addPoints(ys) {
         const gl = this.gl;
-        this.rollBufferSize + 2;
+        const bfsize = this.rollBufferSize + 2;
         gl.useProgram(this.program);
         gl.uniform1f(this.uShiftLocation, this.shift);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        /*const newData = Array.from(ys[0], (v, i) => [
-          this.dataX + (i * 2) / this.rollBufferSize,
-          v,
-        ]).flat();*/
-        const newData1 = [];
-        const newData2 = [];
-        const newData3 = [];
         let index = this.dataIndex;
         let lastX = 0;
-        for (let i = 0; i < ys[0].length; i++) {
-            const x = this.dataX + (i * 2) / this.rollBufferSize;
-            //this.dataIndex = (this.dataIndex + 1) % this.rollBufferSize;
-            if (index < this.rollBufferSize) {
-                newData1.push(x);
-                newData1.push(ys[0][i]);
+        for (let line = 0; line < ys.length; line++) {
+            const newData1 = [];
+            const newData2 = [];
+            const newData3 = [];
+            index = this.dataIndex;
+            lastX = 0;
+            for (let i = 0; i < ys[line].length; i++) {
+                const x = this.dataX + (i * 2) / this.rollBufferSize;
+                if (index < this.rollBufferSize) {
+                    newData1.push(x);
+                    newData1.push(ys[line][i]);
+                }
+                if (index === this.rollBufferSize - 1) {
+                    this.lastDataX[line] = x;
+                    this.lastDataY[line] = ys[line][i];
+                }
+                if (index % this.rollBufferSize === 0 && this.lastDataX[line] !== 0) {
+                    newData2.push(this.lastDataX[line]);
+                    newData2.push(this.lastDataY[line]);
+                    newData2.push(x);
+                    newData2.push(ys[line][i]);
+                }
+                if (index >= this.rollBufferSize) {
+                    newData3.push(x);
+                    newData3.push(ys[line][i]);
+                }
+                index++;
+                lastX = x;
             }
-            if (index === this.rollBufferSize - 1) {
-                this.lastDataX[0] = x;
-                this.lastDataY[0] = ys[0][i];
+            if (newData1.length > 0) {
+                gl.bufferSubData(gl.ARRAY_BUFFER, (this.dataIndex + line * bfsize) * 2 * 4, new Float32Array(newData1));
             }
-            if (index % this.rollBufferSize === 0 && this.lastDataX[0] !== 0) {
-                newData2.push(this.lastDataX[0]);
-                newData2.push(this.lastDataY[0]);
-                newData2.push(x);
-                newData2.push(ys[0][i]);
+            if (newData2.length > 0) {
+                gl.bufferSubData(gl.ARRAY_BUFFER, (this.rollBufferSize + line * bfsize) * 2 * 4, new Float32Array(newData2));
             }
-            if (index >= this.rollBufferSize) {
-                newData3.push(x);
-                newData3.push(ys[0][i]);
+            if (newData3.length > 0) {
+                gl.bufferSubData(gl.ARRAY_BUFFER, line * bfsize * 2 * 4, new Float32Array(newData3));
             }
-            index++;
-            lastX = x;
         }
-        /*console.log(newData1);
-        console.log(newData2);
-        console.log(newData3);
-        console.log(index, this.rollBufferSize, this.dataIndex);
-    
-        console.log("😉-----");*/
-        if (newData1.length > 0) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, this.dataIndex * 2 * 4, new Float32Array(newData1));
-        }
-        if (newData2.length > 0) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, this.rollBufferSize * 2 * 4, new Float32Array(newData2));
-        }
-        if (newData3.length > 0) {
-            gl.bufferSubData(gl.ARRAY_BUFFER, 0, new Float32Array(newData3));
-        }
-        /*if (this.dataIndex === this.rollBufferSize - 1) {
-          for (let i = 0; i < this.numLines; i++) {
-            this.lastDataX[i] = this.dataX;
-            this.lastDataY[i] = ys[i][0];
-          }
-        }
-    
-        if (this.dataIndex === 0 && this.lastDataX[0] !== 0) {
-          for (let i = 0; i < this.numLines; i++) {
-            gl.bufferSubData(
-              gl.ARRAY_BUFFER,
-              (this.rollBufferSize + bfsize * i) * 2 * 4,
-              new Float32Array([this.lastDataX[i], this.lastDataY[i], this.dataX, ys[i][1]])
-            );
-          }
-        }*/
         this.shift += (ys[0].length * 2) / this.rollBufferSize;
         this.dataX = lastX + 2 / this.rollBufferSize;
         this.dataIndex = index % this.rollBufferSize;
