@@ -18,7 +18,7 @@ wglp.gScaleY = screenRatio;
 
 const numLines = 10;
 
-const newDataSize = 10;
+const newDataSize = 7;
 
 const roll = new WebglLineRoll(wglp, canvas.width, numLines);
 

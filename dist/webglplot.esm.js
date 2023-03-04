@@ -437,42 +437,26 @@ class WebglLineRoll {
         let index = this.dataIndex;
         let lastX = 0;
         for (let line = 0; line < ys.length; line++) {
-            const newData1 = [];
-            const newData2 = [];
-            const newData3 = [];
             index = this.dataIndex;
             lastX = 0;
             for (let i = 0; i < ys[line].length; i++) {
                 const x = this.dataX + (i * 2) / this.rollBufferSize;
                 if (index < this.rollBufferSize) {
-                    newData1.push(x);
-                    newData1.push(ys[line][i]);
+                    gl.bufferSubData(gl.ARRAY_BUFFER, (index + line * bfsize) * 2 * 4, new Float32Array([x, ys[line][i]]));
                 }
                 if (index === this.rollBufferSize - 1) {
                     this.lastDataX[line] = x;
                     this.lastDataY[line] = ys[line][i];
                 }
                 if (index % this.rollBufferSize === 0 && this.lastDataX[line] !== 0) {
-                    newData2.push(this.lastDataX[line]);
-                    newData2.push(this.lastDataY[line]);
-                    newData2.push(x);
-                    newData2.push(ys[line][i]);
+                    gl.bufferSubData(gl.ARRAY_BUFFER, (this.rollBufferSize + line * bfsize) * 2 * 4, new Float32Array([this.lastDataX[line], this.lastDataY[line], x, ys[line][i]]));
                 }
                 if (index >= this.rollBufferSize) {
-                    newData3.push(x);
-                    newData3.push(ys[line][i]);
+                    const index2 = index % this.rollBufferSize;
+                    gl.bufferSubData(gl.ARRAY_BUFFER, (index2 + line * bfsize) * 2 * 4, new Float32Array([x, ys[line][i]]));
                 }
                 index++;
                 lastX = x;
-            }
-            if (newData1.length > 0) {
-                gl.bufferSubData(gl.ARRAY_BUFFER, (this.dataIndex + line * bfsize) * 2 * 4, new Float32Array(newData1));
-            }
-            if (newData2.length > 0) {
-                gl.bufferSubData(gl.ARRAY_BUFFER, (this.rollBufferSize + line * bfsize) * 2 * 4, new Float32Array(newData2));
-            }
-            if (newData3.length > 0) {
-                gl.bufferSubData(gl.ARRAY_BUFFER, line * bfsize * 2 * 4, new Float32Array(newData3));
             }
         }
         this.shift += (ys[0].length * 2) / this.rollBufferSize;
