@@ -3,7 +3,7 @@ import {
   WebglScatterAcc,
   WebglAux,
   WebglPlot,
-  WebglAuxLine,
+  WebglLine,
 } from "../dist/webglplot.esm.mjs";
 
 const canvas = document.getElementById("my_canvas");
@@ -21,13 +21,13 @@ const wglp = new WebglPlot(canvas);
 wglp.gScaleX = 1;
 wglp.gScaleY = screenRatio;
 
-const aux = new WebglAux(wglp);
+/*const aux = new WebglAux(wglp);
 
-aux.addLine(new WebglAuxLine([-1, 0, 1, 0], new ColorRGBA(255, 255, 0, 1)));
-aux.addLine(new WebglAuxLine([0, -1, 0, 1], new ColorRGBA(255, 255, 0, 1)));
-aux.addLine(new WebglAuxLine([-1, -1, 1, 1], new ColorRGBA(255, 0, 0, 1)));
+aux.addLine(new W([-1, 0, 1, 0], new ColorRGBA(255, 255, 0, 1)));
+aux.addLine(new WebglAux([0, -1, 0, 1], new ColorRGBA(255, 255, 0, 1)));
+aux.addLine(new WebglAux([-1, -1, 1, 1], new ColorRGBA(255, 0, 0, 1)));
 
-cursors();
+cursors();*/
 
 const sqSize = 0.01;
 
@@ -66,15 +66,15 @@ const render = () => {
   sqAcc.addSquare(new Float32Array(pos), new Uint8Array(colors));
   wglp.clear();
   sqAcc.draw();
-  aux.draw();
+  //aux.draw();
   requestAnimationFrame(render);
 };
 
 requestAnimationFrame(render);
 
-function cursors() {
-  const LineCursorX = new WebglAuxLine([0, 0, 0, 0], new ColorRGBA(0, 250, 0, 1));
-  const LineCursorY = new WebglAuxLine([0, 0, 0, 0], new ColorRGBA(0, 250, 0, 1));
+/*function cursors() {
+  const LineCursorX = new WebglAux([0, 0, 0, 0], new ColorRGBA(0, 250, 0, 1));
+  const LineCursorY = new WebglAux([0, 0, 0, 0], new ColorRGBA(0, 250, 0, 1));
   aux.addLine(LineCursorX);
   aux.addLine(LineCursorY);
 
@@ -89,7 +89,7 @@ function cursors() {
     LineCursorX.xy = [xNorm, -1, xNorm, 1];
     LineCursorY.xy = [-1, -yNorm, 1, -yNorm];
   });
-}
+}*/
 
 // https://stackoverflow.com/questions/7706339/grayscale-to-red-green-blue-matlab-jet-color-scale
 function GetMatlabRgb(ordinal) {

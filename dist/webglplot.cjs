@@ -293,12 +293,10 @@ class WebglLine {
     lineSpaceX(lineSize) {
         const n = lineSize;
         this.xy = new Array(n * 2);
-        console.log(this.xy);
         for (let i = 0; i < n; i++) {
             this.xy[i * 2] = (2 * i) / n - 1;
             this.xy[i * 2 + 1] = 0;
         }
-        console.log(this.xy);
     }
     emptyLine(lineSize) {
         const n = lineSize;
@@ -419,6 +417,7 @@ class WebglLineRoll {
         gl.enableVertexAttribArray(this.aPositionLocation);
         if (this.dataIndex === this.rollBufferSize - 1) {
             for (let i = 0; i < this.numLines; i++) {
+                //????????????????
                 this.lastDataX[i] = this.dataX;
                 this.lastDataY[i] = ys[i];
             }
@@ -525,7 +524,6 @@ class WebglLinePlot {
     lineSizes;
     totalLineSizes;
     lineSizeAccum;
-    indexData;
     constructor(wglp, lines) {
         //super();
         this.wglp = wglp;
@@ -558,7 +556,7 @@ class WebglLinePlot {
         out vec4 outColor;
     
         void main() {
-            outColor = vec4(vColor,0.7);
+            outColor = vec4(vColor,0.8);
         }`;
         const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
         gl.shaderSource(fragShader, fragCode);
@@ -576,7 +574,6 @@ class WebglLinePlot {
         const colorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
         this.totalLineSizes = lineSizes.reduce((a, b) => a + b, 0);
-        console.log(this.totalLineSizes);
         this.lineSizeAccum = lineSizes
             .reduce((acc, cur) => {
             acc.push(acc[acc.length - 1] + cur);
@@ -606,17 +603,6 @@ class WebglLinePlot {
         const vertexData = new Float32Array(this.totalLineSizes * 2);
         // Upload the vertex data to the GPU
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.DYNAMIC_DRAW);
-        // Create an index buffer and bind it to the ELEMENT_ARRAY_BUFFER target
-        const indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        // Define the index data
-        this.indexData = Array.from({ length: lineSizes[0] }, (_, i) => i);
-        for (let i = 1; i < lineSizes.length; i++) {
-            this.indexData.push(-1);
-            this.indexData = this.indexData.concat(Array.from({ length: lineSizes[i] }, (_, j) => this.lineSizeAccum[i] + j));
-        }
-        // Upload the index data to the GPU
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(this.indexData), gl.STATIC_DRAW);
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.enable(gl.BLEND);
@@ -633,7 +619,9 @@ class WebglLinePlot {
     draw = () => {
         const gl = this.gl;
         gl.useProgram(this.prog);
-        gl.drawElements(gl.LINE_STRIP, this.indexData.length, gl.UNSIGNED_INT, 0);
+        for (let i = 0; i < this.lineSizes.length; i++) {
+            gl.drawArrays(gl.LINE_STRIP, this.lineSizeAccum[i], this.lineSizes[i]);
+        }
     };
 }
 

@@ -16,9 +16,9 @@ const wglp = new WebglPlot(canvas);
 wglp.gScaleX = 1;
 wglp.gScaleY = screenRatio;
 
-const numLines = 10;
+const numLines = 10; //7500 max on 4090
 
-const newDataSize = 7;
+const newDataSize = 1;
 
 const roll = new WebglLineRoll(wglp, canvas.width, numLines);
 

@@ -6,7 +6,6 @@
     //"esModuleInterop": true,
     "isolatedModules": true,
     "strictNullChecks": false,
-    "importsNotUsedAsValues": "error",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "sourceMap": true,

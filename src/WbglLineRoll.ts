@@ -139,6 +139,7 @@ export class WebglLineRoll {
 
     if (this.dataIndex === this.rollBufferSize - 1) {
       for (let i = 0; i < this.numLines; i++) {
+        //????????????????
         this.lastDataX[i] = this.dataX;
         this.lastDataY[i] = ys[i];
       }

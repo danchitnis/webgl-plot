@@ -41,12 +41,10 @@ export class WebglLine {
     lineSpaceX(lineSize) {
         const n = lineSize;
         this.xy = new Array(n * 2);
-        console.log(this.xy);
         for (let i = 0; i < n; i++) {
             this.xy[i * 2] = (2 * i) / n - 1;
             this.xy[i * 2 + 1] = 0;
         }
-        console.log(this.xy);
     }
     emptyLine(lineSize) {
         const n = lineSize;

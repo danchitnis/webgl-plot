@@ -97,7 +97,6 @@ declare class WebglLinePlot {
     lineSizes: number[];
     private totalLineSizes;
     private lineSizeAccum;
-    private indexData;
     constructor(wglp: WebglPlot, lines: WebglLine[]);
     updateLine: (lineIndex: number) => void;
     draw: () => void;
