@@ -164,7 +164,7 @@ Thanks to [TimDaub](https://github.com/TimDaub) for testing the ES6 module.
 [Native Line](https://danchitnis.github.io/webgl-plot/benchmark/bench1.html) and
 [Thick Line](https://danchitnis.github.io/webgl-plot/benchmark/bench-thick.html).
 
-See [Benchmark](https://github.com/danchitnis/webgl-plot/tree/webglplot-v2/benchmark) for more detailed analysis.
+See [Benchmark](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/README.md) for more detailed analysis.
 
 ## Internal test
 
