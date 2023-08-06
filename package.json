@@ -48,5 +48,5 @@
     "url": "https://github.com/danchitnis/webgl-plot/issues"
   },
   "homepage": "https://github.com/danchitnis/webgl-plot",
-  "packageManager": "yarn@3.4.1"
+  "packageManager": "yarn@3.6.1"
 }
