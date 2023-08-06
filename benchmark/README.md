@@ -21,9 +21,9 @@ The line width is 2000 data points and the number of lines is increase until the
 | Javascript     | 7.5k      | 2k         | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
 | Javascript     | 2.5k      | 10k        | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
 | Javascript     | 0.2k      | 100k       | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
-| Python         | -         | -          | -            | [pyglplot]()                                                                                 |
-| Python         | -         | -          | -            | [pyglplot]()                                                                                 |
-| Python         | -         | -          | -            | [pyglplot]()                                                                                 |
+| Python         | 1.5k      | 2k         | 12%          | [pyglplot](https://github.com/danchitnis/pyglplot/blob/main/test/testRoll.py)                |
+| Python         | 1k        | 10k        | 25%          | [pyglplot](https://github.com/danchitnis/pyglplot/blob/main/test/testRoll.py)                |
+| Python         | 0.3k      | 100k       | 40%          | [pyglplot](https://github.com/danchitnis/pyglplot/blob/main/test/testRoll.py)                |
 | C++            | 40k       | 2k         | 95%          | [cpp-plot](https://github.com/danchitnis/cpp-plot/blob/main/src/roll.cpp)                    |
 | C++            | 15k       | 10k        | 95%          | [cpp-plot](https://github.com/danchitnis/cpp-plot/blob/main/src/roll.cpp)                    |
 | C++            | 1.5k      | 100k       | 95%          | [cpp-plot](https://github.com/danchitnis/cpp-plot/blob/main/src/roll.cpp)                    |
