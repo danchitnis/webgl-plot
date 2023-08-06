@@ -24,13 +24,13 @@
   ],
   "devDependencies": {
     "@skypack/package-check": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^6.1.0",
-    "@typescript-eslint/parser": "^6.1.0",
-    "eslint": "^8.45.0",
-    "rollup": "^3.26.3",
-    "rollup-plugin-dts": "^5.3.0",
+    "@typescript-eslint/eslint-plugin": "^6.2.1",
+    "@typescript-eslint/parser": "^6.2.1",
+    "eslint": "^8.46.0",
+    "rollup": "^3.27.2",
+    "rollup-plugin-dts": "^5.3.1",
     "typedoc": "^0.24.8",
-    "typedoc-plugin-markdown": "^3.15.3",
+    "typedoc-plugin-markdown": "^3.15.4",
     "typescript": "^5.1.6"
   },
   "scripts": {
