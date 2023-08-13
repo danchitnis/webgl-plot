@@ -33,7 +33,7 @@ The line width is 2000 data points and the number of lines is increase until the
 | Implementation | Max Square | Max GPU Util | Code                                                                                         |
 | -------------- | ---------- | ------------ | -------------------------------------------------------------------------------------------- |
 | Javascript     | 6M         | 30%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
-| Python         | -          | -            | [pyglplot]()                                                                                 |
+| Python         | 30M        | 98%          | [pyglplot]()                                                                                 |
 | C++            | 30M        | 98%          | [cpp-plot](https://github.com/danchitnis/cpp-plot/blob/main/src/scatter.cpp)                 |
 
 The results are show that the Javascript and Python implementations are limited by the CPU and not the GPU. This may be to translation overhead of the interpreter or slower memory operations or due to sandboxing in the browser. The C++ implementation compiler using the -O3 flag limited by the GPU takes benefit full CPU cache and memory bandwidth.
