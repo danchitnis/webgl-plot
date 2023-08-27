@@ -5,6 +5,10 @@
 })(this, (function (exports) { 'use strict';
 
     class ColorRGBA {
+        r;
+        g;
+        b;
+        a;
         constructor(r, g, b, a) {
             this.r = r;
             this.g = g;
@@ -17,6 +21,67 @@
      * Baseline class
      */
     class WebglBase {
+        //private static program: WebGLProgram;
+        intensity;
+        visible;
+        /**
+         * The number of data point pairs in the line
+         */
+        numPoints;
+        /**
+         * The data ponits for webgl array
+         * @internal
+         */
+        xy;
+        /**
+         * The Color of the line
+         */
+        color;
+        /**
+         * The horizontal scale of the line
+         * @default = 1
+         */
+        scaleX;
+        /**
+         * The vertical scale of the line
+         * @default = 1
+         */
+        scaleY;
+        /**
+         * The horizontal offset of the line
+         * @default = 0
+         */
+        offsetX;
+        /**
+         * the vertical offset of the line
+         * @default = 0
+         */
+        offsetY;
+        /**
+         * if this is a close loop line or not
+         * @default = false
+         */
+        loop;
+        /**
+         * total webgl number of points
+         * @internal
+         */
+        webglNumPoints;
+        /**
+         * @private
+         * @internal
+         */
+        _vbuffer;
+        /**
+         * @private
+         * @internal
+         */
+        //public _prog: WebGLProgram;
+        /**
+         * @private
+         * @internal
+         */
+        _coord;
         /**
          * @internal
          */
@@ -41,6 +106,7 @@
      * The standard Line class
      */
     class WebglLine extends WebglBase {
+        currentIndex = 0;
         /**
          * Create a new line
          * @param c - the color of the line
@@ -54,7 +120,6 @@
          */
         constructor(c, numPoints) {
             super();
-            this.currentIndex = 0;
             this.webglNumPoints = numPoints;
             this.numPoints = numPoints;
             this.color = c;
@@ -259,6 +324,12 @@
     }
 
     class WebglPolar extends WebglBase {
+        numPoints;
+        xy;
+        color;
+        intenisty;
+        visible;
+        offsetTheta;
         constructor(c, numPoints) {
             super();
             this.webglNumPoints = numPoints;
@@ -489,6 +560,11 @@
      * The standard Line class
      */
     class WebglThickLine extends WebglBase {
+        currentIndex = 0;
+        //protected triPoints: Float32Array;
+        _linePoints;
+        _thicknessRequested = 0;
+        _actualThickness = 0;
         /**
          * Create a new line
          * @param c - the color of the line
@@ -502,9 +578,6 @@
          */
         constructor(c, numPoints, thickness) {
             super();
-            this.currentIndex = 0;
-            this._thicknessRequested = 0;
-            this._actualThickness = 0;
             this.webglNumPoints = numPoints * 2;
             this.numPoints = numPoints;
             this.color = c;
@@ -587,6 +660,55 @@
      * The main class for the webgl-plot library
      */
     class WebglPlot {
+        /**
+         * @private
+         */
+        webgl;
+        /**
+         * Global horizontal scale factor
+         * @default = 1.0
+         */
+        gScaleX;
+        /**
+         * Global vertical scale factor
+         * @default = 1.0
+         */
+        gScaleY;
+        /**
+         * Global X/Y scale ratio
+         * @default = 1
+         */
+        gXYratio;
+        /**
+         * Global horizontal offset
+         * @default = 0
+         */
+        gOffsetX;
+        /**
+         * Global vertical offset
+         * @default = 0
+         */
+        gOffsetY;
+        /**
+         * Global log10 of x-axis
+         * @default = false
+         */
+        gLog10X;
+        /**
+         * Global log10 of y-axis
+         * @default = false
+         */
+        gLog10Y;
+        /**
+         * collection of data lines in the plot
+         */
+        _linesData;
+        /**
+         * collection of auxiliary lines (grids, markers, etc) in the plot
+         */
+        _linesAux;
+        _thickLines;
+        _surfaces;
         get linesData() {
             return this._linesData;
         }
@@ -599,6 +721,11 @@
         get surfaces() {
             return this._surfaces;
         }
+        _progLine;
+        /**
+         * log debug output
+         */
+        debug = false;
         /**
          * Create a webgl-plot instance
          * @param canvas - the canvas in which the plot appears
@@ -638,11 +765,6 @@
          * ```
          */
         constructor(canvas, options) {
-            /**
-             * log debug output
-             */
-            this.debug = false;
-            this.addLine = this.addDataLine;
             if (options == undefined) {
                 this.webgl = canvas.getContext("webgl", {
                     antialias: true,
@@ -815,6 +937,7 @@
             this._addLine(line);
             this.linesData.push(line);
         }
+        addLine = this.addDataLine;
         addAuxLine(line) {
             this._addLine(line);
             this.linesAux.push(line);

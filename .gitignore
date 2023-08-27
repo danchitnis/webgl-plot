@@ -4,7 +4,7 @@ tmp
 .now
 .vscode
 docs
-.yarn/*
+.yarn/**
 .yarn/cache
 !.yarn/patches
 !.yarn/plugins

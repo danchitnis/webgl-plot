@@ -5,6 +5,11 @@ import { WebglBase } from "./WebglBase";
  * The standard Line class
  */
 export class WebglThickLine extends WebglBase {
+    currentIndex = 0;
+    //protected triPoints: Float32Array;
+    _linePoints;
+    _thicknessRequested = 0;
+    _actualThickness = 0;
     /**
      * Create a new line
      * @param c - the color of the line
@@ -18,9 +23,6 @@ export class WebglThickLine extends WebglBase {
      */
     constructor(c, numPoints, thickness) {
         super();
-        this.currentIndex = 0;
-        this._thicknessRequested = 0;
-        this._actualThickness = 0;
         this.webglNumPoints = numPoints * 2;
         this.numPoints = numPoints;
         this.color = c;

@@ -3,6 +3,7 @@ import { WebglBase } from "./WebglBase";
  * The standard Line class
  */
 export class WebglLine extends WebglBase {
+    currentIndex = 0;
     /**
      * Create a new line
      * @param c - the color of the line
@@ -16,7 +17,6 @@ export class WebglLine extends WebglBase {
      */
     constructor(c, numPoints) {
         super();
-        this.currentIndex = 0;
         this.webglNumPoints = numPoints;
         this.numPoints = numPoints;
         this.color = c;

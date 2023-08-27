@@ -1,5 +1,11 @@
 import { WebglBase } from "./WebglBase";
 export class WebglPolar extends WebglBase {
+    numPoints;
+    xy;
+    color;
+    intenisty;
+    visible;
+    offsetTheta;
     constructor(c, numPoints) {
         super();
         this.webglNumPoints = numPoints;

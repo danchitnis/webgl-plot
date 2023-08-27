@@ -1,6 +1,6 @@
 {
   "name": "webgl-plot",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
   "type": "module",
@@ -25,14 +25,14 @@
   ],
   "devDependencies": {
     "@skypack/package-check": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "eslint": "^8.33.0",
-    "rollup": "^3.13.0",
-    "rollup-plugin-dts": "^5.1.1",
-    "typedoc": "^0.23.24",
-    "typedoc-plugin-markdown": "^3.14.0",
-    "typescript": "^4.9.5"
+    "@typescript-eslint/eslint-plugin": "^6.4.1",
+    "@typescript-eslint/parser": "^6.4.1",
+    "eslint": "^8.48.0",
+    "rollup": "^3.28.1",
+    "rollup-plugin-dts": "^6.0.0",
+    "typedoc": "^0.25.0",
+    "typedoc-plugin-markdown": "^3.16.0",
+    "typescript": "^5.2.2"
   },
   "scripts": {
     "build": "tsc && rollup -c && rollup --config rollup.config.dts.js",
@@ -48,5 +48,6 @@
   "bugs": {
     "url": "https://github.com/danchitnis/webgl-plot/issues"
   },
-  "homepage": "https://github.com/danchitnis/webgl-plot"
+  "homepage": "https://github.com/danchitnis/webgl-plot",
+  "packageManager": "yarn@3.6.3"
 }

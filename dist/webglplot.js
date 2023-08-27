@@ -16,6 +16,55 @@ export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLin
  * The main class for the webgl-plot library
  */
 export class WebglPlot {
+    /**
+     * @private
+     */
+    webgl;
+    /**
+     * Global horizontal scale factor
+     * @default = 1.0
+     */
+    gScaleX;
+    /**
+     * Global vertical scale factor
+     * @default = 1.0
+     */
+    gScaleY;
+    /**
+     * Global X/Y scale ratio
+     * @default = 1
+     */
+    gXYratio;
+    /**
+     * Global horizontal offset
+     * @default = 0
+     */
+    gOffsetX;
+    /**
+     * Global vertical offset
+     * @default = 0
+     */
+    gOffsetY;
+    /**
+     * Global log10 of x-axis
+     * @default = false
+     */
+    gLog10X;
+    /**
+     * Global log10 of y-axis
+     * @default = false
+     */
+    gLog10Y;
+    /**
+     * collection of data lines in the plot
+     */
+    _linesData;
+    /**
+     * collection of auxiliary lines (grids, markers, etc) in the plot
+     */
+    _linesAux;
+    _thickLines;
+    _surfaces;
     get linesData() {
         return this._linesData;
     }
@@ -28,6 +77,11 @@ export class WebglPlot {
     get surfaces() {
         return this._surfaces;
     }
+    _progLine;
+    /**
+     * log debug output
+     */
+    debug = false;
     /**
      * Create a webgl-plot instance
      * @param canvas - the canvas in which the plot appears
@@ -67,11 +121,6 @@ export class WebglPlot {
      * ```
      */
     constructor(canvas, options) {
-        /**
-         * log debug output
-         */
-        this.debug = false;
-        this.addLine = this.addDataLine;
         if (options == undefined) {
             this.webgl = canvas.getContext("webgl", {
                 antialias: true,
@@ -244,6 +293,7 @@ export class WebglPlot {
         this._addLine(line);
         this.linesData.push(line);
     }
+    addLine = this.addDataLine;
     addAuxLine(line) {
         this._addLine(line);
         this.linesAux.push(line);

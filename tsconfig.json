@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
     "strict": true,
-    "module": "es2015",
-    "target": "es2015",
+    "module": "esnext",
+    "target": "esnext",
     //"esModuleInterop": true,
     "isolatedModules": true,
-    "importsNotUsedAsValues": "error",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "sourceMap": true,
