@@ -6,6 +6,7 @@ tmp
 docs
 .yarn/**
 .yarn/cache
+.yarnrc.yml
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
