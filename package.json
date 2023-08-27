@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": {
+      "types": "./dist/webglplot.d.ts",
       "require": "./dist/webglplot.cjs",
       "import": "./dist/webglplot.esm.mjs"
     },
