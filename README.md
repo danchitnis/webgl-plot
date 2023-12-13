@@ -31,7 +31,7 @@ However notice that due to computation of the line data points, the performance 
 
 The next version is currently under development. More computation is moved to the GPU, significantly improving performance. These improvements specifically benefit the rolling plot and the scatter plot. However, these changes require a rewrite of the main library and migration to `webgl2`. The current version will remain as no maintenance is needed since it is based on pure javascript. See an example [here](https://codesandbox.io/s/wbglscatteracc-krsvmy).
 
-## Python vesrion now released!! 🥳
+## Python version now released!! 🥳
 
 See [pyglplot](https://github.com/danchitnis/pyglplot) for the python equivalent of this library. However, please notice the python version is at its early stages.
 
