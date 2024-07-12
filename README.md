@@ -37,6 +37,12 @@ See [pyglplot](https://github.com/danchitnis/pyglplot) for the python equivalent
 
 ## Getting started
 
+### Install the library using npm:
+
+```bash
+npm install webgl-plot
+```
+
 ### Create an HTML canvas with an appropriate width or height:
 
 ```html
