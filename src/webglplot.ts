@@ -235,7 +235,7 @@ export class WebglPlot {
         const uColor = webgl.getUniformLocation(this._progLine, "uColor");
         webgl.uniform4fv(uColor, [line.color.r, line.color.g, line.color.b, line.color.a]);
 
-        webgl.bufferData(webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, webgl.STREAM_DRAW);
+        webgl.bufferData(webgl.ARRAY_BUFFER, line.xy, webgl.STREAM_DRAW);
 
         webgl.drawArrays(line.loop ? webgl.LINE_LOOP : webgl.LINE_STRIP, 0, line.webglNumPoints);
       }
@@ -273,7 +273,7 @@ export class WebglPlot {
         const uColor = webgl.getUniformLocation(this._progLine, "uColor");
         webgl.uniform4fv(uColor, [square.color.r, square.color.g, square.color.b, square.color.a]);
 
-        webgl.bufferData(webgl.ARRAY_BUFFER, square.xy as ArrayBuffer, webgl.STREAM_DRAW);
+        webgl.bufferData(webgl.ARRAY_BUFFER, square.xy, webgl.STREAM_DRAW);
 
         webgl.drawArrays(webgl.TRIANGLE_STRIP, 0, square.webglNumPoints);
       }
@@ -283,7 +283,7 @@ export class WebglPlot {
   private _drawTriangles(thickLine: WebglThickLine): void {
     const webgl = this.webgl;
 
-    webgl.bufferData(webgl.ARRAY_BUFFER, thickLine.xy as ArrayBuffer, webgl.STREAM_DRAW);
+    webgl.bufferData(webgl.ARRAY_BUFFER, thickLine.xy, webgl.STREAM_DRAW);
 
     webgl.useProgram(this._progLine);
 
@@ -372,7 +372,7 @@ export class WebglPlot {
     //line.initProgram(this.webgl);
     line._vbuffer = this.webgl.createBuffer() as WebGLBuffer;
     this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
-    this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy as ArrayBuffer, this.webgl.STREAM_DRAW);
+    this.webgl.bufferData(this.webgl.ARRAY_BUFFER, line.xy, this.webgl.STREAM_DRAW);
 
     //this.webgl.bindBuffer(this.webgl.ARRAY_BUFFER, line._vbuffer);
 

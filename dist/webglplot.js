@@ -17,7 +17,7 @@ export { WebglLine, ColorRGBA, WebglStep, WebglPolar, WebglSquare, WebglThickLin
  */
 export class WebglPlot {
     /**
-     * @private
+     * @protected
      */
     webgl;
     /**

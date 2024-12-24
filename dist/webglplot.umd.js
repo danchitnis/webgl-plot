@@ -661,7 +661,7 @@
      */
     class WebglPlot {
         /**
-         * @private
+         * @protected
          */
         webgl;
         /**

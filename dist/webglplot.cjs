@@ -657,7 +657,7 @@ class WebglThickLine extends WebglBase {
  */
 class WebglPlot {
     /**
-     * @private
+     * @protected
      */
     webgl;
     /**

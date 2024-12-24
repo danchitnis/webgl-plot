@@ -26,9 +26,9 @@ type WebglPlotConfig = {
  */
 export declare class WebglPlot {
     /**
-     * @private
+     * @protected
      */
-    private readonly webgl;
+    protected readonly webgl: WebGLRenderingContext;
     /**
      * Global horizontal scale factor
      * @default = 1.0
