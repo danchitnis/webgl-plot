@@ -1,4 +1,3 @@
-import type { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
 import type { WebglLine } from "./WbglLine";
 
@@ -13,7 +12,6 @@ import type { WebglLine } from "./WbglLine";
 export class WebglAux {
   private wglp: WebglPlot;
   private lines: WebglLine[];
-  private color: ColorRGBA;
   private gl: WebGL2RenderingContext;
   private coord: number;
   private vbuffer: WebGLBuffer;
@@ -38,6 +36,9 @@ export class WebglAux {
     }`;
 
     const vertShader = this.gl.createShader(this.gl.VERTEX_SHADER);
+    if (!vertShader) {
+      throw new Error("Error creating vertex shader");
+    }
     this.gl.shaderSource(vertShader, vertCode);
     this.gl.compileShader(vertShader);
 
@@ -58,6 +59,9 @@ export class WebglAux {
          }`;
 
     const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+    if (!fragShader) {
+      throw new Error("Error creating fragment shader");
+    }
     this.gl.shaderSource(fragShader, fragCode);
     this.gl.compileShader(fragShader);
 
@@ -89,7 +93,10 @@ export class WebglAux {
     );
 
     const uoffset = gl.getUniformLocation(this.prog, "uoffset");
-    gl.uniform2fv(uoffset, new Float32Array([this.wglp.gOffsetX, this.wglp.gOffsetY]));
+    gl.uniform2fv(
+      uoffset,
+      new Float32Array([this.wglp.gOffsetX, this.wglp.gOffsetY])
+    );
 
     const uColor = gl.getUniformLocation(this.prog, "uColor");
     gl.uniform4fv(uColor, [1, 1, 0, 1]);
@@ -103,9 +110,19 @@ export class WebglAux {
     this.gl.useProgram(this.prog);
     this.lines.forEach((line) => {
       this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer);
-      this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(line.xy), this.gl.STREAM_DRAW);
+      this.gl.bufferData(
+        this.gl.ARRAY_BUFFER,
+        new Float32Array(line.xy),
+        this.gl.STREAM_DRAW
+      );
       const uColor = this.gl.getUniformLocation(this.prog, "uColor");
-      this.gl.uniform4f(uColor, line.color.r, line.color.g, line.color.b, line.color.a);
+      this.gl.uniform4f(
+        uColor,
+        line.color.r,
+        line.color.g,
+        line.color.b,
+        line.color.a
+      );
       this.gl.drawArrays(this.gl.LINE_STRIP, 0, line.xy.length / 2);
     });
   }

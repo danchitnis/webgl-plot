@@ -1,5 +1,4 @@
 import { ColorRGBA } from "./ColorRGBA";
-import type { WebglPlot } from "./webglplot";
 
 export class WebglLine {
   public xy = [] as number[];

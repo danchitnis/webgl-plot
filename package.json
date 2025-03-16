@@ -3,17 +3,14 @@
   "version": "1.0.2",
   "description": "High-performance 2D plotting library based on native WebGL",
   "main": "./dist/webglplot.umd.js",
-  "type": "module",
+  "module": "./dist/webglplot.mjs",
   "exports": {
     ".": {
-      "require": "./dist/webglplot.cjs",
-      "import": "./dist/webglplot.esm.mjs"
-    },
-    "./package.json": "./package.json"
+      "types": "./dist/webglplot.d.ts",
+      "require": "./dist/webglplot.umd.js",
+      "import": "./dist/webglplot.mjs"
+    }
   },
-  "module": "./dist/webglplot.esm.js",
-  "typings": "./dist/webglplot.d.ts",
-  "types": "./dist/webglplot.d.ts",
   "keywords": [
     "webgl",
     "plot",
@@ -23,19 +20,22 @@
     "high-performance"
   ],
   "devDependencies": {
-    "@skypack/package-check": "^0.2.2",
-    "@typescript-eslint/eslint-plugin": "^6.2.1",
-    "@typescript-eslint/parser": "^6.2.1",
-    "eslint": "^8.46.0",
-    "rollup": "^3.27.2",
-    "rollup-plugin-dts": "^5.3.1",
-    "typedoc": "^0.24.8",
-    "typedoc-plugin-markdown": "^3.15.4",
-    "typescript": "^5.1.6"
+    "@eslint/js": "^9.22.0",
+    "@types/node": "^22.13.10",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "typedoc": "^0.28.0",
+    "typedoc-plugin-markdown": "^4.5.0",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1",
+    "vite": "^6.2.2",
+    "vite-plugin-dts": "^4.5.3"
   },
   "scripts": {
-    "build": "tsc && rollup -c && rollup --config rollup.config.dts.js",
-    "dts": "rollup --config rollup.config.dts.js",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "tsc --noEmit",
     "doc": "typedoc"
   },
   "repository": {
@@ -47,6 +47,5 @@
   "bugs": {
     "url": "https://github.com/danchitnis/webgl-plot/issues"
   },
-  "homepage": "https://github.com/danchitnis/webgl-plot",
-  "packageManager": "yarn@3.6.1"
+  "homepage": "https://github.com/danchitnis/webgl-plot"
 }

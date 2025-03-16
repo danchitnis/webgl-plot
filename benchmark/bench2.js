@@ -2,9 +2,8 @@ import {
   ColorRGBA,
   WebglPlot,
   WebglLinePlot,
-  WebglAux,
   WebglLine,
-} from "../dist/webglplot.esm.mjs";
+} from "../dist/webglplot.mjs";
 
 const canvas = document.getElementById("my_canvas");
 

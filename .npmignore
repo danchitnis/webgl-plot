@@ -9,9 +9,9 @@ docs
 .vscode
 .gitignore
 tsconfig.json
-rollup.config.js
 index.html
 .yarn
 .pnp.js
 .yarnrc.yml
 docs
+src

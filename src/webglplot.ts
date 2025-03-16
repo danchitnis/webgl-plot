@@ -12,8 +12,17 @@ import { WebglScatterAcc } from "./WbglScatterAcc";
 import { WebglLine } from "./WbglLine";
 import { WebglLineRoll } from "./WbglLineRoll";
 import { WebglLinePlot } from "./WbglLinePlot";
+import { WebglLineThick } from "./WbglLineThick";
 
-export { WebglAux, ColorRGBA, WebglScatterAcc, WebglLine, WebglLineRoll, WebglLinePlot };
+export {
+  WebglAux,
+  ColorRGBA,
+  WebglScatterAcc,
+  WebglLine,
+  WebglLineRoll,
+  WebglLinePlot,
+  WebglLineThick,
+};
 
 type WebglPlotConfig = {
   antialias?: boolean;
@@ -34,7 +43,6 @@ export class WebglPlot {
   public readonly gl: WebGL2RenderingContext;
   public width: number;
   public height: number;
-  public devicePixelRatio: number;
 
   /**
    * Global horizontal scale factor

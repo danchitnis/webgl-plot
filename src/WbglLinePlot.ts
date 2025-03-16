@@ -2,7 +2,6 @@
 import type { WebglLine, WebglPlot } from "./webglplot";
 
 export class WebglLinePlot {
-  private wglp: WebglPlot;
   private lines: WebglLine[];
   private gl: WebGL2RenderingContext;
   private coord: number;
@@ -14,7 +13,6 @@ export class WebglLinePlot {
 
   constructor(wglp: WebglPlot, lines: WebglLine[]) {
     //super();
-    this.wglp = wglp;
     this.gl = wglp.gl;
     const gl = this.gl;
     this.lines = lines;
@@ -34,6 +32,9 @@ export class WebglLinePlot {
         }`;
 
     const vertShader = gl.createShader(gl.VERTEX_SHADER);
+    if (!vertShader) {
+      throw new Error("Error creating vertex shader");
+    }
     gl.shaderSource(vertShader, vertCode);
     gl.compileShader(vertShader);
 
@@ -53,6 +54,9 @@ export class WebglLinePlot {
         }`;
 
     const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    if (!fragShader) {
+      throw new Error("Error creating fragment shader");
+    }
     gl.shaderSource(fragShader, fragCode);
     gl.compileShader(fragShader);
 
@@ -89,14 +93,22 @@ export class WebglLinePlot {
       Math.random(),
     ]);
 
-    let colorData = Array.from({ length: lineSizes[0] }, (_, i) => i).flatMap((x) => colors[0]);
+    let colorData = Array.from({ length: lineSizes[0] }, (_, i) => i).flatMap(
+      () => colors[0]
+    );
     for (let i = 1; i < lineSizes.length; i++) {
       colorData = colorData.concat(
-        Array.from({ length: lineSizes[i] }, (_, j) => j).flatMap((x) => colors[i])
+        Array.from({ length: lineSizes[i] }, (_, j) => j).flatMap(
+          () => colors[i]
+        )
       );
     }
 
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorData), gl.DYNAMIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(colorData),
+      gl.DYNAMIC_DRAW
+    );
     const uColorLocation = gl.getAttribLocation(this.prog, "a_Color");
     gl.vertexAttribPointer(uColorLocation, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(uColorLocation);
@@ -114,9 +126,11 @@ export class WebglLinePlot {
     const vertexData = new Float32Array(this.totalLineSizes * 2);
 
     // Upload the vertex data to the GPU
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexData), gl.DYNAMIC_DRAW);
-
-  
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(vertexData),
+      gl.DYNAMIC_DRAW
+    );
 
     gl.clearColor(0.1, 0.1, 0.1, 1.0);
 

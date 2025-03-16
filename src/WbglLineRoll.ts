@@ -13,7 +13,7 @@ export class WebglLineRoll {
   private lastDataX: number[];
   private lastDataY: number[];
   public numLines: number;
-  private ext: WEBGL_multi_draw;
+  private ext: WEBGL_multi_draw | null;
   private colorBuffer: WebGLBuffer;
   private aColorLocation: number;
   private uShiftLocation: WebGLUniformLocation;
@@ -49,6 +49,9 @@ export class WebglLineRoll {
         }`;
 
     const vertShader = gl.createShader(gl.VERTEX_SHADER);
+    if (!vertShader) {
+      throw new Error("Failed to create vertex shader");
+    }
     gl.shaderSource(vertShader, vertCode);
     gl.compileShader(vertShader);
 
@@ -68,6 +71,9 @@ export class WebglLineRoll {
         }`;
 
     const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    if (!fragShader) {
+      throw new Error("Failed to create fragment shader");
+    }
     gl.shaderSource(fragShader, fragCode);
     gl.compileShader(fragShader);
 
@@ -107,13 +113,24 @@ export class WebglLineRoll {
     const colors = Array((this.rollBufferSize + 2) * 3 * numLines).fill(128);
 
     gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, new Uint8Array(colors), gl.STATIC_DRAW);
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      new Uint8Array(colors),
+      gl.STATIC_DRAW
+    );
 
     this.aColorLocation = gl.getAttribLocation(this.program, "a_color");
-    gl.vertexAttribPointer(this.aColorLocation, 3, gl.UNSIGNED_BYTE, false, 0, 0);
+    gl.vertexAttribPointer(
+      this.aColorLocation,
+      3,
+      gl.UNSIGNED_BYTE,
+      false,
+      0,
+      0
+    );
     gl.enableVertexAttribArray(this.aColorLocation);
 
-    this.uShiftLocation = gl.getUniformLocation(this.program, "uShift");
+    this.uShiftLocation = gl.getUniformLocation(this.program, "uShift")!;
 
     //this.uColorLocation = gl.getUniformLocation(this.program, "uColor");
   }
@@ -150,7 +167,12 @@ export class WebglLineRoll {
         gl.bufferSubData(
           gl.ARRAY_BUFFER,
           (this.rollBufferSize + bfsize * i) * 2 * 4,
-          new Float32Array([this.lastDataX[i], this.lastDataY[i], this.dataX, ys[i]])
+          new Float32Array([
+            this.lastDataX[i],
+            this.lastDataY[i],
+            this.dataX,
+            ys[i],
+          ])
         );
       }
     }
@@ -193,7 +215,12 @@ export class WebglLineRoll {
           gl.bufferSubData(
             gl.ARRAY_BUFFER,
             (this.rollBufferSize + line * bfsize) * 2 * 4,
-            new Float32Array([this.lastDataX[line], this.lastDataY[line], x, ys[line][i]])
+            new Float32Array([
+              this.lastDataX[line],
+              this.lastDataY[line],
+              x,
+              ys[line][i],
+            ])
           );
         }
 
@@ -250,7 +277,17 @@ export class WebglLineRoll {
       firsts.push(i * bfsize + this.rollBufferSize);
       counts.push(2);
     }
-    this.ext.multiDrawArraysWEBGL(gl.LINE_STRIP, firsts, 0, counts, 0, counts.length);
+    if (!this.ext) {
+      throw new Error("Multi draw extension not available");
+    }
+    this.ext.multiDrawArraysWEBGL(
+      gl.LINE_STRIP,
+      firsts,
+      0,
+      counts,
+      0,
+      counts.length
+    );
   }
 
   draw() {

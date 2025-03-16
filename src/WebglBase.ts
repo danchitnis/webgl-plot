@@ -34,7 +34,7 @@ export abstract class WebglBase {
    * @private
    * @internal
    */
-  public _prog: WebGLProgram;
+  public _prog!: WebGLProgram;
 
   /**
    * @internal
