@@ -1,4 +1,9 @@
-import { WebglPlot, ColorRGBA, WebglThickLine } from "../dist/webglplot.esm.js";
+import {
+  ColorRGBA,
+  WebglPlot,
+  WebglLineThick,
+  WebglLine,
+} from "../dist/webglplot.mjs";
 
 const canvas = document.getElementById("my_canvas");
 
@@ -8,17 +13,22 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 const numX = canvas.width;
 
-const wglp = new WebglPlot(canvas, { powerPerformance: "high-performance" });
+console.log("numX", numX);
+
+const wglp = new WebglPlot(canvas);
+
+let line;
+let plotLine;
+//let newYData = [];
 
 const createLines = (num) => {
-  wglp.removeAllLines();
-  for (let i = 0; i < num; i++) {
-    const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
-    const thickLine = new WebglThickLine(color, numX, 0.01);
-    thickLine.lineSpaceX(-1, 2 / numX);
-    thickLine.offsetY = (i - Math.floor(num / 2)) / num;
-    wglp.addThickLine(thickLine);
-  }
+  line = new WebglLine();
+
+  line.setColor(new ColorRGBA(255, 255, 0, 1)); //color not working
+  line.lineSpaceX(numX);
+
+  plotLine = new WebglLineThick(wglp, line);
+  //newYData = Array(line.getSize()).fill(0);
 };
 
 createLines(1);
@@ -26,13 +36,26 @@ createLines(1);
 let frame = 0;
 let prevTime = new Date();
 
-const newFrame = () => {
-  //const timeStrat = +new Date();
-  update();
-  wglp.update();
+function newFrame() {
+  wglp.clear();
+
+  /*for (let i = 0; i < lines.length; i++) {
+    const y0 = i / lines.length + window.performance.now() * 0.0001;
+    for (let j = 0; j < numX; j++) {
+      const y = y0 + (j * 0.1) / numX;
+      const yy = y - Math.floor(y);
+      newYData[j] = yy * 2 - 1;
+    }
+    lines[i].setYs(newYData);
+    plotLine.updateLine(i);
+  }*/
+
+  plotLine.draw();
+
   const timeNow = new Date();
   if (timeNow - prevTime > 1000) {
     console.log(frame);
+    fpsElem.innerHTML = `Current fps: ${frame}`;
     frame = 0;
     prevTime = timeNow;
   } else {
@@ -40,30 +63,10 @@ const newFrame = () => {
   }
 
   requestAnimationFrame(newFrame);
-};
+}
 requestAnimationFrame(newFrame);
 
-const update = () => {
-  const freq = 0.001;
-  const amp = 0.5;
-  const noise = 0.01;
-
-  let yFinal = new Float32Array(numX);
-
-  for (let i = 0; i < yFinal.length; i++) {
-    const ySin = Math.sin(Math.PI * i * freq * Math.PI * 2);
-    const yNoise = Math.random() - 0.5;
-    yFinal[i] = ySin * amp + yNoise * noise;
-  }
-  //console.log(yFinal);
-
-  wglp.thickLines.forEach((line) => {
-    for (let i = 0; i < yFinal.length; i++) {
-      line.setY(i, yFinal[i]);
-    }
-  });
-};
-
+const fpsElem = document.getElementById("fps");
 const btClick = document.getElementById("btClick");
 const inNum = document.getElementById("inNum");
 btClick.addEventListener("click", () => {
