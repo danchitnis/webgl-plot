@@ -76,14 +76,25 @@ export declare class WebglLineRoll {
 }
 
 export declare class WebglLineThick {
-    private line;
     private gl;
     prog: WebGLProgram;
     private width;
     private height;
+    private thickness;
+    private offset;
+    private pointsTexture;
     private vao;
-    constructor(wglp: WebglPlot, line: WebglLine);
+    private vertexBuffer;
+    private numPoints;
+    private locations;
+    constructor(wglp: {
+        gl: WebGL2RenderingContext;
+        width: number;
+        height: number;
+    }, thickness: number);
+    updateLine(points: Float32Array): void;
     draw(): void;
+    setOffset(x: number, y: number): void;
 }
 
 /**

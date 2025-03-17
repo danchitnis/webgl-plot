@@ -11,7 +11,9 @@ const devicePixelRatio = window.devicePixelRatio || 1;
 canvas.width = canvas.clientWidth * devicePixelRatio;
 canvas.height = canvas.clientHeight * devicePixelRatio;
 
-const numX = canvas.width;
+//const numX = canvas.width;
+
+const numX = 1000;
 
 console.log("numX", numX);
 
@@ -19,19 +21,23 @@ const wglp = new WebglPlot(canvas);
 
 let line;
 let plotLine;
-//let newYData = [];
+let newYData = [];
 
-const createLines = (num) => {
+const createLines = () => {
   line = new WebglLine();
 
   line.setColor(new ColorRGBA(255, 255, 0, 1)); //color not working
   line.lineSpaceX(numX);
 
-  plotLine = new WebglLineThick(wglp, line);
-  //newYData = Array(line.getSize()).fill(0);
+  plotLine = new WebglLineThick(wglp, line, 10);
+  newYData = Array(line.getSize()).fill(0);
 };
 
 createLines(1);
+
+console.log(line.xy);
+
+//console.log("newYData", newYData);
 
 let frame = 0;
 let prevTime = new Date();
@@ -39,23 +45,38 @@ let prevTime = new Date();
 function newFrame() {
   wglp.clear();
 
-  /*for (let i = 0; i < lines.length; i++) {
-    const y0 = i / lines.length + window.performance.now() * 0.0001;
+  const array = new Float32Array(numX * 2);
+
+  for (let i = 0; i < 1; i++) {
+    const per = window.performance.now() * 0.0005 * numX;
+    //const per = 0;
+    //const y0 = i / 1 + per;
     for (let j = 0; j < numX; j++) {
-      const y = y0 + (j * 0.1) / numX;
-      const yy = y - Math.floor(y);
-      newYData[j] = yy * 2 - 1;
+      const x = (j / numX) * canvas.width;
+      const y = ((j + per) / numX) * canvas.height;
+
+      const yy = y - Math.floor(y / canvas.height) * canvas.height;
+      //newYData[j] = yy * 2 - 1;
+      //console.log(j, numX, per, y0, y, yy, newYData[j]);
+      array[j * 2] = Math.round(x);
+      array[j * 2 + 1] = Math.round(yy);
     }
-    lines[i].setYs(newYData);
-    plotLine.updateLine(i);
-  }*/
+    //line.setYs(newYData);
+
+    //const array = new Float32Array(line.xy);
+    /*array.forEach((element, index) => {
+      if (index % 2 === 0) array[index] = ((element + 1) / 2) * canvas.width;
+      else array[index] = ((-element + 1) / 2) * canvas.height;
+    });*/
+    plotLine.updateLine(array);
+  }
 
   plotLine.draw();
 
   const timeNow = new Date();
   if (timeNow - prevTime > 1000) {
     console.log(frame);
-    fpsElem.innerHTML = `Current fps: ${frame}`;
+    //fpsElem.innerHTML = `Current fps: ${frame}`;
     frame = 0;
     prevTime = timeNow;
   } else {

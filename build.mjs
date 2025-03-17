@@ -1,13 +1,13 @@
 // vite.config.js
 import { resolve } from "path";
-import { defineConfig } from "vite";
+import { build, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
-export default defineConfig({
+const libConfig = defineConfig({
   build: {
     lib: {
       // Could also be a dictionary or array of multiple entry points
-      entry: resolve(__dirname, "src/webglplot.ts"),
+      entry: resolve(import.meta.dirname, "src/webglplot.ts"),
       name: "webglplot",
       // the proper extensions will be added
       fileName: "webglplot",
@@ -25,3 +25,23 @@ export default defineConfig({
   },
   plugins: [dts({ rollupTypes: true })],
 });
+
+const benchmarkConfig = defineConfig({
+  build: {
+    outDir: "dist-benchmark",
+    rollupOptions: {
+      input: {
+        main: "./benchmark/bench-thick.html",
+      },
+    },
+  },
+});
+
+async function runBuilds() {
+  // Build the library
+  await build(libConfig);
+  // Build the benchmarks
+  await build(benchmarkConfig);
+}
+
+runBuilds();

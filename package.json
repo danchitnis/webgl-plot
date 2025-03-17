@@ -24,6 +24,7 @@
     "@types/node": "^22.13.10",
     "eslint": "^9.22.0",
     "globals": "^16.0.0",
+    "serve": "^14.2.4",
     "typedoc": "^0.28.0",
     "typedoc-plugin-markdown": "^4.5.0",
     "typescript": "^5.8.2",
