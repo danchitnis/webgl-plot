@@ -100,12 +100,12 @@ export declare class WebglLineThick {
      *
      * Each line is an object with:
      *  - points: a Float32Array of (x,y) pixel positions.
-     *  - scale: a float factor applied to the points.
-     *  - offset: a [x,y] translation (in pixel space).
+     *  - scale: a [number, number] factor applied to the points (x, y scaling).
+     *  - offset: a [x,y] translation (in pixel space) for the line.
      */
     updateLines(lines: {
         points: Float32Array;
-        scale: number;
+        scale: [number, number];
         offset: [number, number];
     }[]): void;
     /**
@@ -115,10 +115,10 @@ export declare class WebglLineThick {
      * without re-uploading the points data.
      *
      * @param lineId - The index of the line to update.
-     * @param scale - The new scale factor for the line.
+     * @param scale - The new [x, y] scale factors for the line.
      * @param offset - The new [x, y] offset (in pixel space) for the line.
      */
-    updateLineTransform(lineId: number, scale: number, offset: [number, number]): void;
+    updateLineTransform(lineId: number, scale: [number, number], offset: [number, number]): void;
     /**
      * Draw the lines.
      *

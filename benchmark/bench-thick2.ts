@@ -20,7 +20,7 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 //const numX = canvas.width;
 
-const numX = 1000;
+const numX = 10000;
 
 console.log("numX", numX);
 
@@ -43,7 +43,7 @@ const array = new Float32Array(numX * 2);
 
 type Array = {
   points: Float32Array;
-  scale: number;
+  scale: [number, number];
   offset: [number, number];
 };
 
@@ -73,7 +73,7 @@ for (let i = 0; i < maxLines; i++) {
     });*/
   arrays.push({
     points: new Float32Array(array),
-    scale: 1,
+    scale: [1, 1],
     offset: [0, -canvas.height / 2 + (i / (maxLines - 1)) * canvas.height],
   });
 }
@@ -93,10 +93,11 @@ function newFrame() {
   for (let i = 0; i < maxLines; i++) {
     const baseOffset =
       -canvas!.height / 2 + (i / (maxLines - 1)) * canvas!.height;
-    plotLine.updateLineTransform(i, 1, [
-      0,
-      baseOffset + offset * canvas!.height,
-    ]);
+    plotLine.updateLineTransform(
+      i,
+      [1, 1],
+      [0, baseOffset + offset * canvas!.height]
+    );
   }
 
   plotLine.draw();

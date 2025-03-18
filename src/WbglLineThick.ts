@@ -1,5 +1,5 @@
 // Maximum number of lines supported.
-const MAX_LINES = 100;
+const MAX_LINES = 10;
 
 type UniformLocationsMulti = {
   uPointsTex: WebGLUniformLocation;
@@ -11,7 +11,7 @@ type UniformLocationsMulti = {
   uNumLines: WebGLUniformLocation;
   uLineStart: WebGLUniformLocation; // base location for int array
   uLineNumPoints: WebGLUniformLocation; // base location for int array
-  uLineScale: WebGLUniformLocation; // base location for float array
+  uLineScale: WebGLUniformLocation; // base location for vec2 array
   uLineOffset: WebGLUniformLocation; // base location for vec2 array
 };
 
@@ -34,9 +34,9 @@ export class WebglLineThick {
 
   // Store the number of lines currently uploaded.
   private numLines: number = 0;
-  // Current per-line scale and offset arrays, so they can be updated later.
-  private currentLineScale: Float32Array = new Float32Array(0);
-  private currentLineOffset: Float32Array = new Float32Array(0);
+  // Current per-line scale (vec2 per line) and offset arrays, so they can be updated later.
+  private currentLineScale: Float32Array = new Float32Array(0); // length = numLines * 2
+  private currentLineOffset: Float32Array = new Float32Array(0); // length = numLines * 2
 
   constructor(
     wglp: { gl: WebGL2RenderingContext; width: number; height: number },
@@ -48,7 +48,7 @@ export class WebglLineThick {
     this.thickness = thickness;
     const gl = this.gl;
 
-    // Vertex shader with support for multiple lines.
+    // Vertex shader with support for multiple lines and independent x,y scaling.
     const vsSource = `#version 300 es
 precision mediump float;
 #define MAX_LINES ${MAX_LINES}
@@ -64,7 +64,7 @@ uniform int uTexHeight;
 uniform int uNumLines;
 uniform int uLineStart[MAX_LINES];
 uniform int uLineNumPoints[MAX_LINES];
-uniform float uLineScale[MAX_LINES];
+uniform vec2 uLineScale[MAX_LINES];
 uniform vec2 uLineOffset[MAX_LINES];
 
 in float aLineId;  // which line (index)
@@ -90,7 +90,7 @@ void main() {
   vec2 pPrev = (localIndex == 0) ? p : getPoint(uLineStart[lineId] + localIndex - 1);
   vec2 pNext = (localIndex == numPoints - 1) ? p : getPoint(uLineStart[lineId] + localIndex + 1);
   
-  // Apply per-line transformation.
+  // Apply per-line transformation with independent x and y scale.
   p = p * uLineScale[lineId] + uLineOffset[lineId];
   pPrev = pPrev * uLineScale[lineId] + uLineOffset[lineId];
   pNext = pNext * uLineScale[lineId] + uLineOffset[lineId];
@@ -225,11 +225,15 @@ void main() {
    *
    * Each line is an object with:
    *  - points: a Float32Array of (x,y) pixel positions.
-   *  - scale: a float factor applied to the points.
-   *  - offset: a [x,y] translation (in pixel space).
+   *  - scale: a [number, number] factor applied to the points (x, y scaling).
+   *  - offset: a [x,y] translation (in pixel space) for the line.
    */
   public updateLines(
-    lines: { points: Float32Array; scale: number; offset: [number, number] }[]
+    lines: {
+      points: Float32Array;
+      scale: [number, number];
+      offset: [number, number];
+    }[]
   ) {
     const gl = this.gl;
 
@@ -243,14 +247,16 @@ void main() {
     let totalPoints = 0;
     const lineStart = new Int32Array(lines.length);
     const lineNumPoints = new Int32Array(lines.length);
-    const lineScale = new Float32Array(lines.length);
+    // Now store 2 floats per line for independent x and y scaling.
+    const lineScale = new Float32Array(lines.length * 2);
     const lineOffset = new Float32Array(lines.length * 2);
     for (let i = 0; i < lines.length; i++) {
       lineStart[i] = totalPoints;
       const numPts = lines[i].points.length / 2;
       lineNumPoints[i] = numPts;
       totalPoints += numPts;
-      lineScale[i] = lines[i].scale;
+      lineScale[i * 2 + 0] = lines[i].scale[0];
+      lineScale[i * 2 + 1] = lines[i].scale[1];
       lineOffset[i * 2 + 0] = lines[i].offset[0];
       lineOffset[i * 2 + 1] = lines[i].offset[1];
     }
@@ -324,7 +330,7 @@ void main() {
     gl.uniform1i(this.locations.uNumLines, lines.length);
     gl.uniform1iv(this.locations.uLineStart, lineStart);
     gl.uniform1iv(this.locations.uLineNumPoints, lineNumPoints);
-    gl.uniform1fv(this.locations.uLineScale, lineScale);
+    gl.uniform2fv(this.locations.uLineScale, lineScale);
     gl.uniform2fv(this.locations.uLineOffset, lineOffset);
   }
 
@@ -335,25 +341,26 @@ void main() {
    * without re-uploading the points data.
    *
    * @param lineId - The index of the line to update.
-   * @param scale - The new scale factor for the line.
+   * @param scale - The new [x, y] scale factors for the line.
    * @param offset - The new [x, y] offset (in pixel space) for the line.
    */
   public updateLineTransform(
     lineId: number,
-    scale: number,
+    scale: [number, number],
     offset: [number, number]
   ) {
     if (lineId < 0 || lineId >= this.numLines) {
       throw new Error(`Invalid lineId: ${lineId}`);
     }
-    this.currentLineScale[lineId] = scale;
+    this.currentLineScale[lineId * 2 + 0] = scale[0];
+    this.currentLineScale[lineId * 2 + 1] = scale[1];
     this.currentLineOffset[lineId * 2] = offset[0];
     this.currentLineOffset[lineId * 2 + 1] = offset[1];
 
     const gl = this.gl;
     gl.useProgram(this.prog);
     // Update only the transform uniforms.
-    gl.uniform1fv(this.locations.uLineScale, this.currentLineScale);
+    gl.uniform2fv(this.locations.uLineScale, this.currentLineScale);
     gl.uniform2fv(this.locations.uLineOffset, this.currentLineOffset);
   }
 
