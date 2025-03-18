@@ -20,7 +20,7 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 //const numX = canvas.width;
 
-const numX = 10000;
+const numX = 1000;
 
 console.log("numX", numX);
 
@@ -31,7 +31,7 @@ const line = new WebglLine();
 line.setColor(new ColorRGBA(255, 255, 0, 1)); //color not working
 line.lineSpaceX(numX);
 
-const plotLine = new WebglLineThick(wglp, 10);
+const plotLine = new WebglLineThick(wglp, 0.01);
 //newYData = Array(line.getSize()).fill(0);
 
 //console.log("newYData", newYData);
@@ -55,8 +55,8 @@ for (let i = 0; i < maxLines; i++) {
   //const per = 0;
   //const y0 = i / 1 + per;
   for (let j = 0; j < numX; j++) {
-    const x = (j / numX) * canvas!.width;
-    const y = (Math.sin(j * 0.005) * 0.2 + 0.5) * canvas!.height;
+    const x = -1 + (2 * j) / numX;
+    const y = Math.sin(j * 0.05) * 0.3 + 0;
 
     //const yy = y - Math.floor(y / canvas!.height) * canvas!.height;
     //newYData[j] = yy * 2 - 1;
@@ -74,7 +74,7 @@ for (let i = 0; i < maxLines; i++) {
   arrays.push({
     points: new Float32Array(array),
     scale: [1, 1],
-    offset: [0, -canvas.height / 2 + (i / (maxLines - 1)) * canvas.height],
+    offset: [0, 0],
   });
 }
 
@@ -91,13 +91,8 @@ function newFrame() {
   }
 
   for (let i = 0; i < maxLines; i++) {
-    const baseOffset =
-      -canvas!.height / 2 + (i / (maxLines - 1)) * canvas!.height;
-    plotLine.updateLineTransform(
-      i,
-      [1, 1],
-      [0, baseOffset + offset * canvas!.height]
-    );
+    const baseOffset = -1 + (2 * i) / (maxLines - 1);
+    plotLine.updateLineTransform(i, [1, 1], [0, baseOffset + offset]);
   }
 
   plotLine.draw();
@@ -112,7 +107,7 @@ function newFrame() {
     frame++;
   }
 
-  //requestAnimationFrame(newFrame);
+  requestAnimationFrame(newFrame);
 }
 requestAnimationFrame(newFrame);
 

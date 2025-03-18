@@ -78,8 +78,6 @@ export declare class WebglLineRoll {
 export declare class WebglLineThick {
     private gl;
     prog: WebGLProgram;
-    private width;
-    private height;
     private thickness;
     private pointsTexture;
     private vao;
@@ -92,16 +90,14 @@ export declare class WebglLineThick {
     private currentLineOffset;
     constructor(wglp: {
         gl: WebGL2RenderingContext;
-        width: number;
-        height: number;
     }, thickness: number);
     /**
      * Update the lines.
      *
      * Each line is an object with:
-     *  - points: a Float32Array of (x,y) pixel positions.
-     *  - scale: a [number, number] factor applied to the points (x, y scaling).
-     *  - offset: a [x,y] translation (in pixel space) for the line.
+     *  - points: a Float32Array of (x, y) positions in ND ([-1,1] range).
+     *  - scale: a [number, number] factor (for x and y) in ND.
+     *  - offset: a [x, y] translation in ND.
      */
     updateLines(lines: {
         points: Float32Array;
@@ -111,19 +107,16 @@ export declare class WebglLineThick {
     /**
      * Update the transform (scale and offset) of an already-uploaded line.
      *
-     * This method changes the per-line scale and offset uniforms for the specified line,
-     * without re-uploading the points data.
-     *
      * @param lineId - The index of the line to update.
-     * @param scale - The new [x, y] scale factors for the line.
-     * @param offset - The new [x, y] offset (in pixel space) for the line.
+     * @param scale - The new [x, y] scale factors in ND.
+     * @param offset - The new [x, y] offset in ND.
      */
     updateLineTransform(lineId: number, scale: [number, number], offset: [number, number]): void;
     /**
      * Draw the lines.
      *
-     * Because the vertex buffer holds concatenated triangle strips (one per line),
-     * we loop over the lines and issue one draw call per line.
+     * The vertex buffer holds concatenated triangle strips (one per line);
+     * we loop over the strips and issue one draw call per line.
      */
     draw(): void;
 }
