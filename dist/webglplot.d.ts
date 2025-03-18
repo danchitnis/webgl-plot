@@ -88,6 +88,7 @@ export declare class WebglLineThick {
     private numLines;
     private currentLineScale;
     private currentLineOffset;
+    private currentLineColor;
     constructor(wglp: {
         gl: WebGL2RenderingContext;
     }, thickness: number);
@@ -95,14 +96,16 @@ export declare class WebglLineThick {
      * Update the lines.
      *
      * Each line is an object with:
-     *  - points: a Float32Array of (x, y) positions in ND ([-1,1] range).
+     *  - points: a Float32Array of (x, y) positions in ND ([-1, 1] range).
      *  - scale: a [number, number] factor (for x and y) in ND.
      *  - offset: a [x, y] translation in ND.
+     *  - color: a [r, g, b, a] color in ND (with a for opacity).
      */
     updateLines(lines: {
         points: Float32Array;
         scale: [number, number];
         offset: [number, number];
+        color: [number, number, number, number];
     }[]): void;
     /**
      * Update the transform (scale and offset) of an already-uploaded line.
@@ -113,10 +116,17 @@ export declare class WebglLineThick {
      */
     updateLineTransform(lineId: number, scale: [number, number], offset: [number, number]): void;
     /**
+     * Update the color (and opacity) of an already-uploaded line.
+     *
+     * @param lineId - The index of the line to update.
+     * @param color - The new [r, g, b, a] color (in ND) for the line.
+     */
+    updateLineColor(lineId: number, color: [number, number, number, number]): void;
+    /**
      * Draw the lines.
      *
-     * The vertex buffer holds concatenated triangle strips (one per line);
-     * we loop over the strips and issue one draw call per line.
+     * The vertex buffer contains concatenated triangle strips (one per line).
+     * We loop over the strips and issue one draw call per line.
      */
     draw(): void;
 }

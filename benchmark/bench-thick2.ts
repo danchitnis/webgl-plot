@@ -45,6 +45,7 @@ type Array = {
   points: Float32Array;
   scale: [number, number];
   offset: [number, number];
+  color: [number, number, number, number];
 };
 
 const arrays: Array[] = [];
@@ -75,6 +76,7 @@ for (let i = 0; i < maxLines; i++) {
     points: new Float32Array(array),
     scale: [1, 1],
     offset: [0, 0],
+    color: [Math.random(), Math.random(), Math.random(), 1],
   });
 }
 

@@ -11,6 +11,7 @@ type UniformLocationsMulti = {
   uLineNumPoints: WebGLUniformLocation; // base location for int array
   uLineScale: WebGLUniformLocation; // base location for vec2 array
   uLineOffset: WebGLUniformLocation; // base location for vec2 array
+  uLineColor: WebGLUniformLocation; // base location for vec4 array
 };
 
 export class WebglLineThick {
@@ -22,24 +23,25 @@ export class WebglLineThick {
   private vertexBuffer: WebGLBuffer;
   private locations: UniformLocationsMulti;
 
-  // To know where each line’s vertices are in the vertex buffer.
+  // Draw-call info per line.
   private lineDrawCalls: { offset: number; count: number }[] = [];
-
-  // Total number of vertices in the buffer.
   private totalVertexCount: number = 0;
 
-  // Store the number of lines currently uploaded.
+  // The number of lines currently uploaded.
   private numLines: number = 0;
-  // Current per-line scale (vec2 per line) and offset arrays.
+  // Per-line transform arrays.
   private currentLineScale: Float32Array = new Float32Array(0); // length = numLines * 2
   private currentLineOffset: Float32Array = new Float32Array(0); // length = numLines * 2
+  // Per-line color array: each line has a vec4 (RGBA) in ND.
+  private currentLineColor: Float32Array = new Float32Array(0); // length = numLines * 4
 
   constructor(wglp: { gl: WebGL2RenderingContext }, thickness: number) {
     this.gl = wglp.gl;
     this.thickness = thickness;
     const gl = this.gl;
 
-    // Vertex shader: all coordinates (points, offset, scale) are in ND coordinates.
+    // Vertex shader: all coordinates (points, offset, scale) are in ND space.
+    // Added a uniform uLineColor and flat output vColor.
     const vsSource = `#version 300 es
 precision mediump float;
 #define MAX_LINES ${MAX_LINES}
@@ -55,12 +57,15 @@ uniform int uLineStart[MAX_LINES];
 uniform int uLineNumPoints[MAX_LINES];
 uniform vec2 uLineScale[MAX_LINES];
 uniform vec2 uLineOffset[MAX_LINES];
+uniform vec4 uLineColor[MAX_LINES];
 
 in float aLineId;  // which line (index)
 in float aIndex;   // index within that line
 in float aSide;    // +1.0 or -1.0
 
-// Fetch a point from the texture.
+// Use flat interpolation for the line color.
+flat out vec4 vColor;
+
 vec2 getPoint(int idx) {
   int texX = idx % uTexWidth;
   int texY = idx / uTexWidth;
@@ -80,7 +85,7 @@ void main() {
   vec2 pPrev = (localIndex == 0) ? p : getPoint(uLineStart[lineId] + localIndex - 1);
   vec2 pNext = (localIndex == numPoints - 1) ? p : getPoint(uLineStart[lineId] + localIndex + 1);
   
-  // Apply the per-line transformation (both scale and offset are in ND).
+  // Apply per-line transformation (scale and offset are in ND).
   p = p * uLineScale[lineId] + uLineOffset[lineId];
   pPrev = pPrev * uLineScale[lineId] + uLineOffset[lineId];
   pNext = pNext * uLineScale[lineId] + uLineOffset[lineId];
@@ -107,18 +112,20 @@ void main() {
   }
   
   vec2 pos = p + offsetNormal * aSide;
-  
-  // In ND coordinates, the position is already in the range [-1, 1].
   gl_Position = vec4(pos, 0.0, 1.0);
+
+  // Fetch the color for this line.
+  vColor = uLineColor[lineId];
 }
 `;
 
-    // Simple fragment shader (outputs a solid red color).
+    // Fragment shader: uses the flat interpolated color.
     const fsSource = `#version 300 es
 precision mediump float;
+flat in vec4 vColor;
 out vec4 fragColor;
 void main() {
-  fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  fragColor = vColor;
 }
 `;
 
@@ -158,7 +165,7 @@ void main() {
     this.prog = createProgram(gl, vsSource, fsSource);
     gl.useProgram(this.prog);
 
-    // Create a texture to hold all the line points.
+    // Create the texture that will hold all the line points.
     this.pointsTexture = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -170,7 +177,7 @@ void main() {
     // Create the vertex buffer.
     this.vertexBuffer = gl.createBuffer()!;
 
-    // Set up the VAO. Each vertex has 3 floats (12 bytes): aLineId, aIndex, and aSide.
+    // Set up the VAO. Each vertex has 3 floats (aLineId, aIndex, aSide).
     this.vao = gl.createVertexArray()!;
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -193,27 +200,33 @@ void main() {
       uLineNumPoints: gl.getUniformLocation(this.prog, "uLineNumPoints[0]")!,
       uLineScale: gl.getUniformLocation(this.prog, "uLineScale[0]")!,
       uLineOffset: gl.getUniformLocation(this.prog, "uLineOffset[0]")!,
+      uLineColor: gl.getUniformLocation(this.prog, "uLineColor[0]")!,
     };
 
     // Set up constant uniforms.
     gl.useProgram(this.prog);
     gl.uniform1i(this.locations.uPointsTex, 0);
     gl.uniform1f(this.locations.uThickness, this.thickness);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   }
 
   /**
    * Update the lines.
    *
    * Each line is an object with:
-   *  - points: a Float32Array of (x, y) positions in ND ([-1,1] range).
+   *  - points: a Float32Array of (x, y) positions in ND ([-1, 1] range).
    *  - scale: a [number, number] factor (for x and y) in ND.
    *  - offset: a [x, y] translation in ND.
+   *  - color: a [r, g, b, a] color in ND (with a for opacity).
    */
   public updateLines(
     lines: {
       points: Float32Array;
       scale: [number, number];
       offset: [number, number];
+      color: [number, number, number, number];
     }[]
   ) {
     const gl = this.gl;
@@ -226,9 +239,9 @@ void main() {
     let totalPoints = 0;
     const lineStart = new Int32Array(lines.length);
     const lineNumPoints = new Int32Array(lines.length);
-    // Two floats per line for independent x and y scaling.
     const lineScale = new Float32Array(lines.length * 2);
     const lineOffset = new Float32Array(lines.length * 2);
+    const lineColor = new Float32Array(lines.length * 4);
     for (let i = 0; i < lines.length; i++) {
       lineStart[i] = totalPoints;
       const numPts = lines[i].points.length / 2;
@@ -238,10 +251,15 @@ void main() {
       lineScale[i * 2 + 1] = lines[i].scale[1];
       lineOffset[i * 2 + 0] = lines[i].offset[0];
       lineOffset[i * 2 + 1] = lines[i].offset[1];
+      lineColor[i * 4 + 0] = lines[i].color[0];
+      lineColor[i * 4 + 1] = lines[i].color[1];
+      lineColor[i * 4 + 2] = lines[i].color[2];
+      lineColor[i * 4 + 3] = lines[i].color[3];
     }
     // Save these arrays for later updates.
     this.currentLineScale = lineScale;
     this.currentLineOffset = lineOffset;
+    this.currentLineColor = lineColor;
 
     // Pack all points from all lines into one Float32Array.
     const allPoints = new Float32Array(totalPoints * 2);
@@ -251,7 +269,7 @@ void main() {
       offsetPts += lines[i].points.length;
     }
 
-    // Upload the points data to the texture.
+    // Upload points data to the texture.
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
     const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
@@ -273,26 +291,22 @@ void main() {
     );
 
     // Build the vertex buffer.
-    // For each line, each point produces two vertices:
-    //   Vertex: [ aLineId, aIndex, 1.0 ]
-    //   Vertex: [ aLineId, aIndex, -1.0 ]
     const vertexData = new Float32Array(totalPoints * 2 * 3);
     let vOffset = 0;
-    this.lineDrawCalls = []; // reset draw-call info
+    this.lineDrawCalls = [];
     let vertexCountSoFar = 0;
     for (let lineId = 0; lineId < lines.length; lineId++) {
       const numPts = lineNumPoints[lineId];
-      // Record the starting offset and vertex count for this line.
       this.lineDrawCalls.push({ offset: vertexCountSoFar, count: numPts * 2 });
       for (let i = 0; i < numPts; i++) {
-        // First vertex for the point.
-        vertexData[vOffset++] = lineId; // aLineId
-        vertexData[vOffset++] = i; // aIndex
-        vertexData[vOffset++] = 1.0; // aSide
-        // Second vertex for the point.
-        vertexData[vOffset++] = lineId; // aLineId
-        vertexData[vOffset++] = i; // aIndex
-        vertexData[vOffset++] = -1.0; // aSide
+        // Vertex for side +1.
+        vertexData[vOffset++] = lineId;
+        vertexData[vOffset++] = i;
+        vertexData[vOffset++] = 1.0;
+        // Vertex for side -1.
+        vertexData[vOffset++] = lineId;
+        vertexData[vOffset++] = i;
+        vertexData[vOffset++] = -1.0;
       }
       vertexCountSoFar += numPts * 2;
     }
@@ -308,6 +322,7 @@ void main() {
     gl.uniform1iv(this.locations.uLineNumPoints, lineNumPoints);
     gl.uniform2fv(this.locations.uLineScale, lineScale);
     gl.uniform2fv(this.locations.uLineOffset, lineOffset);
+    gl.uniform4fv(this.locations.uLineColor, lineColor);
   }
 
   /**
@@ -327,7 +342,7 @@ void main() {
     }
     this.currentLineScale[lineId * 2 + 0] = scale[0];
     this.currentLineScale[lineId * 2 + 1] = scale[1];
-    this.currentLineOffset[lineId * 2] = offset[0];
+    this.currentLineOffset[lineId * 2 + 0] = offset[0];
     this.currentLineOffset[lineId * 2 + 1] = offset[1];
 
     const gl = this.gl;
@@ -337,10 +352,33 @@ void main() {
   }
 
   /**
+   * Update the color (and opacity) of an already-uploaded line.
+   *
+   * @param lineId - The index of the line to update.
+   * @param color - The new [r, g, b, a] color (in ND) for the line.
+   */
+  public updateLineColor(
+    lineId: number,
+    color: [number, number, number, number]
+  ) {
+    if (lineId < 0 || lineId >= this.numLines) {
+      throw new Error(`Invalid lineId: ${lineId}`);
+    }
+    this.currentLineColor[lineId * 4 + 0] = color[0];
+    this.currentLineColor[lineId * 4 + 1] = color[1];
+    this.currentLineColor[lineId * 4 + 2] = color[2];
+    this.currentLineColor[lineId * 4 + 3] = color[3];
+
+    const gl = this.gl;
+    gl.useProgram(this.prog);
+    gl.uniform4fv(this.locations.uLineColor, this.currentLineColor);
+  }
+
+  /**
    * Draw the lines.
    *
-   * The vertex buffer holds concatenated triangle strips (one per line);
-   * we loop over the strips and issue one draw call per line.
+   * The vertex buffer contains concatenated triangle strips (one per line).
+   * We loop over the strips and issue one draw call per line.
    */
   public draw() {
     const gl = this.gl;

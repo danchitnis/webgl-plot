@@ -1,7 +1,7 @@
-var _ = Object.defineProperty;
-var b = (d, r, e) => r in d ? _(d, r, { enumerable: !0, configurable: !0, writable: !0, value: e }) : d[r] = e;
-var o = (d, r, e) => b(d, typeof r != "symbol" ? r + "" : r, e);
-class E {
+var P = Object.defineProperty;
+var b = (g, r, e) => r in g ? P(g, r, { enumerable: !0, configurable: !0, writable: !0, value: e }) : g[r] = e;
+var o = (g, r, e) => b(g, typeof r != "symbol" ? r + "" : r, e);
+class _ {
   constructor(r, e, t, i) {
     o(this, "r");
     o(this, "g");
@@ -13,7 +13,7 @@ class E {
     return [this.r, this.g, this.b, this.a];
   }
 }
-class T {
+class B {
   constructor(r) {
     o(this, "wglp");
     o(this, "lines");
@@ -37,7 +37,7 @@ class T {
     if (!i)
       throw new Error("Error creating vertex shader");
     this.gl.shaderSource(i, t), this.gl.compileShader(i), e.getShaderParameter(i, e.COMPILE_STATUS) || console.error(e.getShaderInfoLog(i));
-    const n = `#version 300 es
+    const l = `#version 300 es
 
          precision mediump float;
          uniform highp vec4 uColor;
@@ -48,7 +48,7 @@ class T {
          }`, a = this.gl.createShader(this.gl.FRAGMENT_SHADER);
     if (!a)
       throw new Error("Error creating fragment shader");
-    this.gl.shaderSource(a, n), this.gl.compileShader(a), e.getShaderParameter(a, e.COMPILE_STATUS) || console.error(e.getShaderInfoLog(a)), this.prog = this.gl.createProgram(), this.gl.attachShader(this.prog, i), this.gl.attachShader(this.prog, a), this.gl.linkProgram(this.prog), this.gl.useProgram(this.prog), this.vbuffer = this.gl.createBuffer(), this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer), this.coord = this.gl.getAttribLocation(this.prog, "coord"), this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, !1, 0, 0), this.gl.enableVertexAttribArray(this.coord), e.useProgram(this.prog);
+    this.gl.shaderSource(a, l), this.gl.compileShader(a), e.getShaderParameter(a, e.COMPILE_STATUS) || console.error(e.getShaderInfoLog(a)), this.prog = this.gl.createProgram(), this.gl.attachShader(this.prog, i), this.gl.attachShader(this.prog, a), this.gl.linkProgram(this.prog), this.gl.useProgram(this.prog), this.vbuffer = this.gl.createBuffer(), this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbuffer), this.coord = this.gl.getAttribLocation(this.prog, "coord"), this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, !1, 0, 0), this.gl.enableVertexAttribArray(this.coord), e.useProgram(this.prog);
     const h = e.getUniformLocation(this.prog, "uscale");
     e.uniformMatrix2fv(
       h,
@@ -60,8 +60,8 @@ class T {
       s,
       new Float32Array([this.wglp.gOffsetX, this.wglp.gOffsetY])
     );
-    const u = e.getUniformLocation(this.prog, "uColor");
-    e.uniform4fv(u, [1, 1, 0, 1]);
+    const f = e.getUniformLocation(this.prog, "uColor");
+    e.uniform4fv(f, [1, 1, 0, 1]);
   }
   addLine(r) {
     this.lines.push(r);
@@ -84,7 +84,7 @@ class T {
     });
   }
 }
-class B {
+class F {
   constructor(r, e) {
     o(this, "wglp");
     o(this, "headIndex", 0);
@@ -98,7 +98,7 @@ class B {
     o(this, "prog");
     o(this, "attrPosLocation");
     o(this, "attrColorLocation");
-    this.wglp = r, this.color = new E(1, 1, 1, 1), this.squareSize = 0.1, this.maxSquare = e, this.gl = r.gl;
+    this.wglp = r, this.color = new _(1, 1, 1, 1), this.squareSize = 0.1, this.maxSquare = e, this.gl = r.gl;
     const t = this.gl, i = t.createShader(t.VERTEX_SHADER);
     if (!i)
       throw new Error("Unable to create vertex shader");
@@ -123,11 +123,11 @@ class B {
 
 `
     ), t.compileShader(i), t.getShaderParameter(i, t.COMPILE_STATUS) || console.error(t.getShaderInfoLog(i));
-    const n = t.createShader(t.FRAGMENT_SHADER);
-    if (!n)
+    const l = t.createShader(t.FRAGMENT_SHADER);
+    if (!l)
       throw new Error("Unable to create fragment shader");
     t.shaderSource(
-      n,
+      l,
       `#version 300 es
     precision mediump float;
 
@@ -139,19 +139,19 @@ class B {
       outColor = vec4(vColor, 0.7);
     }
 `
-    ), t.compileShader(n), t.getShaderParameter(n, t.COMPILE_STATUS) || console.error(t.getShaderInfoLog(n));
+    ), t.compileShader(l), t.getShaderParameter(l, t.COMPILE_STATUS) || console.error(t.getShaderInfoLog(l));
     const a = t.createProgram();
-    t.attachShader(a, i), t.attachShader(a, n), t.linkProgram(a), t.useProgram(a), this.prog = a;
+    t.attachShader(a, i), t.attachShader(a, l), t.linkProgram(a), t.useProgram(a), this.prog = a;
     const h = t.createBuffer();
     t.bindBuffer(t.ELEMENT_ARRAY_BUFFER, h), t.bufferData(t.ELEMENT_ARRAY_BUFFER, this.squareIndices, t.STATIC_DRAW);
     const s = new Float32Array(
       Array.from({ length: this.maxSquare * 2 }, () => 0)
     );
     this.positionBuffer = t.createBuffer(), t.bindBuffer(t.ARRAY_BUFFER, this.positionBuffer), t.bufferData(t.ARRAY_BUFFER, s, t.DYNAMIC_DRAW), this.attrPosLocation = t.getAttribLocation(this.prog, "position"), t.vertexAttribPointer(this.attrPosLocation, 2, t.FLOAT, !1, 0, 0), t.vertexAttribDivisor(this.attrPosLocation, 1), t.enableVertexAttribArray(this.attrPosLocation);
-    const u = new Uint8Array(
+    const f = new Uint8Array(
       Array.from({ length: this.maxSquare * 3 }, () => 255)
     );
-    this.colorsBuffer = t.createBuffer(), t.bindBuffer(t.ARRAY_BUFFER, this.colorsBuffer), t.bufferData(t.ARRAY_BUFFER, u, t.DYNAMIC_DRAW), this.attrColorLocation = t.getAttribLocation(this.prog, "sColor"), t.vertexAttribPointer(
+    this.colorsBuffer = t.createBuffer(), t.bindBuffer(t.ARRAY_BUFFER, this.colorsBuffer), t.bufferData(t.ARRAY_BUFFER, f, t.DYNAMIC_DRAW), this.attrColorLocation = t.getAttribLocation(this.prog, "sColor"), t.vertexAttribPointer(
       this.attrColorLocation,
       3,
       t.UNSIGNED_BYTE,
@@ -222,11 +222,11 @@ class B {
     );
   }
 }
-class F {
+class w {
   constructor(r, e) {
     o(this, "xy", []);
     o(this, "color");
-    r === void 0 && (r = [0, 0, 1, 1]), e === void 0 && (e = new E(1, 1, 1, 1)), this.xy = r, this.color = e;
+    r === void 0 && (r = [0, 0, 1, 1]), e === void 0 && (e = new _(1, 1, 1, 1)), this.xy = r, this.color = e;
   }
   getSize() {
     return this.xy.length / 2;
@@ -265,7 +265,7 @@ class F {
     this.color = r;
   }
 }
-class w {
+class C {
   constructor(r, e, t) {
     o(this, "gl");
     o(this, "aPositionLocation");
@@ -285,7 +285,7 @@ class w {
     this.gl = r.gl, this.rollBufferSize = e, this.shift = 0, this.dataIndex = 0, this.dataX = 1, this.lastDataX = Array(t).fill(0), this.lastDataY = Array(t).fill(0), this.numLines = t;
     const i = this.gl;
     this.ext = i.getExtension("WEBGL_multi_draw");
-    const n = `#version 300 es
+    const l = `#version 300 es
         layout(location = 1) in vec2 a_position;
         layout(location = 2) in vec3 a_color;
 
@@ -302,7 +302,7 @@ class w {
         }`, a = i.createShader(i.VERTEX_SHADER);
     if (!a)
       throw new Error("Failed to create vertex shader");
-    i.shaderSource(a, n), i.compileShader(a), i.getShaderParameter(a, i.COMPILE_STATUS) || console.error(i.getShaderInfoLog(a));
+    i.shaderSource(a, l), i.compileShader(a), i.getShaderParameter(a, i.COMPILE_STATUS) || console.error(i.getShaderInfoLog(a));
     const h = `#version 300 es
         precision mediump float;    
         in vec3 vColor;
@@ -318,10 +318,10 @@ class w {
       new Float32Array((this.rollBufferSize + 2) * 2 * t),
       i.DYNAMIC_DRAW
     ), this.aPositionLocation = i.getAttribLocation(this.program, "a_position"), i.vertexAttribPointer(this.aPositionLocation, 2, i.FLOAT, !1, 0, 0), i.enableVertexAttribArray(this.aPositionLocation), this.colorBuffer = i.createBuffer();
-    const u = Array((this.rollBufferSize + 2) * 3 * t).fill(128);
+    const f = Array((this.rollBufferSize + 2) * 3 * t).fill(128);
     i.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer), this.gl.bufferData(
       this.gl.ARRAY_BUFFER,
-      new Uint8Array(u),
+      new Uint8Array(f),
       i.STATIC_DRAW
     ), this.aColorLocation = i.getAttribLocation(this.program, "a_color"), i.vertexAttribPointer(
       this.aColorLocation,
@@ -361,9 +361,9 @@ class w {
   addPoints(r) {
     const e = this.gl, t = this.rollBufferSize + 2;
     e.useProgram(this.program), e.uniform1f(this.uShiftLocation, this.shift), e.bindBuffer(e.ARRAY_BUFFER, this.vertexBuffer);
-    let i = this.dataIndex, n = 0;
+    let i = this.dataIndex, l = 0;
     for (let a = 0; a < r.length; a++) {
-      i = this.dataIndex, n = 0;
+      i = this.dataIndex, l = 0;
       for (let h = 0; h < r[a].length; h++) {
         const s = this.dataX + h * 2 / this.rollBufferSize;
         if (i < this.rollBufferSize && e.bufferSubData(
@@ -380,17 +380,17 @@ class w {
             r[a][h]
           ])
         ), i >= this.rollBufferSize) {
-          const u = i % this.rollBufferSize;
+          const f = i % this.rollBufferSize;
           e.bufferSubData(
             e.ARRAY_BUFFER,
-            (u + a * t) * 2 * 4,
+            (f + a * t) * 2 * 4,
             new Float32Array([s, r[a][h]])
           );
         }
-        i++, n = s;
+        i++, l = s;
       }
     }
-    this.shift += r[0].length * 2 / this.rollBufferSize, this.dataX = n + 2 / this.rollBufferSize, this.dataIndex = i % this.rollBufferSize, e.enableVertexAttribArray(this.aPositionLocation);
+    this.shift += r[0].length * 2 / this.rollBufferSize, this.dataX = l + 2 / this.rollBufferSize, this.dataIndex = i % this.rollBufferSize, e.enableVertexAttribArray(this.aPositionLocation);
   }
   drawOld() {
     const r = this.rollBufferSize + 2, e = this.gl;
@@ -406,8 +406,8 @@ class w {
     const r = this.rollBufferSize + 2, e = this.gl;
     this.gl.useProgram(this.program);
     const t = [], i = [];
-    for (let n = 0; n < this.numLines; n++)
-      t.push(n * r), i.push(this.dataIndex), t.push(n * r + this.dataIndex), i.push(this.rollBufferSize - this.dataIndex), t.push(n * r + this.rollBufferSize), i.push(2);
+    for (let l = 0; l < this.numLines; l++)
+      t.push(l * r), i.push(this.dataIndex), t.push(l * r + this.dataIndex), i.push(this.rollBufferSize - this.dataIndex), t.push(l * r + this.rollBufferSize), i.push(2);
     if (!this.ext)
       throw new Error("Multi draw extension not available");
     this.ext.multiDrawArraysWEBGL(
@@ -426,7 +426,7 @@ class w {
     const t = this.gl;
     t.useProgram(this.program), t.bindBuffer(t.ARRAY_BUFFER, this.colorBuffer);
     const i = [];
-    for (let n = 0; n < this.rollBufferSize + 2; n++)
+    for (let l = 0; l < this.rollBufferSize + 2; l++)
       i.push(r.r), i.push(r.g), i.push(r.b);
     t.bufferSubData(
       t.ARRAY_BUFFER,
@@ -464,7 +464,7 @@ class I {
     this.lines = e;
     const i = e.map((c) => c.xy.length / 2);
     this.lineSizes = i;
-    const n = `#version 300 es
+    const l = `#version 300 es
         layout(location = 1) in vec2 a_position;
         layout(location = 2) in vec3 a_Color;
       
@@ -476,7 +476,7 @@ class I {
         }`, a = t.createShader(t.VERTEX_SHADER);
     if (!a)
       throw new Error("Error creating vertex shader");
-    t.shaderSource(a, n), t.compileShader(a), t.getShaderParameter(a, t.COMPILE_STATUS) || console.error(t.getShaderInfoLog(a));
+    t.shaderSource(a, l), t.compileShader(a), t.getShaderParameter(a, t.COMPILE_STATUS) || console.error(t.getShaderInfoLog(a));
     const h = `#version 300 es
         precision mediump float;
         in vec3 vColor;
@@ -488,43 +488,43 @@ class I {
     if (!s)
       throw new Error("Error creating fragment shader");
     t.shaderSource(s, h), t.compileShader(s), t.getShaderParameter(s, t.COMPILE_STATUS) || console.error(t.getShaderInfoLog(s)), this.prog = t.createProgram(), t.attachShader(this.prog, a), t.attachShader(this.prog, s), t.linkProgram(this.prog), t.useProgram(this.prog);
-    const u = t.createBuffer();
-    t.bindBuffer(t.ARRAY_BUFFER, u), this.totalLineSizes = i.reduce((c, g) => c + g, 0), this.lineSizeAccum = i.reduce(
-      (c, g) => (c.push(c[c.length - 1] + g), c),
+    const f = t.createBuffer();
+    t.bindBuffer(t.ARRAY_BUFFER, f), this.totalLineSizes = i.reduce((c, S) => c + S, 0), this.lineSizeAccum = i.reduce(
+      (c, S) => (c.push(c[c.length - 1] + S), c),
       [0]
     ).splice(0, i.length);
-    const m = Array.from({ length: i.length }, () => [
+    const A = Array.from({ length: i.length }, () => [
       Math.random(),
       Math.random(),
       Math.random()
     ]);
-    let f = Array.from({ length: i[0] }, (c, g) => g).flatMap(
-      () => m[0]
+    let u = Array.from({ length: i[0] }, (c, S) => S).flatMap(
+      () => A[0]
     );
     for (let c = 1; c < i.length; c++)
-      f = f.concat(
-        Array.from({ length: i[c] }, (g, x) => x).flatMap(
-          () => m[c]
+      u = u.concat(
+        Array.from({ length: i[c] }, (S, L) => L).flatMap(
+          () => A[c]
         )
       );
     t.bufferData(
       t.ARRAY_BUFFER,
-      new Float32Array(f),
+      new Float32Array(u),
       t.DYNAMIC_DRAW
     );
-    const S = t.getAttribLocation(this.prog, "a_Color");
-    t.vertexAttribPointer(S, 3, t.FLOAT, !1, 0, 0), t.enableVertexAttribArray(S), this.vertexBuffer = t.createBuffer(), t.bindBuffer(t.ARRAY_BUFFER, this.vertexBuffer), this.coord = t.getAttribLocation(this.prog, "a_position"), t.vertexAttribPointer(this.coord, 2, t.FLOAT, !1, 0, 0), t.enableVertexAttribArray(this.coord);
-    const A = new Float32Array(this.totalLineSizes * 2);
+    const m = t.getAttribLocation(this.prog, "a_Color");
+    t.vertexAttribPointer(m, 3, t.FLOAT, !1, 0, 0), t.enableVertexAttribArray(m), this.vertexBuffer = t.createBuffer(), t.bindBuffer(t.ARRAY_BUFFER, this.vertexBuffer), this.coord = t.getAttribLocation(this.prog, "a_position"), t.vertexAttribPointer(this.coord, 2, t.FLOAT, !1, 0, 0), t.enableVertexAttribArray(this.coord);
+    const d = new Float32Array(this.totalLineSizes * 2);
     t.bufferData(
       t.ARRAY_BUFFER,
-      new Float32Array(A),
+      new Float32Array(d),
       t.DYNAMIC_DRAW
     ), t.clearColor(0.1, 0.1, 0.1, 1), t.clear(t.COLOR_BUFFER_BIT), t.enable(t.BLEND), t.blendFunc(t.SRC_ALPHA, t.ONE_MINUS_SRC_ALPHA), t.viewport(0, 0, r.width, r.height);
   }
 }
 const p = 10;
-class y {
-  // length = numLines * 2
+class U {
+  // length = numLines * 4
   constructor(r, e) {
     o(this, "gl");
     o(this, "prog");
@@ -533,16 +533,18 @@ class y {
     o(this, "vao");
     o(this, "vertexBuffer");
     o(this, "locations");
-    // To know where each line’s vertices are in the vertex buffer.
+    // Draw-call info per line.
     o(this, "lineDrawCalls", []);
-    // Total number of vertices in the buffer.
     o(this, "totalVertexCount", 0);
-    // Store the number of lines currently uploaded.
+    // The number of lines currently uploaded.
     o(this, "numLines", 0);
-    // Current per-line scale (vec2 per line) and offset arrays.
+    // Per-line transform arrays.
     o(this, "currentLineScale", new Float32Array(0));
     // length = numLines * 2
     o(this, "currentLineOffset", new Float32Array(0));
+    // length = numLines * 2
+    // Per-line color array: each line has a vec4 (RGBA) in ND.
+    o(this, "currentLineColor", new Float32Array(0));
     this.gl = r.gl, this.thickness = e;
     const t = this.gl, i = `#version 300 es
 precision mediump float;
@@ -559,12 +561,15 @@ uniform int uLineStart[MAX_LINES];
 uniform int uLineNumPoints[MAX_LINES];
 uniform vec2 uLineScale[MAX_LINES];
 uniform vec2 uLineOffset[MAX_LINES];
+uniform vec4 uLineColor[MAX_LINES];
 
 in float aLineId;  // which line (index)
 in float aIndex;   // index within that line
 in float aSide;    // +1.0 or -1.0
 
-// Fetch a point from the texture.
+// Use flat interpolation for the line color.
+flat out vec4 vColor;
+
 vec2 getPoint(int idx) {
   int texX = idx % uTexWidth;
   int texY = idx / uTexWidth;
@@ -584,7 +589,7 @@ void main() {
   vec2 pPrev = (localIndex == 0) ? p : getPoint(uLineStart[lineId] + localIndex - 1);
   vec2 pNext = (localIndex == numPoints - 1) ? p : getPoint(uLineStart[lineId] + localIndex + 1);
   
-  // Apply the per-line transformation (both scale and offset are in ND).
+  // Apply per-line transformation (scale and offset are in ND).
   p = p * uLineScale[lineId] + uLineOffset[lineId];
   pPrev = pPrev * uLineScale[lineId] + uLineOffset[lineId];
   pNext = pNext * uLineScale[lineId] + uLineOffset[lineId];
@@ -611,32 +616,34 @@ void main() {
   }
   
   vec2 pos = p + offsetNormal * aSide;
-  
-  // In ND coordinates, the position is already in the range [-1, 1].
   gl_Position = vec4(pos, 0.0, 1.0);
+
+  // Fetch the color for this line.
+  vColor = uLineColor[lineId];
 }
-`, n = `#version 300 es
+`, l = `#version 300 es
 precision mediump float;
+flat in vec4 vColor;
 out vec4 fragColor;
 void main() {
-  fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+  fragColor = vColor;
 }
 `;
-    function a(s, u, m) {
-      const f = s.createShader(u);
-      if (!f) throw new Error("Could not create shader");
-      if (s.shaderSource(f, m), s.compileShader(f), !s.getShaderParameter(f, s.COMPILE_STATUS))
-        throw new Error("Shader compile error: " + s.getShaderInfoLog(f));
-      return f;
+    function a(s, f, A) {
+      const u = s.createShader(f);
+      if (!u) throw new Error("Could not create shader");
+      if (s.shaderSource(u, A), s.compileShader(u), !s.getShaderParameter(u, s.COMPILE_STATUS))
+        throw new Error("Shader compile error: " + s.getShaderInfoLog(u));
+      return u;
     }
-    function h(s, u, m) {
-      const f = a(s, s.VERTEX_SHADER, u), S = a(s, s.FRAGMENT_SHADER, m), A = s.createProgram();
-      if (!A) throw new Error("Could not create program");
-      if (s.attachShader(A, f), s.attachShader(A, S), s.linkProgram(A), !s.getProgramParameter(A, s.LINK_STATUS))
-        throw new Error("Program link error: " + s.getProgramInfoLog(A));
-      return A;
+    function h(s, f, A) {
+      const u = a(s, s.VERTEX_SHADER, f), m = a(s, s.FRAGMENT_SHADER, A), d = s.createProgram();
+      if (!d) throw new Error("Could not create program");
+      if (s.attachShader(d, u), s.attachShader(d, m), s.linkProgram(d), !s.getProgramParameter(d, s.LINK_STATUS))
+        throw new Error("Program link error: " + s.getProgramInfoLog(d));
+      return d;
     }
-    this.prog = h(t, i, n), t.useProgram(this.prog), this.pointsTexture = t.createTexture(), t.bindTexture(t.TEXTURE_2D, this.pointsTexture), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_WRAP_S, t.CLAMP_TO_EDGE), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_WRAP_T, t.CLAMP_TO_EDGE), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_MIN_FILTER, t.NEAREST), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_MAG_FILTER, t.NEAREST), t.bindTexture(t.TEXTURE_2D, null), this.vertexBuffer = t.createBuffer(), this.vao = t.createVertexArray(), t.bindVertexArray(this.vao), t.bindBuffer(t.ARRAY_BUFFER, this.vertexBuffer), t.enableVertexAttribArray(0), t.vertexAttribPointer(0, 1, t.FLOAT, !1, 12, 0), t.enableVertexAttribArray(1), t.vertexAttribPointer(1, 1, t.FLOAT, !1, 12, 4), t.enableVertexAttribArray(2), t.vertexAttribPointer(2, 1, t.FLOAT, !1, 12, 8), t.bindVertexArray(null), this.locations = {
+    this.prog = h(t, i, l), t.useProgram(this.prog), this.pointsTexture = t.createTexture(), t.bindTexture(t.TEXTURE_2D, this.pointsTexture), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_WRAP_S, t.CLAMP_TO_EDGE), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_WRAP_T, t.CLAMP_TO_EDGE), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_MIN_FILTER, t.NEAREST), t.texParameteri(t.TEXTURE_2D, t.TEXTURE_MAG_FILTER, t.NEAREST), t.bindTexture(t.TEXTURE_2D, null), this.vertexBuffer = t.createBuffer(), this.vao = t.createVertexArray(), t.bindVertexArray(this.vao), t.bindBuffer(t.ARRAY_BUFFER, this.vertexBuffer), t.enableVertexAttribArray(0), t.vertexAttribPointer(0, 1, t.FLOAT, !1, 12, 0), t.enableVertexAttribArray(1), t.vertexAttribPointer(1, 1, t.FLOAT, !1, 12, 4), t.enableVertexAttribArray(2), t.vertexAttribPointer(2, 1, t.FLOAT, !1, 12, 8), t.bindVertexArray(null), this.locations = {
       uPointsTex: t.getUniformLocation(this.prog, "uPointsTex"),
       uThickness: t.getUniformLocation(this.prog, "uThickness"),
       uTexWidth: t.getUniformLocation(this.prog, "uTexWidth"),
@@ -645,16 +652,18 @@ void main() {
       uLineStart: t.getUniformLocation(this.prog, "uLineStart[0]"),
       uLineNumPoints: t.getUniformLocation(this.prog, "uLineNumPoints[0]"),
       uLineScale: t.getUniformLocation(this.prog, "uLineScale[0]"),
-      uLineOffset: t.getUniformLocation(this.prog, "uLineOffset[0]")
-    }, t.useProgram(this.prog), t.uniform1i(this.locations.uPointsTex, 0), t.uniform1f(this.locations.uThickness, this.thickness);
+      uLineOffset: t.getUniformLocation(this.prog, "uLineOffset[0]"),
+      uLineColor: t.getUniformLocation(this.prog, "uLineColor[0]")
+    }, t.useProgram(this.prog), t.uniform1i(this.locations.uPointsTex, 0), t.uniform1f(this.locations.uThickness, this.thickness), t.enable(t.BLEND), t.blendFunc(t.SRC_ALPHA, t.ONE_MINUS_SRC_ALPHA);
   }
   /**
    * Update the lines.
    *
    * Each line is an object with:
-   *  - points: a Float32Array of (x, y) positions in ND ([-1,1] range).
+   *  - points: a Float32Array of (x, y) positions in ND ([-1, 1] range).
    *  - scale: a [number, number] factor (for x and y) in ND.
    *  - offset: a [x, y] translation in ND.
+   *  - color: a [r, g, b, a] color in ND (with a for opacity).
    */
   updateLines(r) {
     const e = this.gl;
@@ -662,42 +671,42 @@ void main() {
       throw new Error(`This shader supports up to ${p} lines.`);
     this.numLines = r.length;
     let t = 0;
-    const i = new Int32Array(r.length), n = new Int32Array(r.length), a = new Float32Array(r.length * 2), h = new Float32Array(r.length * 2);
-    for (let l = 0; l < r.length; l++) {
-      i[l] = t;
-      const L = r[l].points.length / 2;
-      n[l] = L, t += L, a[l * 2 + 0] = r[l].scale[0], a[l * 2 + 1] = r[l].scale[1], h[l * 2 + 0] = r[l].offset[0], h[l * 2 + 1] = r[l].offset[1];
+    const i = new Int32Array(r.length), l = new Int32Array(r.length), a = new Float32Array(r.length * 2), h = new Float32Array(r.length * 2), s = new Float32Array(r.length * 4);
+    for (let n = 0; n < r.length; n++) {
+      i[n] = t;
+      const v = r[n].points.length / 2;
+      l[n] = v, t += v, a[n * 2 + 0] = r[n].scale[0], a[n * 2 + 1] = r[n].scale[1], h[n * 2 + 0] = r[n].offset[0], h[n * 2 + 1] = r[n].offset[1], s[n * 4 + 0] = r[n].color[0], s[n * 4 + 1] = r[n].color[1], s[n * 4 + 2] = r[n].color[2], s[n * 4 + 3] = r[n].color[3];
     }
-    this.currentLineScale = a, this.currentLineOffset = h;
-    const s = new Float32Array(t * 2);
-    let u = 0;
-    for (let l = 0; l < r.length; l++)
-      s.set(r[l].points, u), u += r[l].points.length;
+    this.currentLineScale = a, this.currentLineOffset = h, this.currentLineColor = s;
+    const f = new Float32Array(t * 2);
+    let A = 0;
+    for (let n = 0; n < r.length; n++)
+      f.set(r[n].points, A), A += r[n].points.length;
     e.activeTexture(e.TEXTURE0), e.bindTexture(e.TEXTURE_2D, this.pointsTexture);
-    const m = e.getParameter(e.MAX_TEXTURE_SIZE), f = Math.min(t, m), S = Math.ceil(t / f), A = f * S, c = new Float32Array(A * 2);
-    c.set(s), e.texImage2D(
+    const u = e.getParameter(e.MAX_TEXTURE_SIZE), m = Math.min(t, u), d = Math.ceil(t / m), c = m * d, S = new Float32Array(c * 2);
+    S.set(f), e.texImage2D(
       e.TEXTURE_2D,
       0,
       e.RG32F,
-      f,
-      S,
+      m,
+      d,
       0,
       e.RG,
       e.FLOAT,
-      c
+      S
     );
-    const g = new Float32Array(t * 2 * 3);
+    const L = new Float32Array(t * 2 * 3);
     let x = 0;
     this.lineDrawCalls = [];
-    let v = 0;
-    for (let l = 0; l < r.length; l++) {
-      const L = n[l];
-      this.lineDrawCalls.push({ offset: v, count: L * 2 });
-      for (let R = 0; R < L; R++)
-        g[x++] = l, g[x++] = R, g[x++] = 1, g[x++] = l, g[x++] = R, g[x++] = -1;
-      v += L * 2;
+    let E = 0;
+    for (let n = 0; n < r.length; n++) {
+      const v = l[n];
+      this.lineDrawCalls.push({ offset: E, count: v * 2 });
+      for (let R = 0; R < v; R++)
+        L[x++] = n, L[x++] = R, L[x++] = 1, L[x++] = n, L[x++] = R, L[x++] = -1;
+      E += v * 2;
     }
-    e.bindBuffer(e.ARRAY_BUFFER, this.vertexBuffer), e.bufferData(e.ARRAY_BUFFER, g, e.STATIC_DRAW), e.useProgram(this.prog), e.uniform1i(this.locations.uTexWidth, f), e.uniform1i(this.locations.uTexHeight, S), e.uniform1i(this.locations.uNumLines, r.length), e.uniform1iv(this.locations.uLineStart, i), e.uniform1iv(this.locations.uLineNumPoints, n), e.uniform2fv(this.locations.uLineScale, a), e.uniform2fv(this.locations.uLineOffset, h);
+    e.bindBuffer(e.ARRAY_BUFFER, this.vertexBuffer), e.bufferData(e.ARRAY_BUFFER, L, e.STATIC_DRAW), e.useProgram(this.prog), e.uniform1i(this.locations.uTexWidth, m), e.uniform1i(this.locations.uTexHeight, d), e.uniform1i(this.locations.uNumLines, r.length), e.uniform1iv(this.locations.uLineStart, i), e.uniform1iv(this.locations.uLineNumPoints, l), e.uniform2fv(this.locations.uLineScale, a), e.uniform2fv(this.locations.uLineOffset, h), e.uniform4fv(this.locations.uLineColor, s);
   }
   /**
    * Update the transform (scale and offset) of an already-uploaded line.
@@ -709,15 +718,28 @@ void main() {
   updateLineTransform(r, e, t) {
     if (r < 0 || r >= this.numLines)
       throw new Error(`Invalid lineId: ${r}`);
-    this.currentLineScale[r * 2 + 0] = e[0], this.currentLineScale[r * 2 + 1] = e[1], this.currentLineOffset[r * 2] = t[0], this.currentLineOffset[r * 2 + 1] = t[1];
+    this.currentLineScale[r * 2 + 0] = e[0], this.currentLineScale[r * 2 + 1] = e[1], this.currentLineOffset[r * 2 + 0] = t[0], this.currentLineOffset[r * 2 + 1] = t[1];
     const i = this.gl;
     i.useProgram(this.prog), i.uniform2fv(this.locations.uLineScale, this.currentLineScale), i.uniform2fv(this.locations.uLineOffset, this.currentLineOffset);
   }
   /**
+   * Update the color (and opacity) of an already-uploaded line.
+   *
+   * @param lineId - The index of the line to update.
+   * @param color - The new [r, g, b, a] color (in ND) for the line.
+   */
+  updateLineColor(r, e) {
+    if (r < 0 || r >= this.numLines)
+      throw new Error(`Invalid lineId: ${r}`);
+    this.currentLineColor[r * 4 + 0] = e[0], this.currentLineColor[r * 4 + 1] = e[1], this.currentLineColor[r * 4 + 2] = e[2], this.currentLineColor[r * 4 + 3] = e[3];
+    const t = this.gl;
+    t.useProgram(this.prog), t.uniform4fv(this.locations.uLineColor, this.currentLineColor);
+  }
+  /**
    * Draw the lines.
    *
-   * The vertex buffer holds concatenated triangle strips (one per line);
-   * we loop over the strips and issue one draw call per line.
+   * The vertex buffer contains concatenated triangle strips (one per line).
+   * We loop over the strips and issue one draw call per line.
    */
   draw() {
     const r = this.gl;
@@ -728,7 +750,7 @@ void main() {
     }
   }
 }
-class U {
+class y {
   constructor(r, e) {
     /**
      * @private
@@ -808,12 +830,12 @@ class U {
   }
 }
 export {
-  E as ColorRGBA,
-  T as WebglAux,
-  F as WebglLine,
+  _ as ColorRGBA,
+  B as WebglAux,
+  w as WebglLine,
   I as WebglLinePlot,
-  w as WebglLineRoll,
-  y as WebglLineThick,
-  U as WebglPlot,
-  B as WebglScatterAcc
+  C as WebglLineRoll,
+  U as WebglLineThick,
+  y as WebglPlot,
+  F as WebglScatterAcc
 };
