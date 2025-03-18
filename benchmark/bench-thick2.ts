@@ -20,7 +20,7 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 //const numX = canvas.width;
 
-const numX = 100000;
+const numX = 1000;
 
 console.log("numX", numX);
 
@@ -41,7 +41,17 @@ let prevTime = new Date();
 
 const array = new Float32Array(numX * 2);
 
-for (let i = 0; i < 1; i++) {
+type Array = {
+  points: Float32Array;
+  scale: number;
+  offset: [number, number];
+};
+
+const arrays: Array[] = [];
+
+const maxLines = 5;
+
+for (let i = 0; i < maxLines; i++) {
   //const per = 0;
   //const y0 = i / 1 + per;
   for (let j = 0; j < numX; j++) {
@@ -61,20 +71,33 @@ for (let i = 0; i < 1; i++) {
       if (index % 2 === 0) array[index] = ((element + 1) / 2) * canvas.width;
       else array[index] = ((-element + 1) / 2) * canvas.height;
     });*/
-  plotLine.updateLine(array);
+  arrays.push({
+    points: new Float32Array(array),
+    scale: 1,
+    offset: [0, -canvas.height / 2 + (i / (maxLines - 1)) * canvas.height],
+  });
 }
 
-let offset = -1;
+plotLine.updateLines(arrays);
+
+let offset = 0;
 
 function newFrame() {
   wglp.clear();
 
-  offset = offset + 0.01;
+  offset = offset + 0.003;
   if (offset > 1) {
     offset = -1;
   }
 
-  plotLine.setOffset(0, offset);
+  for (let i = 0; i < maxLines; i++) {
+    const baseOffset =
+      -canvas!.height / 2 + (i / (maxLines - 1)) * canvas!.height;
+    plotLine.updateLineTransform(i, 1, [
+      0,
+      baseOffset + offset * canvas!.height,
+    ]);
+  }
 
   plotLine.draw();
 
@@ -88,7 +111,7 @@ function newFrame() {
     frame++;
   }
 
-  requestAnimationFrame(newFrame);
+  //requestAnimationFrame(newFrame);
 }
 requestAnimationFrame(newFrame);
 
