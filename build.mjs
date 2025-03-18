@@ -27,11 +27,13 @@ const libConfig = defineConfig({
 });
 
 const benchmarkConfig = defineConfig({
+  root: resolve(import.meta.dirname, "benchmark"),
   build: {
-    outDir: "dist-benchmark",
+    outDir: resolve(import.meta.dirname, "dist-benchmark"),
+    emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: "./benchmark/bench-thick.html",
+        main: resolve(import.meta.dirname, "benchmark", "bench-thick.html"),
       },
     },
   },
