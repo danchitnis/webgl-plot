@@ -1,9 +1,4 @@
-import {
-  ColorRGBA,
-  WebglPlot,
-  WebglLineThick,
-  WebglLine,
-} from "../dist/webglplot";
+import { WebglPlot, WebglLineThick } from "../dist/webglplot";
 
 const fpsElem = document.getElementById("fps");
 const btClick = document.getElementById("btClick");
@@ -20,21 +15,15 @@ canvas.height = canvas.clientHeight * devicePixelRatio;
 
 //const numX = canvas.width;
 
+const maxLines = 5;
+
 const numX = 1000;
 
 console.log("numX", numX);
 
 const wglp = new WebglPlot(canvas);
 
-const line = new WebglLine();
-
-line.setColor(new ColorRGBA(255, 255, 0, 1)); //color not working
-line.lineSpaceX(numX);
-
-const plotLine = new WebglLineThick(wglp, 0.01);
-//newYData = Array(line.getSize()).fill(0);
-
-//console.log("newYData", newYData);
+const plotLine = new WebglLineThick(wglp, maxLines, 0.01);
 
 let frame = 0;
 let prevTime = new Date();
@@ -50,28 +39,15 @@ type Array = {
 
 const arrays: Array[] = [];
 
-const maxLines = 5;
-
 for (let i = 0; i < maxLines; i++) {
-  //const per = 0;
-  //const y0 = i / 1 + per;
   for (let j = 0; j < numX; j++) {
     const x = -1 + (2 * j) / numX;
     const y = Math.sin(j * 0.05) * 0.3 + 0;
 
-    //const yy = y - Math.floor(y / canvas!.height) * canvas!.height;
-    //newYData[j] = yy * 2 - 1;
-    //console.log(j, numX, per, y0, y, yy, newYData[j]);
     array[j * 2] = x;
     array[j * 2 + 1] = y;
   }
-  //line.setYs(newYData);
 
-  //const array = new Float32Array(line.xy);
-  /*array.forEach((element, index) => {
-      if (index % 2 === 0) array[index] = ((element + 1) / 2) * canvas.width;
-      else array[index] = ((-element + 1) / 2) * canvas.height;
-    });*/
   arrays.push({
     points: new Float32Array(array),
     scale: [1, 1],

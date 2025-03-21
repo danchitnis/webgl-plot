@@ -1,6 +1,3 @@
-// Maximum number of lines supported.
-const MAX_LINES = 10;
-
 type UniformLocationsMulti = {
   uPointsTex: WebGLUniformLocation;
   uThickness: WebGLUniformLocation;
@@ -17,6 +14,7 @@ type UniformLocationsMulti = {
 export class WebglLineThick {
   private gl: WebGL2RenderingContext;
   public prog: WebGLProgram;
+  private maxLines: number;
   private thickness: number;
   private pointsTexture: WebGLTexture;
   private vao: WebGLVertexArrayObject;
@@ -35,8 +33,13 @@ export class WebglLineThick {
   // Per-line color array: each line has a vec4 (RGBA) in ND.
   private currentLineColor: Float32Array = new Float32Array(0); // length = numLines * 4
 
-  constructor(wglp: { gl: WebGL2RenderingContext }, thickness: number) {
+  constructor(
+    wglp: { gl: WebGL2RenderingContext },
+    maxLines: number,
+    thickness: number
+  ) {
     this.gl = wglp.gl;
+    this.maxLines = maxLines;
     this.thickness = thickness;
     const gl = this.gl;
 
@@ -44,7 +47,7 @@ export class WebglLineThick {
     // Added a uniform uLineColor and flat output vColor.
     const vsSource = `#version 300 es
 precision mediump float;
-#define MAX_LINES ${MAX_LINES}
+#define MAX_LINES ${this.maxLines}
 
 uniform sampler2D uPointsTex;
 uniform float uThickness;
@@ -230,8 +233,8 @@ void main() {
     }[]
   ) {
     const gl = this.gl;
-    if (lines.length > MAX_LINES) {
-      throw new Error(`This shader supports up to ${MAX_LINES} lines.`);
+    if (lines.length > this.maxLines) {
+      throw new Error(`This shader supports up to ${this.maxLines} lines.`);
     }
     this.numLines = lines.length;
 
