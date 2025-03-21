@@ -42,7 +42,7 @@ const arrays: Array[] = [];
 for (let i = 0; i < maxLines; i++) {
   for (let j = 0; j < numX; j++) {
     const x = -1 + (2 * j) / numX;
-    const y = Math.sin(j * 0.05) * 0.3 + 0;
+    const y = Math.sin(j * 0.03) * 0.3 + 0;
 
     array[j * 2] = x;
     array[j * 2 + 1] = y;
@@ -56,7 +56,13 @@ for (let i = 0; i < maxLines; i++) {
   });
 }
 
-plotLine.updateLines(arrays);
+plotLine.initLines(arrays);
+
+const tempY = new Float32Array(numX);
+for (let i = 0; i < numX; i++) {
+  tempY[i] = Math.cos(i * 0.06) * 0.2 + 0;
+}
+plotLine.updateLineY(2, tempY);
 
 let offset = 0;
 

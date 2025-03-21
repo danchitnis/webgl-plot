@@ -33,6 +33,13 @@ export class WebglLineThick {
   // Per-line color array: each line has a vec4 (RGBA) in ND.
   private currentLineColor: Float32Array = new Float32Array(0); // length = numLines * 4
 
+  // New members to store per-line point info and the texture data.
+  private lineStartArray: Int32Array = new Int32Array(0);
+  private lineNumPointsArray: Int32Array = new Int32Array(0);
+  private pointsData: Float32Array = new Float32Array(0);
+  private texWidth: number = 0;
+  private texHeight: number = 0;
+
   constructor(
     wglp: { gl: WebGL2RenderingContext },
     maxLines: number,
@@ -224,7 +231,7 @@ void main() {
    *  - offset: a [x, y] translation in ND.
    *  - color: a [r, g, b, a] color in ND (with a for opacity).
    */
-  public updateLines(
+  public initLines(
     lines: {
       points: Float32Array;
       scale: [number, number];
@@ -263,6 +270,8 @@ void main() {
     this.currentLineScale = lineScale;
     this.currentLineOffset = lineOffset;
     this.currentLineColor = lineColor;
+    this.lineStartArray = lineStart;
+    this.lineNumPointsArray = lineNumPoints;
 
     // Pack all points from all lines into one Float32Array.
     const allPoints = new Float32Array(totalPoints * 2);
@@ -278,9 +287,13 @@ void main() {
     const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     const texWidth = Math.min(totalPoints, maxTexSize);
     const texHeight = Math.ceil(totalPoints / texWidth);
+    this.texWidth = texWidth;
+    this.texHeight = texHeight;
     const totalTexels = texWidth * texHeight;
+    // Create a full texture array (size: totalTexels * 2 floats per texel)
     const data2D = new Float32Array(totalTexels * 2);
     data2D.set(allPoints);
+    this.pointsData = data2D; // save for later updates
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
@@ -375,6 +388,77 @@ void main() {
     const gl = this.gl;
     gl.useProgram(this.prog);
     gl.uniform4fv(this.locations.uLineColor, this.currentLineColor);
+  }
+
+  /**
+   * Update only the Y coordinates of the points for a given line.
+   *
+   * This function accepts a new Y array and will:
+   *   - Verify that its length matches the number of points for the line.
+   *   - Update the internal points data.
+   *   - Use gl.texSubImage2D to update only the affected texels.
+   *
+   * @param lineId - The index of the line to update.
+   * @param newY - A Float32Array of new Y coordinates.
+   */
+  public updateLineY(lineId: number, newY: Float32Array) {
+    if (lineId < 0 || lineId >= this.numLines) {
+      throw new Error(`Invalid lineId: ${lineId}`);
+    }
+    const numPts = this.lineNumPointsArray[lineId];
+    if (newY.length !== numPts) {
+      throw new Error(
+        `Length mismatch: expected ${numPts} Y values but got ${newY.length}.`
+      );
+    }
+    const gl = this.gl;
+    // Get the starting point index for this line.
+    const startIdx = this.lineStartArray[lineId];
+
+    // Update the pointsData array with the new Y values.
+    for (let i = 0; i < numPts; i++) {
+      // Each point is 2 floats: X is at index*2, Y is at index*2+1.
+      const pointIndex = startIdx + i;
+      this.pointsData[pointIndex * 2 + 1] = newY[i];
+    }
+
+    // Update the texture only for the modified region.
+    // Since the points are stored in a 2D texture, the updated points may span one or more rows.
+    gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
+    // Loop over the points of the line and update each contiguous block within a row.
+    let current = startIdx;
+    const end = startIdx + numPts;
+    while (current < end) {
+      const row = Math.floor(current / this.texWidth);
+      const col = current % this.texWidth;
+      // Determine how many points in this row (until the end of the row or end of the line).
+      const remainingInRow = this.texWidth - col;
+      const remainingPts = end - current;
+      const blockCount = Math.min(remainingInRow, remainingPts);
+
+      // Create a subarray for the contiguous block.
+      // Each texel has 2 floats.
+      const offsetInArray = current * 2;
+      const blockLength = blockCount * 2;
+      const subData = this.pointsData.subarray(
+        offsetInArray,
+        offsetInArray + blockLength
+      );
+
+      // Update the sub-region of the texture.
+      gl.texSubImage2D(
+        gl.TEXTURE_2D,
+        0,
+        col, // x offset in texels
+        row, // y offset in texels
+        blockCount, // width (number of texels)
+        1, // height (one row)
+        gl.RG,
+        gl.FLOAT,
+        subData
+      );
+      current += blockCount;
+    }
   }
 
   /**
