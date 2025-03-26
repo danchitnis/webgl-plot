@@ -26,7 +26,6 @@ const wglp = new WebglPlot(canvas);
 
 const plotLine = new WebglLineThick(wglp, maxLines);
 
-let framerate = 0;
 let prevTime = new Date();
 
 const array = new Float32Array(numX * 2);
@@ -78,7 +77,7 @@ function newFrame() {
     plotLine.updateLineTransform(i, [1, 1], [0, baseOffset + offset]);
   }
 
-  if (frame % 20 === 0) {
+  if (frame % 10 === 0) {
     plotLine.updateLineThickness(thickIndex, 0.03);
     plotLine.updateLineThickness(
       thickIndex - 1 >= 0 ? thickIndex - 1 : maxLines - 1,
@@ -91,18 +90,16 @@ function newFrame() {
     }
   }
 
-  frame++;
-
   plotLine.draw();
 
   const timeNow = new Date();
   if (timeNow.getTime() - prevTime.getTime() > 1000) {
-    console.log(framerate);
-    fpsElem!.innerHTML = `Current fps: ${framerate}`;
-    framerate = 0;
+    console.log(frame);
+    fpsElem!.innerHTML = `Current fps: ${frame}`;
+    frame = 0;
     prevTime = timeNow;
   } else {
-    framerate++;
+    frame++;
   }
 
   requestAnimationFrame(newFrame);

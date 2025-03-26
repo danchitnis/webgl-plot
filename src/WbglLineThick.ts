@@ -17,12 +17,12 @@ const BYTES_PER_INT = 4;
 // 48 (offset of thickness) + 4 (size of thickness) = 52. Next multiple of 16 is 64.
 const LINE_DATA_STRIDE = 64;
 
-// Uniform locations (Thickness is now per-line in UBO)
+// Uniform locations (Thickness is now per-line in UBO, uNumLines removed)
 type UniformLocationsMulti = {
   uPointsTex: WebGLUniformLocation | null;
   uTexWidth: WebGLUniformLocation | null;
   uTexHeight: WebGLUniformLocation | null;
-  uNumLines: WebGLUniformLocation | null;
+  // uNumLines removed
 };
 
 // Input structure for initializing lines
@@ -37,16 +37,16 @@ export type LineInitData = {
 // --- Main Class ---
 export class WebglLineThick {
   private gl: WebGL2RenderingContext;
-  public prog: WebGLProgram;
+  public prog: WebGLProgram | null;
   private maxLines: number;
   // private thickness: number; // Removed global thickness
-  private pointsTexture: WebGLTexture;
-  private vao: WebGLVertexArrayObject;
-  private vertexBuffer: WebGLBuffer;
+  private pointsTexture: WebGLTexture | null;
+  private vao: WebGLVertexArrayObject | null;
+  private vertexBuffer: WebGLBuffer | null;
   private locations: UniformLocationsMulti;
 
   // UBO related members
-  private lineDataUBO: WebGLBuffer;
+  private lineDataUBO: WebGLBuffer | null;
   private lineDataUBObindingPoint: number = 0; // UBO binding point 0
   private lineDataStride: number = LINE_DATA_STRIDE; // Use calculated stride
   private lineDataArrayBuffer: ArrayBuffer = new ArrayBuffer(0); // CPU-side copy
@@ -87,10 +87,9 @@ precision highp int;
 
 // --- Uniforms ---
 uniform sampler2D uPointsTex; // Texture containing all line points (x,y)
-// Removed: uniform float uThickness;
 uniform int uTexWidth;        // Width of the points texture
 uniform int uTexHeight;       // Height of the points texture
-// uniform int uNumLines;     // Not strictly needed in shader if using fixed MAX_LINES in UBO access
+// Removed: uniform int uNumLines;
 
 // --- UBO Definition (std140 layout) ---
 // Holds per-line data: transform, color, indices, thickness
@@ -171,7 +170,6 @@ void main() {
 
   if ((isStart || prevCoincident) && (isEnd || nextCoincident)) {
      // Line has only one distinct point (or all points coincident)
-     // Create an arbitrary perpendicular (e.g., up) for thickness
      offsetNormalDir = vec2(0.0, 1.0);
   } else if (isStart || prevCoincident) {
      // Start of line, or previous point was coincident: Use only next direction
@@ -186,62 +184,48 @@ void main() {
      vec2 dir0 = normalize(dirFromPrev);
      vec2 dir1 = normalize(dirToNext);
 
-     // Normals for the segments before and after the current point
      vec2 n0 = vec2(-dir0.y, dir0.x);
      vec2 n1 = vec2(-dir1.y, dir1.x);
 
-     // Check if directions are anti-parallel (180 degree turn) -> use simple normal
-     if (dot(dir0, dir1) < -0.999) {
-         offsetNormalDir = n1; // Or n0, doesn't matter much
+     if (dot(dir0, dir1) < -0.999) { // Anti-parallel check
+         offsetNormalDir = n1;
      } else {
-         // Miter direction is the average of the two normals
          vec2 miterVec = normalize(n0 + n1);
+         float miterDot = dot(miterVec, n1);
+         float miterScale = 1.0 / max(miterDot, 0.01);
 
-         // Calculate miter length scale factor to maintain thickness
-         float miterDot = dot(miterVec, n1); // cos(angle / 2)
-         float miterScale = 1.0 / max(miterDot, 0.01); // Avoid division by zero/small numbers
-
-         // Apply Miter Limit to prevent excessively long spikes on sharp corners
-         float maxMiterScale = 5.0; // Example limit: Miter length <= 5 * half-thickness
+         float maxMiterScale = 5.0;
          if (miterScale > maxMiterScale) {
-            // Miter limit exceeded: Use bevel-like join (clamp miter length)
             offsetNormalDir = miterVec;
-            offsetScale *= maxMiterScale; // Clamp the magnitude
-            // A true bevel would need different geometry or shader logic
+            offsetScale *= maxMiterScale;
          } else {
-            // Miter join is within limits
             offsetNormalDir = miterVec;
-            offsetScale *= miterScale; // Apply miter scale to magnitude
+            offsetScale *= miterScale;
          }
      }
   }
 
-  // Calculate final vertex position by offsetting along the calculated normal direction
+  // Calculate final vertex position
   vec2 pos = p + offsetNormalDir * offsetScale * aSide;
 
   // Output position and color
-  gl_Position = vec4(pos, 0.0, 1.0); // z=0, w=1 for 2D rendering
-  vColor = uLines[lineId].color;     // Pass the line's color to fragment shader
+  gl_Position = vec4(pos, 0.0, 1.0);
+  vColor = uLines[lineId].color;
 }
 `;
 
     // --- Fragment Shader Source ---
     const fsSource = `#version 300 es
-precision mediump float; // Medium precision is usually fine for color
-
-// Input from Vertex Shader (flat means no interpolation)
+precision mediump float;
 flat in vec4 vColor;
-
-// Output color for the fragment
 out vec4 fragColor;
-
 void main() {
-  // Simply output the color received from the vertex shader
   fragColor = vColor;
 }
 `;
 
     // --- Shader Compilation and Linking Helper Functions ---
+    // (createShader and createProgram functions remain the same)
     /**
      * Creates and compiles a shader.
      * @param gl The WebGL context.
@@ -313,33 +297,24 @@ void main() {
 
     // --- Create and Configure WebGL Resources ---
 
-    // Compile and link the program
     this.prog = createProgram(gl, vsSource, fsSource);
-    gl.useProgram(this.prog); // Use program briefly for setup
+    gl.useProgram(this.prog);
 
     // --- UBO Setup ---
     const blockName = "LineDataBlock";
     const blockIndex = gl.getUniformBlockIndex(this.prog, blockName);
     if (blockIndex === gl.INVALID_INDEX) {
-      // This should not happen if the shader compiled and the block is used
       console.warn(`Uniform block '${blockName}' not found or not active.`);
-      // Consider throwing an error here as it's a critical part
     } else {
-      // Assign the binding point (e.g., 0) to the uniform block
       gl.uniformBlockBinding(
         this.prog,
         blockIndex,
         this.lineDataUBObindingPoint
       );
     }
-    // Stride is now fixed at LINE_DATA_STRIDE (64 bytes)
-    // this.lineDataStride = LINE_DATA_STRIDE; // Already set via property initializer
-
-    // Create the buffer object for the UBO
     const ubo = gl.createBuffer();
     if (!ubo) throw new Error("Failed to create UBO buffer.");
     this.lineDataUBO = ubo;
-    // Initial allocation will happen in initLines
     // --- End UBO Setup ---
 
     // --- Points Texture Setup ---
@@ -347,13 +322,10 @@ void main() {
     if (!pointsTex) throw new Error("Failed to create points texture.");
     this.pointsTexture = pointsTex;
     gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
-    // Clamp coordinates to edge, preventing sampling outside the texture
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    // Use nearest neighbor filtering as points are discrete, no interpolation needed
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    // Unbind texture for now
     gl.bindTexture(gl.TEXTURE_2D, null);
     // --- End Points Texture Setup ---
 
@@ -361,36 +333,22 @@ void main() {
     const vbo = gl.createBuffer();
     if (!vbo) throw new Error("Failed to create vertex buffer.");
     this.vertexBuffer = vbo;
-    // VBO data will be uploaded in initLines
     // --- End VBO Setup ---
 
     // --- Vertex Array Object (VAO) Setup ---
     const vao = gl.createVertexArray();
     if (!vao) throw new Error("Failed to create vertex array object.");
     this.vao = vao;
-    gl.bindVertexArray(this.vao); // Start defining VAO state
-
-    // Bind the VBO to configure attribute pointers
+    gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
 
-    const stride = 3 * BYTES_PER_FLOAT; // Stride for aLineId, aIndex, aSide
-    // Assuming standard attribute locations if not explicitly set in shader
-    const aLineIdLoc = 0; // Corresponds to 'in float aLineId;'
-    const aIndexLoc = 1; // Corresponds to 'in float aIndex;'
-    const aSideLoc = 2; // Corresponds to 'in float aSide;'
+    const stride = 3 * BYTES_PER_FLOAT;
+    const aLineIdLoc = 0;
+    const aIndexLoc = 1;
+    const aSideLoc = 2;
 
-    // Configure attribute pointer for aLineId (float, 1 component)
     gl.enableVertexAttribArray(aLineIdLoc);
-    gl.vertexAttribPointer(
-      aLineIdLoc,
-      1, // size (1 float)
-      gl.FLOAT, // type
-      false, // normalized
-      stride, // stride (bytes between consecutive vertices)
-      0 * BYTES_PER_FLOAT // offset (bytes from start of vertex)
-    );
-
-    // Configure attribute pointer for aIndex (float, 1 component)
+    gl.vertexAttribPointer(aLineIdLoc, 1, gl.FLOAT, false, stride, 0);
     gl.enableVertexAttribArray(aIndexLoc);
     gl.vertexAttribPointer(
       aIndexLoc,
@@ -400,8 +358,6 @@ void main() {
       stride,
       1 * BYTES_PER_FLOAT
     );
-
-    // Configure attribute pointer for aSide (float, 1 component)
     gl.enableVertexAttribArray(aSideLoc);
     gl.vertexAttribPointer(
       aSideLoc,
@@ -412,7 +368,6 @@ void main() {
       2 * BYTES_PER_FLOAT
     );
 
-    // Unbind VAO and VBO to prevent accidental modification
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     // --- End VAO Setup ---
@@ -420,31 +375,30 @@ void main() {
     // --- Get Locations for Non-UBO Uniforms ---
     this.locations = {
       uPointsTex: gl.getUniformLocation(this.prog, "uPointsTex"),
-      // uThickness location removed
       uTexWidth: gl.getUniformLocation(this.prog, "uTexWidth"),
       uTexHeight: gl.getUniformLocation(this.prog, "uTexHeight"),
-      uNumLines: gl.getUniformLocation(this.prog, "uNumLines"),
+      // uNumLines location removed
     };
-    // Basic check if locations were found
+    // Basic check if locations were found (excluding uNumLines)
     if (
       !this.locations.uPointsTex ||
       !this.locations.uTexWidth ||
-      !this.locations.uTexHeight ||
-      !this.locations.uNumLines
+      !this.locations.uTexHeight
+      // Removed check for uNumLines
     ) {
-      console.warn("One or more standard uniform locations not found.");
-      console.warn("Locations:", this.locations);
+      // Adjust warning message
+      console.warn(
+        "One or more required uniform locations (uPointsTex, uTexWidth, uTexHeight) not found."
+      );
+      console.warn("Found Locations:", this.locations); // Log found locations for debugging
     }
 
     // --- Set Constant Uniforms ---
-    gl.useProgram(this.prog); // Ensure program is active
-    // Tell the sampler uniform to use texture unit 0
-    gl.uniform1i(this.locations.uPointsTex, 0);
-    // Initial thickness is now set per-line in initLines via UBO
-    // Removed: gl.uniform1f(this.locations.uThickness, this.thickness);
-    gl.useProgram(null); // Deactivate program for now
+    gl.useProgram(this.prog);
+    gl.uniform1i(this.locations.uPointsTex, 0); // Texture unit 0
+    gl.useProgram(null);
 
-    // --- Enable Blending for Transparency ---
+    // --- Enable Blending ---
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   }
@@ -465,7 +419,6 @@ void main() {
       lines = lines.slice(0, this.maxLines);
     }
 
-    // Filter out lines with fewer than 2 points, store data for valid lines
     const validLinesData: {
       lineObj: LineInitData;
       startIndex: number;
@@ -473,8 +426,8 @@ void main() {
     }[] = [];
     let currentStartIndex = 0;
     let totalValidPoints = 0;
-    this.lineNumPointsCache = []; // Reset cache for point counts
-    this.lineStartIndexCache = []; // Reset cache for start indices
+    this.lineNumPointsCache = [];
+    this.lineStartIndexCache = [];
 
     for (const line of lines) {
       const numPts = line.points.length / 2;
@@ -484,21 +437,19 @@ void main() {
           startIndex: currentStartIndex,
           numPoints: numPts,
         });
-        this.lineNumPointsCache.push(numPts); // Store numPoints for this valid line
-        this.lineStartIndexCache.push(currentStartIndex); // Store start index
+        this.lineNumPointsCache.push(numPts);
+        this.lineStartIndexCache.push(currentStartIndex);
         currentStartIndex += numPts;
         totalValidPoints += numPts;
       } else {
         console.warn("Skipping line with fewer than 2 points.");
       }
     }
-    this.numLines = validLinesData.length; // Update the count of active lines
+    this.numLines = validLinesData.length;
 
     // --- Handle Case: No Valid Lines ---
     if (this.numLines === 0) {
       this.totalVertexCount = 0;
-
-      // Clear or set minimal data for WebGL resources
       this.pointsData = new Float32Array(0);
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
@@ -516,16 +467,11 @@ void main() {
       this.texWidth = 1;
       this.texHeight = 1;
 
-      // Allocate or clear UBO buffer
       const uboTotalSize = this.maxLines * this.lineDataStride;
       this.lineDataArrayBuffer = new ArrayBuffer(uboTotalSize);
-      this.lineDataView = new DataView(this.lineDataArrayBuffer); // Reset view
+      this.lineDataView = new DataView(this.lineDataArrayBuffer);
       gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
-      gl.bufferData(
-        gl.UNIFORM_BUFFER,
-        this.lineDataArrayBuffer.byteLength,
-        gl.DYNAMIC_DRAW
-      );
+      gl.bufferData(gl.UNIFORM_BUFFER, uboTotalSize, gl.DYNAMIC_DRAW);
       gl.bindBuffer(gl.UNIFORM_BUFFER, null);
       gl.bindBufferBase(
         gl.UNIFORM_BUFFER,
@@ -533,22 +479,21 @@ void main() {
         this.lineDataUBO
       );
 
-      // Clear VBO
       gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW);
       gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-      // Update uniforms
+      // Update uniforms (excluding uNumLines)
       gl.useProgram(this.prog);
-      gl.uniform1i(this.locations.uTexWidth, this.texWidth);
-      gl.uniform1i(this.locations.uTexHeight, this.texHeight);
-      gl.uniform1i(this.locations.uNumLines, 0);
+      if (this.locations.uTexWidth)
+        gl.uniform1i(this.locations.uTexWidth, this.texWidth);
+      if (this.locations.uTexHeight)
+        gl.uniform1i(this.locations.uTexHeight, this.texHeight);
+      // Removed: gl.uniform1i(this.locations.uNumLines, 0);
       gl.useProgram(null);
 
-      console.warn(
-        "initLines called with no valid lines (>= 2 points each). Renderer cleared."
-      );
-      return; // Exit early
+      console.warn("initLines called with no valid lines. Renderer cleared.");
+      return;
     }
 
     // --- Prepare and Upload Texture Data (Points) ---
@@ -559,21 +504,18 @@ void main() {
       currentPointOffset += data.lineObj.points.length;
     }
 
-    gl.activeTexture(gl.TEXTURE0); // Work with texture unit 0
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
 
-    // Calculate texture dimensions
     const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
     this.texWidth = Math.min(totalValidPoints, maxTexSize);
     this.texHeight = Math.ceil(totalValidPoints / this.texWidth);
     const totalTexels = this.texWidth * this.texHeight;
 
-    // Create texture data array, potentially padded
-    const textureData = new Float32Array(totalTexels * 2); // RG32F -> 2 floats per texel
+    const textureData = new Float32Array(totalTexels * 2);
     textureData.set(allPoints);
-    this.pointsData = textureData; // Store CPU copy (potentially padded)
+    this.pointsData = textureData;
 
-    // Upload data to GPU texture
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
@@ -585,75 +527,64 @@ void main() {
       gl.FLOAT,
       this.pointsData
     );
-    gl.bindTexture(gl.TEXTURE_2D, null); // Unbind texture
+    gl.bindTexture(gl.TEXTURE_2D, null);
     // --- End Texture Data ---
 
     // --- Prepare Vertex Buffer Data (VBO with Degenerate Triangles) ---
-    const floatsPerVertex = 3; // aLineId, aIndex, aSide
-    const verticesPerPoint = 2; // One vertex for each side (+1, -1)
-    const degenerateVerticesPerJoin = 4; // Vertices needed to link two strips
+    const floatsPerVertex = 3;
+    const verticesPerPoint = 2;
+    const degenerateVerticesPerJoin = 4;
 
-    // Calculate total vertices needed
     let calculatedTotalVertices = 0;
-    for (const data of validLinesData) {
-      calculatedTotalVertices += data.numPoints * verticesPerPoint;
-    }
+    validLinesData.forEach(
+      (data) => (calculatedTotalVertices += data.numPoints * verticesPerPoint)
+    );
     if (this.numLines > 1) {
       calculatedTotalVertices +=
         (this.numLines - 1) * degenerateVerticesPerJoin;
     }
-    this.totalVertexCount = calculatedTotalVertices; // Store final count
+    this.totalVertexCount = calculatedTotalVertices;
 
     const vertexData = new Float32Array(
       this.totalVertexCount * floatsPerVertex
     );
-    let vOffset = 0; // Tracks current position (in floats) in vertexData
+    let vOffset = 0;
 
     for (let lineIdx = 0; lineIdx < this.numLines; lineIdx++) {
       const data = validLinesData[lineIdx];
       const numPts = data.numPoints;
 
-      // Add vertices for the current line's triangle strip
       for (let pointIdx = 0; pointIdx < numPts; pointIdx++) {
-        // Vertex for side +1.0
-        vertexData[vOffset++] = lineIdx; // aLineId
-        vertexData[vOffset++] = pointIdx; // aIndex
-        vertexData[vOffset++] = 1.0; // aSide
-        // Vertex for side -1.0
         vertexData[vOffset++] = lineIdx;
         vertexData[vOffset++] = pointIdx;
-        vertexData[vOffset++] = -1.0;
+        vertexData[vOffset++] = 1.0; // Side +1
+        vertexData[vOffset++] = lineIdx;
+        vertexData[vOffset++] = pointIdx;
+        vertexData[vOffset++] = -1.0; // Side -1
       }
 
-      // Add degenerate vertices to link to the *next* line strip
       if (lineIdx < this.numLines - 1) {
-        const lastPointIndexCurrentLine = numPts - 1;
+        const lastPtIdx = numPts - 1;
         const nextLineIdx = lineIdx + 1;
-        const firstPointIndexNextLine = 0;
-
-        // 1. Duplicate last vertex of current line (-1 side)
+        const firstPtIdxNext = 0;
         vertexData[vOffset++] = lineIdx;
-        vertexData[vOffset++] = lastPointIndexCurrentLine;
-        vertexData[vOffset++] = -1.0;
-        // 2. Duplicate it again
+        vertexData[vOffset++] = lastPtIdx;
+        vertexData[vOffset++] = -1.0; // Degenerate 1
         vertexData[vOffset++] = lineIdx;
-        vertexData[vOffset++] = lastPointIndexCurrentLine;
-        vertexData[vOffset++] = -1.0;
-        // 3. Duplicate first vertex of *next* line (+1 side)
+        vertexData[vOffset++] = lastPtIdx;
+        vertexData[vOffset++] = -1.0; // Degenerate 2
         vertexData[vOffset++] = nextLineIdx;
-        vertexData[vOffset++] = firstPointIndexNextLine;
-        vertexData[vOffset++] = 1.0;
-        // 4. Duplicate it again
+        vertexData[vOffset++] = firstPtIdxNext;
+        vertexData[vOffset++] = 1.0; // Degenerate 3
         vertexData[vOffset++] = nextLineIdx;
-        vertexData[vOffset++] = firstPointIndexNextLine;
-        vertexData[vOffset++] = 1.0;
+        vertexData[vOffset++] = firstPtIdxNext;
+        vertexData[vOffset++] = 1.0; // Degenerate 4
       }
     }
 
-    // Upload the combined vertex data to the GPU VBO
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW); // Static as topology is fixed
-    gl.bindBuffer(gl.ARRAY_BUFFER, null); // Unbind VBO
+    gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
     // --- End Vertex Buffer Data ---
 
     // --- Prepare and Upload Uniform Buffer Object (UBO) Data ---
@@ -666,9 +597,9 @@ void main() {
     for (let lineIdx = 0; lineIdx < this.numLines; lineIdx++) {
       const data = validLinesData[lineIdx];
       const lineObj = data.lineObj;
-      const byteOffset = lineIdx * this.lineDataStride; // Calculate offset based on valid line index
+      const byteOffset = lineIdx * this.lineDataStride;
 
-      // Pack transform (vec4)
+      // Transform
       this.lineDataView.setFloat32(
         byteOffset + OFFSET_TRANSFORM + 0 * BYTES_PER_FLOAT,
         lineObj.scale[0],
@@ -689,8 +620,7 @@ void main() {
         lineObj.offset[1],
         true
       );
-
-      // Pack color (vec4)
+      // Color
       this.lineDataView.setFloat32(
         byteOffset + OFFSET_COLOR + 0 * BYTES_PER_FLOAT,
         lineObj.color[0],
@@ -711,8 +641,7 @@ void main() {
         lineObj.color[3],
         true
       );
-
-      // Pack indices (ivec4)
+      // Indices
       this.lineDataView.setInt32(
         byteOffset + OFFSET_INDICES + 0 * BYTES_PER_INT,
         data.startIndex,
@@ -727,28 +656,23 @@ void main() {
         byteOffset + OFFSET_INDICES + 2 * BYTES_PER_INT,
         0,
         true
-      ); // Padding
+      );
       this.lineDataView.setInt32(
         byteOffset + OFFSET_INDICES + 3 * BYTES_PER_INT,
         0,
         true
-      ); // Padding
-
-      // Pack thickness (float)
+      );
+      // Thickness
       this.lineDataView.setFloat32(
         byteOffset + OFFSET_THICKNESS,
         lineObj.thickness,
         true
       );
-      // The remaining bytes up to this.lineDataStride (64) are implicit padding
     }
 
-    // Upload the entire UBO data (or just the used part if preferred)
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
-    gl.bufferData(gl.UNIFORM_BUFFER, this.lineDataArrayBuffer, gl.DYNAMIC_DRAW); // DYNAMIC for updates
-    gl.bindBuffer(gl.UNIFORM_BUFFER, null); // Unbind
-
-    // Ensure the UBO is bound to its designated binding point
+    gl.bufferData(gl.UNIFORM_BUFFER, this.lineDataArrayBuffer, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     gl.bindBufferBase(
       gl.UNIFORM_BUFFER,
       this.lineDataUBObindingPoint,
@@ -757,11 +681,14 @@ void main() {
     // --- End UBO Data ---
 
     // --- Upload Remaining Uniforms ---
-    gl.useProgram(this.prog); // Activate program
-    gl.uniform1i(this.locations.uTexWidth, this.texWidth);
-    gl.uniform1i(this.locations.uTexHeight, this.texHeight);
-    gl.uniform1i(this.locations.uNumLines, this.numLines); // Number of *active* lines
-    gl.useProgram(null); // Deactivate program
+    gl.useProgram(this.prog);
+    // Check if locations are valid before using them
+    if (this.locations.uTexWidth)
+      gl.uniform1i(this.locations.uTexWidth, this.texWidth);
+    if (this.locations.uTexHeight)
+      gl.uniform1i(this.locations.uTexHeight, this.texHeight);
+    // Removed: gl.uniform1i(this.locations.uNumLines, this.numLines);
+    gl.useProgram(null);
   }
 
   /**
@@ -777,47 +704,44 @@ void main() {
   ): void {
     if (lineId < 0 || lineId >= this.numLines) {
       console.error(
-        `Invalid lineId for transform update: ${lineId}. Must be between 0 and ${
+        `Invalid lineId for transform update: ${lineId}. Range is [0, ${
           this.numLines - 1
-        }.`
+        }].`
       );
       return;
     }
     const gl = this.gl;
-
     const byteOffset = lineId * this.lineDataStride + OFFSET_TRANSFORM;
-    const transformDataSize = 4 * BYTES_PER_FLOAT; // Size of vec4
 
-    // Update the CPU-side copy
     this.lineDataView.setFloat32(
       byteOffset + 0 * BYTES_PER_FLOAT,
       scale[0],
       true
-    ); // scale.x
+    );
     this.lineDataView.setFloat32(
       byteOffset + 1 * BYTES_PER_FLOAT,
       scale[1],
       true
-    ); // scale.y
+    );
     this.lineDataView.setFloat32(
       byteOffset + 2 * BYTES_PER_FLOAT,
       offset[0],
       true
-    ); // offset.x
+    );
     this.lineDataView.setFloat32(
       byteOffset + 3 * BYTES_PER_FLOAT,
       offset[1],
       true
-    ); // offset.y
+    );
 
-    // Upload *only* the updated transform data (16 bytes) to the GPU UBO
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
+    // Use ArrayBufferView constructor that takes buffer, byteOffset, and length
     gl.bufferSubData(
       gl.UNIFORM_BUFFER,
-      byteOffset, // Offset in GPU buffer
-      new Uint8Array(this.lineDataArrayBuffer, byteOffset, transformDataSize) // Create view of the buffer
+      byteOffset,
+      new Float32Array(this.lineDataArrayBuffer, byteOffset, 4)
     );
-    gl.bindBuffer(gl.UNIFORM_BUFFER, null); // Unbind
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
   }
 
   /**
@@ -831,47 +755,45 @@ void main() {
   ): void {
     if (lineId < 0 || lineId >= this.numLines) {
       console.error(
-        `Invalid lineId for color update: ${lineId}. Must be between 0 and ${
+        `Invalid lineId for color update: ${lineId}. Range is [0, ${
           this.numLines - 1
-        }.`
+        }].`
       );
       return;
     }
     const gl = this.gl;
-
     const byteOffset = lineId * this.lineDataStride + OFFSET_COLOR;
-    const colorDataSize = 4 * BYTES_PER_FLOAT; // Size of vec4
 
-    // Update the CPU-side copy
     this.lineDataView.setFloat32(
       byteOffset + 0 * BYTES_PER_FLOAT,
       color[0],
       true
-    ); // r
+    );
     this.lineDataView.setFloat32(
       byteOffset + 1 * BYTES_PER_FLOAT,
       color[1],
       true
-    ); // g
+    );
     this.lineDataView.setFloat32(
       byteOffset + 2 * BYTES_PER_FLOAT,
       color[2],
       true
-    ); // b
+    );
     this.lineDataView.setFloat32(
       byteOffset + 3 * BYTES_PER_FLOAT,
       color[3],
       true
-    ); // a
+    );
 
-    // Upload *only* the updated color data (16 bytes) to the GPU UBO
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
     gl.bufferSubData(
       gl.UNIFORM_BUFFER,
       byteOffset,
-      new Uint8Array(this.lineDataArrayBuffer, byteOffset, colorDataSize)
+      new Float32Array(this.lineDataArrayBuffer, byteOffset, 4)
     );
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
   }
+
   /**
    * Updates the thickness for a specific line using a UBO update.
    * @param lineId The index of the line to update (0 to numLines - 1).
@@ -880,42 +802,38 @@ void main() {
   public updateLineThickness(lineId: number, newThickness: number): void {
     if (lineId < 0 || lineId >= this.numLines) {
       console.error(
-        `Invalid lineId for thickness update: ${lineId}. Must be between 0 and ${
+        `Invalid lineId for thickness update: ${lineId}. Range is [0, ${
           this.numLines - 1
-        }.`
+        }].`
       );
       return;
     }
     const gl = this.gl;
-
     const byteOffset = lineId * this.lineDataStride + OFFSET_THICKNESS;
-    const thicknessDataSize = BYTES_PER_FLOAT; // Size of float
 
-    // Update the CPU-side copy
     this.lineDataView.setFloat32(byteOffset, newThickness, true);
 
-    // Upload *only* the updated thickness data (4 bytes) to the GPU UBO
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
-    // Use bufferSubData to update just this float
-
+    // Update only the single float
     gl.bufferSubData(
       gl.UNIFORM_BUFFER,
-      byteOffset, // Offset in GPU buffer where replacement begins
-      new Uint8Array(this.lineDataArrayBuffer, byteOffset, thicknessDataSize) // Create view of the buffer
+      byteOffset,
+      new Float32Array(this.lineDataArrayBuffer, byteOffset, 1)
     );
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
   }
-  /*
+
+  /**
    * Updates only the Y coordinates of the points for a given line in the points texture.
-   * Uses texSubImage2D for efficient partial texture updates.
    * @param lineId The index of the line to update (0 to numLines - 1).
    * @param newY A Float32Array containing the new Y coordinates for the line's points.
    */
   public updateLineY(lineId: number, newY: Float32Array): void {
     if (lineId < 0 || lineId >= this.numLines) {
       console.error(
-        `Invalid lineId for updateLineY: ${lineId}. Must be between 0 and ${
+        `Invalid lineId for updateLineY: ${lineId}. Range is [0, ${
           this.numLines - 1
-        }.`
+        }].`
       );
       return;
     }
@@ -926,31 +844,25 @@ void main() {
         `Line ${lineId}: Length mismatch for updateLineY. Expected ${numPts} Y values but got ${newY.length}.`
       );
     }
-    if (numPts <= 0) {
-      return; // Nothing to update
-    }
+    if (numPts <= 0) return;
 
     const gl = this.gl;
-    // Get start index directly from cache (more efficient than reading UBO view)
     const startIdx = this.lineStartIndexCache[lineId];
 
-    // --- Update the CPU-side copy (this.pointsData) ---
+    // Update CPU-side copy
     for (let i = 0; i < numPts; i++) {
-      const pointGlobalIndex = startIdx + i;
-      const yDataIndex = pointGlobalIndex * 2 + 1; // Y is the second float (index 1)
-
+      const yDataIndex = (startIdx + i) * 2 + 1;
       if (yDataIndex < this.pointsData.length) {
         this.pointsData[yDataIndex] = newY[i];
       } else {
         console.error(
-          `Calculated index ${yDataIndex} out of bounds for pointsData (length ${this.pointsData.length}) during updateLineY.`
+          `Index ${yDataIndex} out of bounds for pointsData (length ${this.pointsData.length}) in updateLineY.`
         );
         break;
       }
     }
-    // --- End CPU-side update ---
 
-    // --- Update the GPU texture using texSubImage2D ---
+    // Update GPU texture
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
 
@@ -960,39 +872,26 @@ void main() {
     while (currentGlobalIndex < endGlobalIndex) {
       const row = Math.floor(currentGlobalIndex / this.texWidth);
       const col = currentGlobalIndex % this.texWidth;
-
-      const remainingTexelsInRow = this.texWidth - col;
-      const remainingPointsInLine = endGlobalIndex - currentGlobalIndex;
-      const numPointsInBlock = Math.min(
-        remainingTexelsInRow,
-        remainingPointsInLine
-      );
+      const remainingInRow = this.texWidth - col;
+      const remainingInLine = endGlobalIndex - currentGlobalIndex;
+      const numPointsInBlock = Math.min(remainingInRow, remainingInLine);
 
       if (numPointsInBlock <= 0) break;
 
-      const offsetInPointsDataFloats = currentGlobalIndex * 2; // Offset in float array
-      const blockLengthFloats = numPointsInBlock * 2; // RG data
+      const offsetFloats = currentGlobalIndex * 2;
+      const lengthFloats = numPointsInBlock * 2;
 
-      if (
-        offsetInPointsDataFloats + blockLengthFloats >
-        this.pointsData.length
-      ) {
-        console.error(
-          `Texture update range [${offsetInPointsDataFloats}, ${
-            offsetInPointsDataFloats + blockLengthFloats
-          }) exceeds pointsData length (${this.pointsData.length}).`
-        );
+      if (offsetFloats + lengthFloats > this.pointsData.length) {
+        console.error(`Texture update range exceeds pointsData length.`);
         break;
       }
 
-      // Create an ArrayBufferView pointing to the relevant part of pointsData
       const subDataView = new Float32Array(
         this.pointsData.buffer,
-        this.pointsData.byteOffset + offsetInPointsDataFloats * BYTES_PER_FLOAT,
-        blockLengthFloats
+        this.pointsData.byteOffset + offsetFloats * BYTES_PER_FLOAT,
+        lengthFloats
       );
 
-      // Update the sub-region of the GPU texture
       gl.texSubImage2D(
         gl.TEXTURE_2D,
         0,
@@ -1004,11 +903,9 @@ void main() {
         gl.FLOAT,
         subDataView
       );
-
       currentGlobalIndex += numPointsInBlock;
     }
-    gl.bindTexture(gl.TEXTURE_2D, null); // Unbind texture
-    // --- End Texture Update ---
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 
   /**
@@ -1016,74 +913,53 @@ void main() {
    */
   public draw(): void {
     const gl = this.gl;
+    if (this.totalVertexCount === 0) return;
 
-    if (this.totalVertexCount === 0) {
-      return; // Nothing to draw
-    }
-
-    gl.useProgram(this.prog); // Activate the shader program
-
-    // --- Bind Resources ---
+    gl.useProgram(this.prog);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
-    // uPointsTex uniform already set to 0
-
-    // Bind UBO (important!)
     gl.bindBufferBase(
       gl.UNIFORM_BUFFER,
       this.lineDataUBObindingPoint,
       this.lineDataUBO
     );
-
-    // Bind VAO (binds VBO and attribute pointers)
     gl.bindVertexArray(this.vao);
-    // --- End Resource Binding ---
 
-    // --- Execute Single Draw Call ---
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.totalVertexCount);
-    // --- End Draw Call ---
 
-    // --- Unbind Resources (Good Practice) ---
     gl.bindVertexArray(null);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    // Unbinding the UBO from the *generic* target is okay, but it remains bound to the specific binding point.
-    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
-    gl.useProgram(null); // Deactivate program
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null); // Unbind from generic target
+    gl.useProgram(null);
   }
 
   /**
    * Releases WebGL resources allocated by this instance.
-   * Call this when the line renderer is no longer needed to prevent memory leaks.
    */
   public cleanup(): void {
     const gl = this.gl;
+    // Delete WebGL resources and set to null
     if (this.prog) {
       gl.deleteProgram(this.prog);
-      // @ts-expect-error Property 'prog' does not exist on type 'WebglLineThick'.
       this.prog = null;
     }
     if (this.pointsTexture) {
       gl.deleteTexture(this.pointsTexture);
-      // @ts-expect-error Property 'pointsTexture' does not exist on type 'WebglLineThick'.
       this.pointsTexture = null;
     }
     if (this.vertexBuffer) {
       gl.deleteBuffer(this.vertexBuffer);
-      // @ts-expect-error Property 'vertexBuffer' does not exist on type 'WebglLineThick'.
       this.vertexBuffer = null;
     }
     if (this.lineDataUBO) {
       gl.deleteBuffer(this.lineDataUBO);
-      // @ts-expect-error Property 'lineDataUBO' does not exist on type 'WebglLineThick'.
       this.lineDataUBO = null;
     }
     if (this.vao) {
       gl.deleteVertexArray(this.vao);
-      // @ts-expect-error Property 'vao' does not exist on type 'WebglLineThick'.
       this.vao = null;
     }
 
-    // Reset internal state
     this.pointsData = new Float32Array(0);
     this.lineDataArrayBuffer = new ArrayBuffer(0);
     this.lineDataView = new DataView(this.lineDataArrayBuffer);
@@ -1091,8 +967,11 @@ void main() {
     this.totalVertexCount = 0;
     this.lineNumPointsCache = [];
     this.lineStartIndexCache = [];
-    // @ts-expect-error Property 'locations' does not exist on type 'WebglLineThick'.
-    this.locations = {}; // Clear locations
+    this.locations = {
+      uPointsTex: null,
+      uTexWidth: null,
+      uTexHeight: null,
+    }; // Clear locations
 
     console.log("WebglLineThick resources cleaned up.");
   }
