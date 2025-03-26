@@ -1,4 +1,4 @@
-import { WebglPlot, WebglLineThick } from "../dist/webglplot";
+import { WebglPlot, WebglLineThick } from "../src/webglplot.ts";
 
 const fpsElem = document.getElementById("fps");
 const btClick = document.getElementById("btClick");

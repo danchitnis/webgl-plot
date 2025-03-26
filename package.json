@@ -37,6 +37,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
+    "test:html": "vite -c benchmark/vite.config.mts",
+    "build:test": "vite build -c benchmark/vite.config.mts",
     "doc": "typedoc"
   },
   "repository": {
