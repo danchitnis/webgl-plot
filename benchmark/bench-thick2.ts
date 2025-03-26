@@ -1,3 +1,4 @@
+import { LineInitData } from "../src/WbglLineThick.ts";
 import { WebglPlot, WebglLineThick } from "../src/webglplot.ts";
 
 const fpsElem = document.getElementById("fps");
@@ -23,21 +24,14 @@ console.log("numX", numX);
 
 const wglp = new WebglPlot(canvas);
 
-const plotLine = new WebglLineThick(wglp, maxLines, 0.01);
+const plotLine = new WebglLineThick(wglp, maxLines);
 
-let frame = 0;
+let framerate = 0;
 let prevTime = new Date();
 
 const array = new Float32Array(numX * 2);
 
-type Array = {
-  points: Float32Array;
-  scale: [number, number];
-  offset: [number, number];
-  color: [number, number, number, number];
-};
-
-const arrays: Array[] = [];
+const arrays: LineInitData[] = [];
 
 for (let i = 0; i < maxLines; i++) {
   for (let j = 0; j < numX; j++) {
@@ -53,6 +47,7 @@ for (let i = 0; i < maxLines; i++) {
     scale: [1, 1],
     offset: [0, 0],
     color: [Math.random(), Math.random(), Math.random(), 1],
+    thickness: 0.01,
   });
 }
 
@@ -64,7 +59,11 @@ for (let i = 0; i < numX; i++) {
 }
 plotLine.updateLineY(2, tempY);
 
+plotLine.updateLineThickness(2, 0.05);
+
 let offset = 0;
+let frame = 0;
+let thickIndex = 0;
 
 function newFrame() {
   wglp.clear();
@@ -79,16 +78,31 @@ function newFrame() {
     plotLine.updateLineTransform(i, [1, 1], [0, baseOffset + offset]);
   }
 
+  if (frame % 20 === 0) {
+    plotLine.updateLineThickness(thickIndex, 0.03);
+    plotLine.updateLineThickness(
+      thickIndex - 1 >= 0 ? thickIndex - 1 : maxLines - 1,
+      0.01
+    );
+    //console.log("tickIndex", tickIndex);
+    thickIndex++;
+    if (thickIndex == maxLines) {
+      thickIndex = 0;
+    }
+  }
+
+  frame++;
+
   plotLine.draw();
 
   const timeNow = new Date();
   if (timeNow.getTime() - prevTime.getTime() > 1000) {
-    console.log(frame);
-    fpsElem!.innerHTML = `Current fps: ${frame}`;
-    frame = 0;
+    console.log(framerate);
+    fpsElem!.innerHTML = `Current fps: ${framerate}`;
+    framerate = 0;
     prevTime = timeNow;
   } else {
-    frame++;
+    framerate++;
   }
 
   requestAnimationFrame(newFrame);
