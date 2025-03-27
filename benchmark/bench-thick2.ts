@@ -60,6 +60,9 @@ plotLine.updateLineY(2, tempY);
 
 plotLine.updateLineThickness(2, 0.05);
 
+plotLine.setLinesEnabled([0, 1, 2], false);
+plotLine.autoScaleEnabledLines();
+
 let offset = 0;
 let frame = 0;
 let thickIndex = 0;
@@ -74,7 +77,7 @@ function newFrame() {
 
   for (let i = 0; i < maxLines; i++) {
     const baseOffset = -1 + (2 * i) / (maxLines - 1);
-    plotLine.updateLineTransform(i, [1, 1], [0, baseOffset + offset]);
+    //plotLine.updateLineTransform(i, [1, 1], [0, baseOffset + offset]);
   }
 
   if (frame % 10 === 0) {
