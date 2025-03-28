@@ -35,7 +35,7 @@ const arrays: LineInitData[] = [];
 for (let i = 0; i < maxLines; i++) {
   for (let j = 0; j < numX; j++) {
     const x = -1 + (2 * j) / numX;
-    const y = Math.sin(j * 0.03) * 0.3 + 0;
+    const y = Math.sin(j * 0.03) * 0.3 + 0 + i / maxLines;
 
     array[j * 2] = x;
     array[j * 2 + 1] = y;
@@ -54,14 +54,18 @@ plotLine.initLines(arrays);
 
 const tempY = new Float32Array(numX);
 for (let i = 0; i < numX; i++) {
-  tempY[i] = Math.cos(i * 0.06) * 0.2 + 0;
+  tempY[i] = Math.cos(i * 0.06) * 0.2;
 }
 plotLine.updateLineY(2, tempY);
 
 plotLine.updateLineThickness(2, 0.05);
 
-plotLine.setLinesEnabled([0, 1, 2], false);
-plotLine.autoScaleEnabledLines();
+//plotLine.setLinesEnabled([0, 1, 2], false);
+
+//plotLine.setGlobalTransform([1, 0.5], [0, -0.5]);
+
+//const dataBounds = plotLine.autoScaleEnabledLines();
+//console.log("dataBounds", dataBounds);
 
 let offset = 0;
 let frame = 0;
@@ -75,10 +79,8 @@ function newFrame() {
     offset = -1;
   }
 
-  for (let i = 0; i < maxLines; i++) {
-    const baseOffset = -1 + (2 * i) / (maxLines - 1);
-    //plotLine.updateLineTransform(i, [1, 1], [0, baseOffset + offset]);
-  }
+  //const baseOffset = -1 + (2 * i) / (maxLines - 1);
+  plotLine.setGlobalTransform([1, 1], [0, offset]);
 
   if (frame % 10 === 0) {
     plotLine.updateLineThickness(thickIndex, 0.03);
