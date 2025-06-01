@@ -12,7 +12,9 @@ import { WebglScatterAcc } from "./WbglScatterAcc";
 import { WebglLine } from "./WbglLine";
 import { WebglLineRoll } from "./WbglLineRoll";
 import { WebglLinePlot } from "./WbglLinePlot";
-import { WebglLineThick } from "./WbglLineThick";
+import { LineInitData, WebglLineThick } from "./WbglLineThick";
+
+export type { LineInitData };
 
 export {
   WebglAux,
