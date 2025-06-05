@@ -250,20 +250,31 @@ void main() {
      vec2 n0 = vec2(-dir0.y, dir0.x);
      vec2 n1 = vec2(-dir1.y, dir1.x);
      float dotDirs = dot(dir0, dir1);
-     if (dotDirs < -0.999) { // Sharp turn (close to 180 degrees)
-         offsetNormalDir = n1; // Use bevel-like normal
+
+     vec2 miterVec = normalize(n0 + n1);
+     // Fallback if n0 + n1 is zero vector (e.g., n0 = -n1 for a 180-degree turn/spike)
+     // normalize(vec2(0.0)) can result in vec2(0.0).
+     if (length(miterVec) < 0.0001) {
+         miterVec = n1; // Fallback to a bevel-like normal using one of the segment normals
+     }
+
+     // cosAngle is dot(miterVec, n1) or dot(miterVec, n0). Should be positive.
+     // Angle between miter vector and segment normal is (angle between segments)/2.
+     // We use abs to be safe, max with 0.1 to prevent division by zero or extremely large factors.
+     float cosHalfAngle = abs(dot(miterVec, n1));
+     float miterScaleFactor = 1.0 / max(cosHalfAngle, 0.1);
+
+     float maxMiterScale = 5.0; // Limit miter length
+
+     // Apply miter logic:
+     // If it's a very sharp turn (spike, dotDirs approx -1), or if miterFactor is very large (gentle curve)
+     // then clamp the miter length to maxMiterScale.
+     // Otherwise, use the calculated miterScaleFactor.
+     offsetNormalDir = miterVec; // Always use the miter direction now
+     if (dotDirs < -0.999 || miterScaleFactor > maxMiterScale) {
+        offsetScale *= maxMiterScale;
      } else {
-         // Miter calculation
-         vec2 miterVec = normalize(n0 + n1);
-         float miterScaleFactor = 1.0 / max(dot(miterVec, n1), 0.1); // Avoid division by zero/tiny numbers
-         float maxMiterScale = 5.0; // Limit miter length
-         if (miterScaleFactor > maxMiterScale) {
-            offsetNormalDir = miterVec;
-            offsetScale *= maxMiterScale; // Clamp the scaling factor
-         } else {
-            offsetNormalDir = miterVec;
-            offsetScale *= miterScaleFactor;
-         }
+        offsetScale *= miterScaleFactor;
      }
   }
 
