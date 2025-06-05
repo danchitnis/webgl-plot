@@ -264,7 +264,7 @@ void main() {
      float cosHalfAngle = abs(dot(miterVec, n1));
      float miterScaleFactor = 1.0 / max(cosHalfAngle, 0.1);
 
-     float maxMiterScale = 5.0; // Limit miter length
+     float maxMiterScale = 2.0; // Limit miter length
 
      // Apply miter logic:
      // If it's a very sharp turn (spike, dotDirs approx -1), or if miterFactor is very large (gentle curve)
