@@ -46,7 +46,7 @@ for (let i = 0; i < maxLines; i++) {
     scale: [1, 1],
     offset: [0, 0],
     color: [Math.random(), Math.random(), Math.random(), 1],
-    thickness: 0.01,
+    thickness: 2.0,
   });
 }
 
@@ -58,7 +58,7 @@ for (let i = 0; i < numX; i++) {
 }
 plotLine.updateLineY(2, tempY);
 
-plotLine.updateLineThickness(2, 0.05);
+plotLine.updateLineThickness(2, 5.0);
 
 //plotLine.setLinesEnabled([0, 1, 2], false);
 
@@ -83,10 +83,10 @@ function newFrame() {
   plotLine.setGlobalTransform([1, 1], [0, offset]);
 
   if (frame % 10 === 0) {
-    plotLine.updateLineThickness(thickIndex, 0.03);
+    plotLine.updateLineThickness(thickIndex, 3.0);
     plotLine.updateLineThickness(
       thickIndex - 1 >= 0 ? thickIndex - 1 : maxLines - 1,
-      0.01
+      1.0
     );
     //console.log("tickIndex", tickIndex);
     thickIndex++;

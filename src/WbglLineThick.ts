@@ -14,6 +14,7 @@ type UniformLocationsMulti = {
   uTexHeight: WebGLUniformLocation | null;
   uGlobalScale: WebGLUniformLocation | null;
   uGlobalOffset: WebGLUniformLocation | null;
+  uViewportSize: WebGLUniformLocation | null;
 };
 
 export type LineInitData = {
@@ -21,7 +22,7 @@ export type LineInitData = {
   scale: [number, number]; // Initial per-line scale (applied before global)
   offset: [number, number]; // Initial per-line offset (applied before global)
   color: [number, number, number, number]; // [r, g, b, a] 0-1
-  thickness: number; // Thickness in NDC
+  thickness: number; // Thickness in screen pixels
 };
 
 // Type for returning bounds from autoScaleEnabledLines
@@ -160,6 +161,7 @@ uniform int uTexWidth;
 uniform int uTexHeight;
 uniform vec2 uGlobalScale;  // Global Scale
 uniform vec2 uGlobalOffset; // Global Offset
+uniform vec2 uViewportSize;
 
 // --- UBO ---
 struct LineData {
@@ -225,7 +227,7 @@ void main() {
 
   // --- Calculate Miter/Bevel Normal ---
   vec2 offsetNormalDir;
-  float offsetScale = 0.5 * lineThickness;
+  //float offsetScale = 0.5 * lineThickness; // OLD: lineThickness was NDC
   vec2 dirToNext = pNext - p;
   vec2 dirFromPrev = p - pPrev;
   float lenToNext = length(dirToNext);
@@ -271,19 +273,42 @@ void main() {
      // then clamp the miter length to maxMiterScale.
      // Otherwise, use the calculated miterScaleFactor.
      offsetNormalDir = miterVec; // Always use the miter direction now
-     if (dotDirs < -0.999 || miterScaleFactor > maxMiterScale) {
-        offsetScale *= maxMiterScale;
-     } else {
-        offsetScale *= miterScaleFactor;
-     }
+     // Previous offsetScale (based on NDC thickness) and miterScaleFactor (now 1.0 due to maxMiterScale=1.0)
+     // are no longer used to compute the final extrusion magnitude here.
+     // The miter logic's sole purpose now is to determine offsetNormalDir.
+     // maxMiterScale = 1.0 ensures the miter factor applied to offsetScale (if it were still used) would be 1.0,
+     // meaning no change to an already NDC-based thickness.
+     // However, we are replacing that entire scaling approach.
   }
 
-  // Calculate final vertex position *before* global transform
-  vec2 pos = p + offsetNormalDir * offsetScale * aSide;
+  // NEW MAGNITUDE CALCULATION (replaces old offsetScale logic):
+  // uLines[lineId].thickness is now interpreted as desired screen pixels.
+  float desiredHalfPixelThickness = uLines[lineId].thickness * 0.5;
 
-  // Apply Global Transformation
-  pos = pos * uGlobalScale + uGlobalOffset; // Apply global scale and offset
+  float newOffsetScaleNDC; // This will be the extrusion magnitude in NDC.
 
+  // Safety checks for viewport size and normal vector length
+  if (uViewportSize.x < 0.001 || uViewportSize.y < 0.001 || length(offsetNormalDir) < 0.0001) {
+      newOffsetScaleNDC = 0.0; // Effectively zero thickness if viewport or normal is degenerate
+  } else {
+      // Calculate how much 1 unit of NDC in the direction of offsetNormalDir stretches in screen pixel space.
+      // Projection: offsetNormalDir (NDC) -> screen space vector -> screen space length
+      // (Viewport scale * 0.5 because NDC ranges from -1 to 1, so viewport covers 2 NDC units)
+      float screenSpaceLengthOfUnitNDCOffset = length(vec2(offsetNormalDir.x * uViewportSize.x * 0.5, offsetNormalDir.y * uViewportSize.y * 0.5));
+
+      if (screenSpaceLengthOfUnitNDCOffset < 0.001) {
+          newOffsetScaleNDC = 0.0; // Avoid division by zero
+      } else {
+          // Calculate the NDC scale needed to achieve the desired pixel half-thickness.
+          newOffsetScaleNDC = desiredHalfPixelThickness / screenSpaceLengthOfUnitNDCOffset;
+      }
+  }
+
+  // Calculate final vertex position *before* global transform, using the new NDC scale
+  vec2 pos = p + offsetNormalDir * newOffsetScaleNDC * aSide;
+
+  // Apply Global Transformation (this part remains the same)
+  pos = pos * uGlobalScale + uGlobalOffset;
   gl_Position = vec4(pos, 0.0, 1.0);
 }
 `;
@@ -319,6 +344,7 @@ void main() {
       uTexHeight: gl.getUniformLocation(this.prog, "uTexHeight"),
       uGlobalScale: gl.getUniformLocation(this.prog, "uGlobalScale"),
       uGlobalOffset: gl.getUniformLocation(this.prog, "uGlobalOffset"),
+      uViewportSize: gl.getUniformLocation(this.prog, "uViewportSize"),
     };
     if (!this.locations.uPointsTex)
       console.warn("Main uniform 'uPointsTex' not found.");
@@ -330,6 +356,7 @@ void main() {
       console.warn("Main uniform 'uGlobalScale' not found.");
     if (!this.locations.uGlobalOffset)
       console.warn("Main uniform 'uGlobalOffset' not found.");
+    if (!this.locations.uViewportSize) console.warn("Main uniform 'uViewportSize' not found.");
 
     // --- Bind Main UBO Block ---
     const blockName = "LineDataBlock";
@@ -1173,6 +1200,9 @@ void main() {
         this.globalOffset[0],
         this.globalOffset[1]
       );
+    if (this.locations.uViewportSize) {
+      gl.uniform2f(this.locations.uViewportSize, gl.canvas.width, gl.canvas.height);
+    }
 
     // Bind resources
     gl.activeTexture(gl.TEXTURE0);
@@ -1241,6 +1271,7 @@ void main() {
       uTexHeight: null,
       uGlobalScale: null,
       uGlobalOffset: null,
+      uViewportSize: null,
     };
     // Reset global transform state
     this.globalScale = [1.0, 1.0];
