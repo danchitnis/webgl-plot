@@ -253,32 +253,28 @@ void main() {
      vec2 n1 = vec2(-dir1.y, dir1.x);
      float dotDirs = dot(dir0, dir1);
 
-     vec2 miterVec = normalize(n0 + n1);
-     // Fallback if n0 + n1 is zero vector (e.g., n0 = -n1 for a 180-degree turn/spike)
-     // normalize(vec2(0.0)) can result in vec2(0.0).
-     if (length(miterVec) < 0.0001) {
-         miterVec = n1; // Fallback to a bevel-like normal using one of the segment normals
+     const float GENTLE_TURN_DOT_THRESHOLD = 0.995; // Threshold for gentle turns
+
+     if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
+         // For very gentle turns (e.g., sine wave peaks/troughs),
+         // use the normal of the incoming segment to avoid miter 'bump'.
+         offsetNormalDir = n0;
+     } else {
+         // For sharper turns or spikes, use the miter direction.
+         vec2 miterVec = normalize(n0 + n1);
+         // Fallback if n0 + n1 is zero vector (e.g., n0 = -n1 for a 180-degree turn/spike)
+         if (length(miterVec) < 0.0001) {
+             miterVec = n1; // Fallback to one of the segment normals
+         }
+         offsetNormalDir = miterVec;
      }
-
-     // cosAngle is dot(miterVec, n1) or dot(miterVec, n0). Should be positive.
-     // Angle between miter vector and segment normal is (angle between segments)/2.
-     // We use abs to be safe, max with 0.1 to prevent division by zero or extremely large factors.
-     float cosHalfAngle = abs(dot(miterVec, n1));
-     float miterScaleFactor = 1.0 / max(cosHalfAngle, 0.1);
-
-     float maxMiterScale = 1.0; // Limit miter length
-
-     // Apply miter logic:
-     // If it's a very sharp turn (spike, dotDirs approx -1), or if miterFactor is very large (gentle curve)
-     // then clamp the miter length to maxMiterScale.
-     // Otherwise, use the calculated miterScaleFactor.
-     offsetNormalDir = miterVec; // Always use the miter direction now
-     // Previous offsetScale (based on NDC thickness) and miterScaleFactor (now 1.0 due to maxMiterScale=1.0)
-     // are no longer used to compute the final extrusion magnitude here.
-     // The miter logic's sole purpose now is to determine offsetNormalDir.
-     // maxMiterScale = 1.0 ensures the miter factor applied to offsetScale (if it were still used) would be 1.0,
-     // meaning no change to an already NDC-based thickness.
-     // However, we are replacing that entire scaling approach.
+     // The following lines regarding cosHalfAngle, miterScaleFactor, and maxMiterScale
+     // are no longer directly used to scale offsetNormalDir's magnitude here,
+     // as newOffsetScaleNDC calculation handles the final magnitude based on pixel thickness.
+     // However, the original miter logic (including dotDirs check) was part of clamping
+     // the *effect* of the miter, which is now implicitly handled by maxMiterScale=1.0 *if*
+     // we were still using the old offsetScale system.
+     // The GENTLE_TURN_DOT_THRESHOLD logic provides a more direct way to switch normal strategy.
   }
 
   // NEW MAGNITUDE CALCULATION (replaces old offsetScale logic):
