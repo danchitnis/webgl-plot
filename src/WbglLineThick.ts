@@ -266,14 +266,20 @@ void main() {
      float dotDirs = dot(dirFromPrevSegment, dirToNextSegment);
      const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
 
-     if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
+     if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) { // GENTLE_TURN_DOT_THRESHOLD will be 0.990
          offsetNormalDir = n0;
      } else {
-         vec2 miterSum = n0 + n1;
-         if (length(miterSum) < 0.0001) {
-             offsetNormalDir = n1;
+         const float VERY_SHARP_TURN_DOT_THRESHOLD = -0.97;
+         if (dotDirs < VERY_SHARP_TURN_DOT_THRESHOLD) {
+             offsetNormalDir = n0; // Use incoming normal for very sharp turns
          } else {
-             offsetNormalDir = normalize(miterSum);
+             // Original miter calculation for moderately sharp turns
+             vec2 miterSum = n0 + n1;
+             if (length(miterSum) < 0.0001) {
+                 offsetNormalDir = n1;
+             } else {
+                 offsetNormalDir = normalize(miterSum);
+             }
          }
      }
   }
