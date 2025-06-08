@@ -46,7 +46,7 @@ for (let i = 0; i < maxLines; i++) {
     scale: [1, 1],
     offset: [0, 0],
     color: [Math.random(), Math.random(), Math.random(), 1],
-    thickness: 2.0,
+    thickness: 10,
   });
 }
 
@@ -86,7 +86,7 @@ function newFrame() {
     plotLine.updateLineThickness(thickIndex, 3.0);
     plotLine.updateLineThickness(
       thickIndex - 1 >= 0 ? thickIndex - 1 : maxLines - 1,
-      1.0
+      20.0
     );
     //console.log("tickIndex", tickIndex);
     thickIndex++;
