@@ -227,55 +227,57 @@ void main() {
 
   // --- Calculate Miter/Bevel Normal ---
   vec2 offsetNormalDir;
-  //float offsetScale = 0.5 * lineThickness; // OLD: lineThickness was NDC
-  vec2 dirToNext = pNext - p;
-  vec2 dirFromPrev = p - pPrev;
-  float lenToNext = length(dirToNext);
-  float lenFromPrev = length(dirFromPrev);
-  bool isStart = (localIndex == 0);
-  bool isEnd = (localIndex == numPoints - 1);
-  bool prevCoincident = (lenFromPrev < 0.00001);
-  bool nextCoincident = (lenToNext < 0.00001);
 
-  if ((isStart || prevCoincident) && (isEnd || nextCoincident)) {
-     offsetNormalDir = vec2(0.0, 1.0); // Single distinct point case
-  } else if (isStart || prevCoincident) {
-     vec2 dir = normalize(dirToNext);
-     offsetNormalDir = vec2(-dir.y, dir.x);
-  } else if (isEnd || nextCoincident) {
-     vec2 dir = normalize(dirFromPrev);
-     offsetNormalDir = vec2(-dir.y, dir.x);
+  // p, pPrev, pNext were already fetched and transformed before this block in the original shader.
+  // We rely on those transformed versions: p, pPrev, pNext.
+
+  // Determine characteristics of the point p relative to its neighbors
+  // (localIndex, numPoints, p, pPrev, pNext are available and transformed)
+  bool isFirstPoint = (localIndex == 0);
+  bool isLastPoint = (localIndex == numPoints - 1);
+
+  // prevIsCoincident: Is p geometrically indistinct from the transformed pPrev?
+  bool prevIsCoincident = isFirstPoint || (length(p - pPrev) < 0.00001);
+
+  // nextIsCoincident: Is p geometrically indistinct from the transformed pNext?
+  bool nextIsCoincident = isLastPoint || (length(p - pNext) < 0.00001);
+
+  if (prevIsCoincident && nextIsCoincident) {
+     // Case 1: p is isolated, or all points in the line are coincident at p's location.
+     offsetNormalDir = vec2(0.0, 1.0);
+  } else if (prevIsCoincident) {
+     // Case 2: p is effectively the start of a segment p -> pNext.
+     // pNext is distinct from p here (otherwise Case 1 would have matched).
+     vec2 dirToSegment = normalize(pNext - p);
+     offsetNormalDir = vec2(-dirToSegment.y, dirToSegment.x);
+  } else if (nextIsCoincident) {
+     // Case 3: p is effectively the end of a segment pPrev -> p.
+     // pPrev is distinct from p here (otherwise Case 1 or 2 would have matched).
+     vec2 dirFromSegment = normalize(p - pPrev);
+     offsetNormalDir = vec2(-dirFromSegment.y, dirFromSegment.x);
   } else {
-     // Regular interior point: Calculate miter join
-     vec2 dir0 = normalize(dirFromPrev);
-     vec2 dir1 = normalize(dirToNext);
-     vec2 n0 = vec2(-dir0.y, dir0.x);
-     vec2 n1 = vec2(-dir1.y, dir1.x);
-     float dotDirs = dot(dir0, dir1);
+     // Case 4: p is an interior point with distinct pPrev and pNext. Miter join.
+     vec2 dirFromPrevSegment = normalize(p - pPrev);
+     vec2 dirToNextSegment = normalize(pNext - p);
 
-     const float GENTLE_TURN_DOT_THRESHOLD = 0.995; // Threshold for gentle turns
+     vec2 n0 = vec2(-dirFromPrevSegment.y, dirFromPrevSegment.x);
+     vec2 n1 = vec2(-dirToNextSegment.y, dirToNextSegment.x);
+
+     float dotDirs = dot(dirFromPrevSegment, dirToNextSegment);
+     const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
 
      if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
-         // For very gentle turns (e.g., sine wave peaks/troughs),
-         // use the normal of the incoming segment to avoid miter 'bump'.
          offsetNormalDir = n0;
      } else {
-         // For sharper turns or spikes, use the miter direction.
-         vec2 miterVec = normalize(n0 + n1);
-         // Fallback if n0 + n1 is zero vector (e.g., n0 = -n1 for a 180-degree turn/spike)
-         if (length(miterVec) < 0.0001) {
-             miterVec = n1; // Fallback to one of the segment normals
+         vec2 miterSum = n0 + n1;
+         if (length(miterSum) < 0.0001) {
+             offsetNormalDir = n1;
+         } else {
+             offsetNormalDir = normalize(miterSum);
          }
-         offsetNormalDir = miterVec;
      }
-     // The following lines regarding cosHalfAngle, miterScaleFactor, and maxMiterScale
-     // are no longer directly used to scale offsetNormalDir's magnitude here,
-     // as newOffsetScaleNDC calculation handles the final magnitude based on pixel thickness.
-     // However, the original miter logic (including dotDirs check) was part of clamping
-     // the *effect* of the miter, which is now implicitly handled by maxMiterScale=1.0 *if*
-     // we were still using the old offsetScale system.
-     // The GENTLE_TURN_DOT_THRESHOLD logic provides a more direct way to switch normal strategy.
   }
+  // --- End of new miter/bevel logic ---
 
   // NEW MAGNITUDE CALCULATION (replaces old offsetScale logic):
   // uLines[lineId].thickness is now interpreted as desired screen pixels.
