@@ -281,11 +281,7 @@ void main() {
          // Miter calculation for all other turns (sharp or moderately sharp)
          vec2 miterSum = n0 + n1;
 
-         // VERY_SHARP_TURN_DOT_THRESHOLD is now defined earlier
-         if (dotDirs < VERY_SHARP_TURN_DOT_THRESHOLD) {
-             float scaleFactor = 0.5; // Factor to blunt the miter
-             miterSum *= scaleFactor;
-         }
+         // The scaling logic based on VERY_SHARP_TURN_DOT_THRESHOLD has been removed.
 
          if (length(miterSum) < 0.0001) {
              offsetNormalDir = n1;
@@ -311,7 +307,20 @@ void main() {
       // (Viewport scale * 0.5 because NDC ranges from -1 to 1, so viewport covers 2 NDC units)
       float screenSpaceLengthOfUnitNDCOffset = length(vec2(offsetNormalDir.x * uViewportSize.x * 0.5, offsetNormalDir.y * uViewportSize.y * 0.5));
 
-      // Clamping logic removed
+      // Clamping logic starts
+      // VERY_SHARP_TURN_DOT_THRESHOLD should be -0.97, defined earlier in the shader
+      if (dotDirs < VERY_SHARP_TURN_DOT_THRESHOLD) {
+          float avgHalfViewport = (uViewportSize.x + uViewportSize.y) * 0.25;
+          avgHalfViewport = max(avgHalfViewport, 1.0);
+
+          float maxReasonableScreenSpaceLength = 2.0 * avgHalfViewport;
+
+          if (screenSpaceLengthOfUnitNDCOffset > maxReasonableScreenSpaceLength) {
+              screenSpaceLengthOfUnitNDCOffset = maxReasonableScreenSpaceLength;
+          }
+          screenSpaceLengthOfUnitNDCOffset = max(screenSpaceLengthOfUnitNDCOffset, 0.001);
+      }
+      // Clamping logic ends
 
       if (screenSpaceLengthOfUnitNDCOffset < 0.001) {
           newOffsetScaleNDC = 0.0; // Avoid division by zero
