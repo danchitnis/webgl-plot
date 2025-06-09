@@ -6,7 +6,7 @@ const OFFSET_THICKNESS = 48;
 const BYTES_PER_FLOAT = 4;
 const BYTES_PER_INT = 4;
 const LINE_DATA_STRIDE = 64; // Stride for UBO LineData struct
-const VERY_SHARP_TURN_DOT_THRESHOLD = -0.97; // For CPU-side sharp join detection
+const VERY_SHARP_TURN_DOT_THRESHOLD = 0.7; // For CPU-side sharp join detection
 
 // --- Types ---
 type UniformLocationsMulti = {
@@ -249,7 +249,7 @@ void main() {
 
       // Define constants for miter logic
       const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
-      const float VERY_SHARP_TURN_DOT_THRESHOLD = -0.97; // Used for miter blunting
+      const float VERY_SHARP_TURN_DOT_THRESHOLD = 0.7; // Used for miter blunting
 
       bool isFirstPoint = (localIndex == 0);
       bool isLastPoint = (localIndex == numPoints - 1);
