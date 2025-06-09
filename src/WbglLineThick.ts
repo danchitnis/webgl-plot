@@ -6,6 +6,7 @@ const OFFSET_THICKNESS = 48;
 const BYTES_PER_FLOAT = 4;
 const BYTES_PER_INT = 4;
 const LINE_DATA_STRIDE = 64; // Stride for UBO LineData struct
+const VERY_SHARP_TURN_DOT_THRESHOLD = -0.97; // For CPU-side sharp join detection
 
 // --- Types ---
 type UniformLocationsMulti = {
@@ -177,6 +178,8 @@ layout(std140) uniform LineDataBlock {
 // --- Attributes ---
 in float aLineId;
 in float aIndex;
+in float aIsBevel;
+in vec2 aBevelNormal;
 in float aSide;
 
 // --- Outputs ---
@@ -194,148 +197,110 @@ vec2 getPoint(int globalPointIndex) {
 // --- Main ---
 void main() {
   int lineId = int(aLineId);
-  int localIndex = int(aIndex);
+  int localIndex = int(aIndex); // This is the original point index passed from CPU
 
-  // Access UBO
+  // Access UBO for line properties
   int globalStartIndex = uLines[lineId].indices.x;
-  int numPoints = uLines[lineId].indices.y;
+  int numPoints = uLines[lineId].indices.y; // Total points in the current line segment
 
-  // Early exit for disabled/invalid points
-  if (numPoints <= 0 || localIndex >= numPoints) {
+  vColor = uLines[lineId].color; // Assign color to fragment shader
+
+  // Early exit for disabled lines or if pointIndex is out of bounds for this line segment
+  if (numPoints <= 0) { // localIndex check is implicitly handled by vertex generation on CPU
      gl_Position = vec4(0.0, 0.0, 0.0, 0.0); // Collapse
-     vColor = vec4(0.0);
+     //vColor = vec4(0.0); // Already set, or can be cleared if preferred
      return;
   }
 
-  // Get line specific data
+  // Common variables needed for both paths
   vec2 lineScale = uLines[lineId].transform.xy;
   vec2 lineOffset = uLines[lineId].transform.zw;
-  float lineThickness = uLines[lineId].thickness;
-  vColor = uLines[lineId].color;
-
-  int globalIndex = globalStartIndex + localIndex;
-
-  // Retrieve points (original data space)
-  vec2 p = getPoint(globalIndex);
-  vec2 pPrev = (localIndex == 0) ? p : getPoint(globalStartIndex + max(0, localIndex - 1));
-  vec2 pNext = (localIndex == numPoints - 1) ? p : getPoint(globalStartIndex + min(numPoints - 1, localIndex + 1));
-
-  // Apply per-line transformation
-  p = p * lineScale + lineOffset;
-  pPrev = pPrev * lineScale + lineOffset;
-  pNext = pNext * lineScale + lineOffset;
-
-  // --- Calculate Miter/Bevel Normal ---
-  vec2 offsetNormalDir;
-
-  // p, pPrev, pNext were already fetched and transformed before this block in the original shader.
-  // We rely on those transformed versions: p, pPrev, pNext.
-
-  float dotDirs = 1.0; // Initialize dotDirs
-
-  // Define constants for miter logic
-  const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
-  const float VERY_SHARP_TURN_DOT_THRESHOLD = -0.97;
-
-  // Determine characteristics of the point p relative to its neighbors
-  // (localIndex, numPoints, p, pPrev, pNext are available and transformed)
-  bool isFirstPoint = (localIndex == 0);
-  bool isLastPoint = (localIndex == numPoints - 1);
-
-  // prevIsCoincident: Is p geometrically indistinct from the transformed pPrev?
-  bool prevIsCoincident = isFirstPoint || (length(p - pPrev) < 0.00001);
-
-  // nextIsCoincident: Is p geometrically indistinct from the transformed pNext?
-  bool nextIsCoincident = isLastPoint || (length(p - pNext) < 0.00001);
-
-  if (prevIsCoincident && nextIsCoincident) {
-     // Case 1: p is isolated, or all points in the line are coincident at p's location.
-     offsetNormalDir = vec2(0.0, 1.0);
-  } else if (prevIsCoincident) {
-     // Case 2: p is effectively the start of a segment p -> pNext.
-     // pNext is distinct from p here (otherwise Case 1 would have matched).
-     vec2 dirToSegment = normalize(pNext - p);
-     offsetNormalDir = vec2(-dirToSegment.y, dirToSegment.x);
-  } else if (nextIsCoincident) {
-     // Case 3: p is effectively the end of a segment pPrev -> p.
-     // pPrev is distinct from p here (otherwise Case 1 or 2 would have matched).
-     vec2 dirFromSegment = normalize(p - pPrev);
-     offsetNormalDir = vec2(-dirFromSegment.y, dirFromSegment.x);
-  } else {
-     // Case 4: p is an interior point with distinct pPrev and pNext. Miter join.
-     vec2 dirFromPrevSegment = normalize(p - pPrev);
-     vec2 dirToNextSegment = normalize(pNext - p);
-
-     // n0 and n1 are calculated based on normalized segments.
-     vec2 n0 = vec2(-dirFromPrevSegment.y, dirFromPrevSegment.x);
-     vec2 n1 = vec2(-dirToNextSegment.y, dirToNextSegment.x);
-
-     dotDirs = dot(dirFromPrevSegment, dirToNextSegment); // Assign to the pre-declared dotDirs
-     // GENTLE_TURN_DOT_THRESHOLD is now defined above
-
-     if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
-         // For gentle turns, use the normal of the incoming segment directly.
-         // n0 is already normalize(vec2(-(p - pPrev).y, (p - pPrev).x)) via dirFromPrevSegment.
-         offsetNormalDir = n0;
-     } else {
-         // Miter calculation for all other turns (sharp or moderately sharp)
-         vec2 miterSum = n0 + n1;
-
-         // The scaling logic based on VERY_SHARP_TURN_DOT_THRESHOLD has been removed.
-
-         if (length(miterSum) < 0.0001) {
-             offsetNormalDir = n1;
-         } else {
-             offsetNormalDir = normalize(miterSum);
-         }
-     }
-  }
-  // --- End of new miter/bevel logic ---
-
-  // NEW MAGNITUDE CALCULATION (replaces old offsetScale logic):
-  // uLines[lineId].thickness is now interpreted as desired screen pixels.
   float desiredHalfPixelThickness = uLines[lineId].thickness * 0.5;
 
-  float newOffsetScaleNDC; // This will be the extrusion magnitude in NDC.
+  // Retrieve the current point's original coordinates from texture
+  // Note: aIndex (localIndex) directly maps to the point's position in the line's own array
+  vec2 p_original = getPoint(globalStartIndex + localIndex);
+  vec2 p_transformed = p_original * lineScale + lineOffset; // Apply per-line transform early
 
-  // Safety checks for viewport size and normal vector length
-  if (uViewportSize.x < 0.001 || uViewportSize.y < 0.001 || length(offsetNormalDir) < 0.0001) {
-      newOffsetScaleNDC = 0.0; // Effectively zero thickness if viewport or normal is degenerate
-  } else {
-      // Calculate how much 1 unit of NDC in the direction of offsetNormalDir stretches in screen pixel space.
-      // Projection: offsetNormalDir (NDC) -> screen space vector -> screen space length
-      // (Viewport scale * 0.5 because NDC ranges from -1 to 1, so viewport covers 2 NDC units)
-      float screenSpaceLengthOfUnitNDCOffset = length(vec2(offsetNormalDir.x * uViewportSize.x * 0.5, offsetNormalDir.y * uViewportSize.y * 0.5));
+  vec2 finalOffsetVector; // This will hold (normal * scale * side)
 
-      // Clamping logic starts
-      // VERY_SHARP_TURN_DOT_THRESHOLD should be -0.97, defined earlier in the shader
-      if (dotDirs < VERY_SHARP_TURN_DOT_THRESHOLD) {
-          float avgHalfViewport = (uViewportSize.x + uViewportSize.y) * 0.25;
-          avgHalfViewport = max(avgHalfViewport, 1.0);
-
-          float maxReasonableScreenSpaceLength = 2.0 * avgHalfViewport;
-
-          if (screenSpaceLengthOfUnitNDCOffset > maxReasonableScreenSpaceLength) {
-              screenSpaceLengthOfUnitNDCOffset = maxReasonableScreenSpaceLength;
-          }
-          screenSpaceLengthOfUnitNDCOffset = max(screenSpaceLengthOfUnitNDCOffset, 0.001);
-      }
-      // Clamping logic ends
-
-      if (screenSpaceLengthOfUnitNDCOffset < 0.001) {
-          newOffsetScaleNDC = 0.0; // Avoid division by zero
+  if (aIsBevel > 0.5) {
+      // --- Path for CPU-generated Bevels ---
+      // aBevelNormal is provided by CPU (N_in or N_out for the specific vertex of the bevel quad)
+      if (length(aBevelNormal) < 0.0001) {
+          finalOffsetVector = vec2(0.0, 0.0);
       } else {
-          // Calculate the NDC scale needed to achieve the desired pixel half-thickness.
-          newOffsetScaleNDC = desiredHalfPixelThickness / screenSpaceLengthOfUnitNDCOffset;
+          float bevelNormScreenSpaceLength = length(vec2(aBevelNormal.x * uViewportSize.x * 0.5, aBevelNormal.y * uViewportSize.y * 0.5));
+          bevelNormScreenSpaceLength = max(bevelNormScreenSpaceLength, 0.001); // Avoid division by zero
+          float bevelOffsetScaleNDC = desiredHalfPixelThickness / bevelNormScreenSpaceLength;
+          finalOffsetVector = aBevelNormal * bevelOffsetScaleNDC * aSide;
+      }
+  } else {
+      // --- Path for Shader-calculated Normals (Miters and Line Ends) ---
+      vec2 pPrev_original = (localIndex == 0) ? p_original : getPoint(globalStartIndex + max(0, localIndex - 1));
+      vec2 pNext_original = (localIndex == numPoints - 1) ? p_original : getPoint(globalStartIndex + min(numPoints - 1, localIndex + 1));
+
+      // Apply per-line transform to neighbors for normal calculation
+      vec2 pPrev_transformed = pPrev_original * lineScale + lineOffset;
+      vec2 pNext_transformed = pNext_original * lineScale + lineOffset;
+
+      vec2 offsetNormalDir; // To be calculated by miter/end logic
+      float dotDirs = 1.0;  // Initialize for GENTLE_TURN, actual value for interior points
+
+      // Define constants for miter logic (copied here for clarity, could be global consts in GLSL 300 es)
+      const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
+      // VERY_SHARP_TURN_DOT_THRESHOLD is not used in this path anymore
+
+      bool isFirstPoint = (localIndex == 0);
+      bool isLastPoint = (localIndex == numPoints - 1);
+      bool prevCoincident = isFirstPoint || (length(p_transformed - pPrev_transformed) < 0.00001);
+      bool nextCoincident = isLastPoint || (length(p_transformed - pNext_transformed) < 0.00001);
+
+      if (prevCoincident && nextCoincident) {
+          offsetNormalDir = vec2(0.0, 1.0); // Isolated or all points coincident
+      } else if (prevCoincident) { // Start of a segment
+          vec2 dirToNext = normalize(pNext_transformed - p_transformed);
+          offsetNormalDir = vec2(-dirToNext.y, dirToNext.x);
+      } else if (nextCoincident) { // End of a segment
+          vec2 dirFromPrev = normalize(p_transformed - pPrev_transformed);
+          offsetNormalDir = vec2(-dirFromPrev.y, dirFromPrev.x);
+      } else { // Interior point (miter join)
+          vec2 dirFromPrev = normalize(p_transformed - pPrev_transformed);
+          vec2 dirToNext = normalize(pNext_transformed - p_transformed);
+
+          dotDirs = dot(dirFromPrev, dirToNext); // Actual dot product for interior points
+
+          vec2 n0 = vec2(-dirFromPrev.y, dirFromPrev.x);
+          vec2 n1 = vec2(-dirToNext.y, dirToNext.x);
+
+          if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
+              offsetNormalDir = n0;
+          } else {
+              vec2 miterSum = n0 + n1;
+              if (length(miterSum) < 0.0001) {
+                  offsetNormalDir = n1; // Fallback for 180-degree turns
+              } else {
+                  offsetNormalDir = normalize(miterSum);
+              }
+          }
+      }
+
+      // Calculate screen-space magnitude for the shader-calculated normal
+      if (length(offsetNormalDir) < 0.0001 || uViewportSize.x < 0.001 || uViewportSize.y < 0.001) {
+           finalOffsetVector = vec2(0.0,0.0);
+      } else {
+          float normScreenSpaceLength = length(vec2(offsetNormalDir.x * uViewportSize.x * 0.5, offsetNormalDir.y * uViewportSize.y * 0.5));
+          normScreenSpaceLength = max(normScreenSpaceLength, 0.001); // Avoid division by zero
+          float calculatedOffsetScaleNDC = desiredHalfPixelThickness / normScreenSpaceLength;
+          finalOffsetVector = offsetNormalDir * calculatedOffsetScaleNDC * aSide;
       }
   }
 
-  // Calculate final vertex position *before* global transform, using the new NDC scale
-  vec2 pos = p + offsetNormalDir * newOffsetScaleNDC * aSide;
+  vec2 finalPos = p_transformed + finalOffsetVector;
 
-  // Apply Global Transformation (this part remains the same)
-  pos = pos * uGlobalScale + uGlobalOffset;
-  gl_Position = vec4(pos, 0.0, 1.0);
+  // Apply Global Transformation
+  finalPos = finalPos * uGlobalScale + uGlobalOffset;
+  gl_Position = vec4(finalPos, 0.0, 1.0);
 }
 `;
 
@@ -419,44 +384,42 @@ void main() {
     // --- Setup Main VAO & Check Attributes ---
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    const stride = 3 * BYTES_PER_FLOAT; // aLineId, aIndex, aSide
+    const stride = 6 * BYTES_PER_FLOAT; // New structure: lineId, pointIndex, isBevel, bevelNormalX, bevelNormalY, side
+
     const aLineIdLoc = gl.getAttribLocation(this.prog, "aLineId");
     const aIndexLoc = gl.getAttribLocation(this.prog, "aIndex");
+    const aIsBevelLoc = gl.getAttribLocation(this.prog, "aIsBevel");
+    const aBevelNormalLoc = gl.getAttribLocation(this.prog, "aBevelNormal");
     const aSideLoc = gl.getAttribLocation(this.prog, "aSide");
 
-    if (aLineIdLoc === -1)
-      console.warn("Attribute 'aLineId' not found in main program.");
+    if (aLineIdLoc === -1) console.warn("Attribute 'aLineId' not found in main program.");
     else {
       gl.enableVertexAttribArray(aLineIdLoc);
-      gl.vertexAttribPointer(aLineIdLoc, 1, gl.FLOAT, false, stride, 0);
+      gl.vertexAttribPointer(aLineIdLoc, 1, gl.FLOAT, false, stride, 0 * BYTES_PER_FLOAT);
     }
 
-    if (aIndexLoc === -1)
-      console.warn("Attribute 'aIndex' not found in main program.");
+    if (aIndexLoc === -1) console.warn("Attribute 'aIndex' not found in main program.");
     else {
       gl.enableVertexAttribArray(aIndexLoc);
-      gl.vertexAttribPointer(
-        aIndexLoc,
-        1,
-        gl.FLOAT,
-        false,
-        stride,
-        1 * BYTES_PER_FLOAT
-      );
+      gl.vertexAttribPointer(aIndexLoc, 1, gl.FLOAT, false, stride, 1 * BYTES_PER_FLOAT);
     }
 
-    if (aSideLoc === -1)
-      console.warn("Attribute 'aSide' not found in main program.");
+    if (aIsBevelLoc === -1) console.warn("Attribute 'aIsBevel' not found in main program.");
+    else {
+      gl.enableVertexAttribArray(aIsBevelLoc);
+      gl.vertexAttribPointer(aIsBevelLoc, 1, gl.FLOAT, false, stride, 2 * BYTES_PER_FLOAT);
+    }
+
+    if (aBevelNormalLoc === -1) console.warn("Attribute 'aBevelNormal' not found in main program.");
+    else {
+      gl.enableVertexAttribArray(aBevelNormalLoc);
+      gl.vertexAttribPointer(aBevelNormalLoc, 2, gl.FLOAT, false, stride, 3 * BYTES_PER_FLOAT);
+    }
+
+    if (aSideLoc === -1) console.warn("Attribute 'aSide' not found in main program.");
     else {
       gl.enableVertexAttribArray(aSideLoc);
-      gl.vertexAttribPointer(
-        aSideLoc,
-        1,
-        gl.FLOAT,
-        false,
-        stride,
-        2 * BYTES_PER_FLOAT
-      );
+      gl.vertexAttribPointer(aSideLoc, 1, gl.FLOAT, false, stride, 5 * BYTES_PER_FLOAT);
     }
 
     gl.bindVertexArray(null);
@@ -636,51 +599,151 @@ void main() {
     );
 
     // --- Prepare Vertex Buffer Data (VBO) ---
-    const floatsPerVertex = 3;
-    const verticesPerPoint = 2;
-    const degenerateVerticesPerJoin = 4;
+    const floatsPerVertex = 6; // New: lineId, pointIndex, isBevel, normalX, normalY, side
+
+    // Helper functions for vector math
+    const v2sub = (a: [number, number], b: [number, number]): [number, number] => [a[0] - b[0], a[1] - b[1]];
+    const v2normalize = (a: [number, number]): [number, number] => {
+      const len = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+      return len > 1e-6 ? [a[0] / len, a[1] / len] : [0, 0];
+    };
+
+    // --- Sharp Join Detection & Vertex Count Calculation ---
+    const pointSharpnessFlags = new Map<number, boolean[]>();
     let calculatedTotalVertices = 0;
+
     for (let lineId = 0; lineId < this.numLines; lineId++) {
-      calculatedTotalVertices +=
-        this.lineOriginalNumPointsCache[lineId] * verticesPerPoint;
+      const lineData = validLinesData[lineId];
+      const pointsArray = lineData.lineObj.points;
+      const numPts = lineData.numPoints;
+      const sharpnessForLine: boolean[] = new Array(numPts).fill(false);
+
+      if (numPts >= 3) { // Need at least 3 points for an interior point
+        for (let i = 1; i < numPts - 1; i++) {
+          const p0x = pointsArray[(i - 1) * 2];
+          const p0y = pointsArray[(i - 1) * 2 + 1];
+          const p1x = pointsArray[i * 2];
+          const p1y = pointsArray[i * 2 + 1];
+          const p2x = pointsArray[(i + 1) * 2];
+          const p2y = pointsArray[(i + 1) * 2 + 1];
+
+          let d0x = p1x - p0x;
+          let d0y = p1y - p0y;
+          const len_d0 = Math.sqrt(d0x * d0x + d0y * d0y);
+          if (len_d0 > 1e-6) {
+            d0x /= len_d0;
+            d0y /= len_d0;
+          }
+
+          let d1x = p2x - p1x;
+          let d1y = p2y - p1y;
+          const len_d1 = Math.sqrt(d1x * d1x + d1y * d1y);
+          if (len_d1 > 1e-6) {
+            d1x /= len_d1;
+            d1y /= len_d1;
+          }
+
+          const dotVal = d0x * d1x + d0y * d1y;
+          if (dotVal < VERY_SHARP_TURN_DOT_THRESHOLD) {
+            sharpnessForLine[i] = true;
+          }
+        }
+      }
+      pointSharpnessFlags.set(lineId, sharpnessForLine);
+
+      // Calculate vertices for this line
+      for (let i = 0; i < numPts; i++) {
+        if (i > 0 && i < numPts - 1 && sharpnessForLine[i]) {
+          calculatedTotalVertices += 4; // Sharp interior point
+        } else {
+          calculatedTotalVertices += 2; // Start, end, or non-sharp interior
+        }
+      }
     }
-    if (this.numLines > 1) {
-      calculatedTotalVertices +=
-        (this.numLines - 1) * degenerateVerticesPerJoin;
-    }
+
+    // The old logic for degenerateVerticesPerJoin between line strips is removed for now.
+    // This will be handled by the new vertex generation logic in the next step.
+    // If a single TRIANGLE_STRIP is used for all lines, degenerates would be needed.
+    // If separate draw calls or manual degenerates are used, this calculation changes.
+    // For now, calculatedTotalVertices is based on per-line point types.
+
     this.totalVertexCount = calculatedTotalVertices;
-    const vertexData = new Float32Array(
-      this.totalVertexCount * floatsPerVertex
-    );
+
+    const vertexData = new Float32Array(this.totalVertexCount * floatsPerVertex);
     let vOffset = 0;
+
     for (let lineId = 0; lineId < this.numLines; lineId++) {
-      const numPts = this.lineOriginalNumPointsCache[lineId];
+      const lineInfo = validLinesData[lineId];
+      const pointsArray = lineInfo.lineObj.points;
+      const numPts = lineInfo.numPoints;
+      const isSharpArray = pointSharpnessFlags.get(lineId) || [];
+
       for (let pointIdx = 0; pointIdx < numPts; pointIdx++) {
-        vertexData[vOffset++] = lineId;
-        vertexData[vOffset++] = pointIdx;
-        vertexData[vOffset++] = 1.0;
-        vertexData[vOffset++] = lineId;
-        vertexData[vOffset++] = pointIdx;
-        vertexData[vOffset++] = -1.0;
-      }
-      if (lineId < this.numLines - 1) {
-        const lastPtIdx = numPts - 1;
-        const nextLineId = lineId + 1;
-        const firstPtIdxNext = 0;
-        vertexData[vOffset++] = lineId;
-        vertexData[vOffset++] = lastPtIdx;
-        vertexData[vOffset++] = -1.0;
-        vertexData[vOffset++] = lineId;
-        vertexData[vOffset++] = lastPtIdx;
-        vertexData[vOffset++] = -1.0;
-        vertexData[vOffset++] = nextLineId;
-        vertexData[vOffset++] = firstPtIdxNext;
-        vertexData[vOffset++] = 1.0;
-        vertexData[vOffset++] = nextLineId;
-        vertexData[vOffset++] = firstPtIdxNext;
-        vertexData[vOffset++] = 1.0;
+        const isSharp = isSharpArray[pointIdx];
+
+        if (isSharp) { // Should only be true for interior points: 1 <= pointIdx < numPts - 1
+          const pCurr: [number, number] = [pointsArray[pointIdx * 2], pointsArray[pointIdx * 2 + 1]];
+          const pPrev: [number, number] = [pointsArray[(pointIdx - 1) * 2], pointsArray[(pointIdx - 1) * 2 + 1]];
+          const pNext: [number, number] = [pointsArray[(pointIdx + 1) * 2], pointsArray[(pointIdx + 1) * 2 + 1]];
+
+          const dir_in = v2normalize(v2sub(pCurr, pPrev));
+          const dir_out = v2normalize(v2sub(pNext, pCurr));
+
+          const n_in: [number, number] = [-dir_in[1], dir_in[0]];
+          const n_out: [number, number] = [-dir_out[1], dir_out[0]];
+
+          // Vertex 1: In-segment, Side -1
+          vertexData[vOffset++] = lineId;
+          vertexData[vOffset++] = pointIdx;
+          vertexData[vOffset++] = 1.0; // isBevel = true
+          vertexData[vOffset++] = n_in[0];
+          vertexData[vOffset++] = n_in[1];
+          vertexData[vOffset++] = -1.0; // Side
+
+          // Vertex 2: In-segment, Side +1
+          vertexData[vOffset++] = lineId;
+          vertexData[vOffset++] = pointIdx;
+          vertexData[vOffset++] = 1.0; // isBevel = true
+          vertexData[vOffset++] = n_in[0];
+          vertexData[vOffset++] = n_in[1];
+          vertexData[vOffset++] = 1.0; // Side
+
+          // Vertex 3: Out-segment, Side -1
+          vertexData[vOffset++] = lineId;
+          vertexData[vOffset++] = pointIdx;
+          vertexData[vOffset++] = 1.0; // isBevel = true
+          vertexData[vOffset++] = n_out[0];
+          vertexData[vOffset++] = n_out[1];
+          vertexData[vOffset++] = -1.0; // Side
+
+          // Vertex 4: Out-segment, Side +1
+          vertexData[vOffset++] = lineId;
+          vertexData[vOffset++] = pointIdx;
+          vertexData[vOffset++] = 1.0; // isBevel = true
+          vertexData[vOffset++] = n_out[0];
+          vertexData[vOffset++] = n_out[1];
+          vertexData[vOffset++] = 1.0; // Side
+        } else {
+          // Non-sharp point (start, end, or non-sharp interior)
+          // Vertex 1: Side -1
+          vertexData[vOffset++] = lineId;
+          vertexData[vOffset++] = pointIdx;
+          vertexData[vOffset++] = 0.0; // isBevel = false
+          vertexData[vOffset++] = 0.0; // bevelNormal idle
+          vertexData[vOffset++] = 0.0; // bevelNormal idle
+          vertexData[vOffset++] = -1.0; // Side
+
+          // Vertex 2: Side +1
+          vertexData[vOffset++] = lineId;
+          vertexData[vOffset++] = pointIdx;
+          vertexData[vOffset++] = 0.0; // isBevel = false
+          vertexData[vOffset++] = 0.0; // bevelNormal idle
+          vertexData[vOffset++] = 0.0; // bevelNormal idle
+          vertexData[vOffset++] = 1.0;  // Side
+        }
       }
     }
+    // Degenerate triangle logic between line strips has been removed.
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
