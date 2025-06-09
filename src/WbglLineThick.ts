@@ -247,9 +247,9 @@ void main() {
       vec2 offsetNormalDir; // To be calculated by miter/end logic
       float dotDirs = 1.0;  // Initialize for GENTLE_TURN, actual value for interior points
 
-      // Define constants for miter logic (copied here for clarity, could be global consts in GLSL 300 es)
+      // Define constants for miter logic
       const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
-      // VERY_SHARP_TURN_DOT_THRESHOLD is not used in this path anymore
+      const float VERY_SHARP_TURN_DOT_THRESHOLD = -0.97; // Used for miter blunting
 
       bool isFirstPoint = (localIndex == 0);
       bool isLastPoint = (localIndex == numPoints - 1);
@@ -277,8 +277,18 @@ void main() {
               offsetNormalDir = n0;
           } else {
               vec2 miterSum = n0 + n1;
+
+              // Apply scaling factor to miterSum
+              // Assumes GENTLE_TURN_DOT_THRESHOLD and VERY_SHARP_TURN_DOT_THRESHOLD are accessible constants.
+              // This logic applies if VERY_SHARP_TURN_DOT_THRESHOLD <= dotDirs <= GENTLE_TURN_DOT_THRESHOLD
+              // (VERY_SHARP_TURN_DOT_THRESHOLD is -0.97, GENTLE_TURN_DOT_THRESHOLD is 0.990)
+              float normalizedRange = (dotDirs - VERY_SHARP_TURN_DOT_THRESHOLD) / (GENTLE_TURN_DOT_THRESHOLD - VERY_SHARP_TURN_DOT_THRESHOLD);
+              normalizedRange = clamp(normalizedRange, 0.0, 1.0);
+              float scaleFactor = 0.6 + normalizedRange * 0.4; // Ranges 0.6 to 1.0
+              miterSum *= scaleFactor;
+
               if (length(miterSum) < 0.0001) {
-                  offsetNormalDir = n1; // Fallback for 180-degree turns
+                  offsetNormalDir = n1;
               } else {
                   offsetNormalDir = normalize(miterSum);
               }
@@ -651,7 +661,7 @@ void main() {
       }
       pointSharpnessFlags.set(lineId, sharpnessForLine);
 
-      // Calculate vertices for this line
+      // Calculate vertices for this line (re-enabling bevels)
       for (let i = 0; i < numPts; i++) {
         if (i > 0 && i < numPts - 1 && sharpnessForLine[i]) {
           calculatedTotalVertices += 4; // Sharp interior point
@@ -661,11 +671,7 @@ void main() {
       }
     }
 
-    // The old logic for degenerateVerticesPerJoin between line strips is removed for now.
-    // This will be handled by the new vertex generation logic in the next step.
-    // If a single TRIANGLE_STRIP is used for all lines, degenerates would be needed.
-    // If separate draw calls or manual degenerates are used, this calculation changes.
-    // For now, calculatedTotalVertices is based on per-line point types.
+    // Add vertices for degenerate quads between line strips
     if (this.numLines > 1) {
       calculatedTotalVertices += (this.numLines - 1) * 4; // 4 vertices for each degenerate quad
     }
@@ -732,16 +738,16 @@ void main() {
           vertexData[vOffset++] = lineId;
           vertexData[vOffset++] = pointIdx;
           vertexData[vOffset++] = 0.0; // isBevel = false
-          vertexData[vOffset++] = 0.0; // bevelNormal idle
-          vertexData[vOffset++] = 0.0; // bevelNormal idle
+          vertexData[vOffset++] = 0.0; // bevelNormal idle X
+          vertexData[vOffset++] = 0.0; // bevelNormal idle Y
           vertexData[vOffset++] = -1.0; // Side
 
           // Vertex 2: Side +1
           vertexData[vOffset++] = lineId;
           vertexData[vOffset++] = pointIdx;
           vertexData[vOffset++] = 0.0; // isBevel = false
-          vertexData[vOffset++] = 0.0; // bevelNormal idle
-          vertexData[vOffset++] = 0.0; // bevelNormal idle
+          vertexData[vOffset++] = 0.0; // bevelNormal idle X
+          vertexData[vOffset++] = 0.0; // bevelNormal idle Y
           vertexData[vOffset++] = 1.0;  // Side
         }
       }
@@ -751,37 +757,37 @@ void main() {
         // const nextLineId = lineId + 1; // Not directly used for vertex data, but for context
         const firstPtIdxNextLine = 0;
 
-        // Vertex 1: Repeat last point of current line, side -1
+        // Vertex 1: Side B of current line's last point
         vertexData[vOffset++] = lineId;
         vertexData[vOffset++] = lastPtIdxCurrentLine;
         vertexData[vOffset++] = 0.0; // isBevel = false
         vertexData[vOffset++] = 0.0; // bevelNormal idle X
         vertexData[vOffset++] = 0.0; // bevelNormal idle Y
-        vertexData[vOffset++] = -1.0; // Side
+        vertexData[vOffset++] = 1.0;  // Side B
 
-        // Vertex 2: Repeat last point of current line, side +1
+        // Vertex 2: Side B of current line's last point, AGAIN
         vertexData[vOffset++] = lineId;
         vertexData[vOffset++] = lastPtIdxCurrentLine;
         vertexData[vOffset++] = 0.0; // isBevel = false
         vertexData[vOffset++] = 0.0; // bevelNormal idle X
         vertexData[vOffset++] = 0.0; // bevelNormal idle Y
-        vertexData[vOffset++] = 1.0;  // Side
+        vertexData[vOffset++] = 1.0;  // Side B
 
-        // Vertex 3: Repeat first point of next line, side -1
+        // Vertex 3: Side A of next line's first point
         vertexData[vOffset++] = lineId + 1;
         vertexData[vOffset++] = firstPtIdxNextLine;
         vertexData[vOffset++] = 0.0; // isBevel = false
         vertexData[vOffset++] = 0.0; // bevelNormal idle X
         vertexData[vOffset++] = 0.0; // bevelNormal idle Y
-        vertexData[vOffset++] = -1.0; // Side
+        vertexData[vOffset++] = -1.0; // Side A
 
-        // Vertex 4: Repeat first point of next line, side +1
+        // Vertex 4: Side A of next line's first point, AGAIN
         vertexData[vOffset++] = lineId + 1;
         vertexData[vOffset++] = firstPtIdxNextLine;
         vertexData[vOffset++] = 0.0; // isBevel = false
         vertexData[vOffset++] = 0.0; // bevelNormal idle X
         vertexData[vOffset++] = 0.0; // bevelNormal idle Y
-        vertexData[vOffset++] = 1.0;  // Side
+        vertexData[vOffset++] = -1.0; // Side A
       }
     }
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
