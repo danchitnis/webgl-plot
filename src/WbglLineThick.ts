@@ -666,6 +666,9 @@ void main() {
     // If a single TRIANGLE_STRIP is used for all lines, degenerates would be needed.
     // If separate draw calls or manual degenerates are used, this calculation changes.
     // For now, calculatedTotalVertices is based on per-line point types.
+    if (this.numLines > 1) {
+      calculatedTotalVertices += (this.numLines - 1) * 4; // 4 vertices for each degenerate quad
+    }
 
     this.totalVertexCount = calculatedTotalVertices;
 
@@ -742,8 +745,45 @@ void main() {
           vertexData[vOffset++] = 1.0;  // Side
         }
       }
+      // Re-introduce degenerate triangles between distinct line arrays
+      if (lineId < this.numLines - 1) {
+        const lastPtIdxCurrentLine = this.lineOriginalNumPointsCache[lineId] - 1;
+        // const nextLineId = lineId + 1; // Not directly used for vertex data, but for context
+        const firstPtIdxNextLine = 0;
+
+        // Vertex 1: Repeat last point of current line, side -1
+        vertexData[vOffset++] = lineId;
+        vertexData[vOffset++] = lastPtIdxCurrentLine;
+        vertexData[vOffset++] = 0.0; // isBevel = false
+        vertexData[vOffset++] = 0.0; // bevelNormal idle X
+        vertexData[vOffset++] = 0.0; // bevelNormal idle Y
+        vertexData[vOffset++] = -1.0; // Side
+
+        // Vertex 2: Repeat last point of current line, side +1
+        vertexData[vOffset++] = lineId;
+        vertexData[vOffset++] = lastPtIdxCurrentLine;
+        vertexData[vOffset++] = 0.0; // isBevel = false
+        vertexData[vOffset++] = 0.0; // bevelNormal idle X
+        vertexData[vOffset++] = 0.0; // bevelNormal idle Y
+        vertexData[vOffset++] = 1.0;  // Side
+
+        // Vertex 3: Repeat first point of next line, side -1
+        vertexData[vOffset++] = lineId + 1;
+        vertexData[vOffset++] = firstPtIdxNextLine;
+        vertexData[vOffset++] = 0.0; // isBevel = false
+        vertexData[vOffset++] = 0.0; // bevelNormal idle X
+        vertexData[vOffset++] = 0.0; // bevelNormal idle Y
+        vertexData[vOffset++] = -1.0; // Side
+
+        // Vertex 4: Repeat first point of next line, side +1
+        vertexData[vOffset++] = lineId + 1;
+        vertexData[vOffset++] = firstPtIdxNextLine;
+        vertexData[vOffset++] = 0.0; // isBevel = false
+        vertexData[vOffset++] = 0.0; // bevelNormal idle X
+        vertexData[vOffset++] = 0.0; // bevelNormal idle Y
+        vertexData[vOffset++] = 1.0;  // Side
+      }
     }
-    // Degenerate triangle logic between line strips has been removed.
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
