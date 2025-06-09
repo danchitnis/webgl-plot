@@ -231,7 +231,11 @@ void main() {
   // p, pPrev, pNext were already fetched and transformed before this block in the original shader.
   // We rely on those transformed versions: p, pPrev, pNext.
 
-  float dotDirs = 1.0; // Initialize dotDirs for use in clamping later
+  float dotDirs = 1.0; // Initialize dotDirs
+
+  // Define constants for miter logic
+  const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
+  const float VERY_SHARP_TURN_DOT_THRESHOLD = -0.97;
 
   // Determine characteristics of the point p relative to its neighbors
   // (localIndex, numPoints, p, pPrev, pNext are available and transformed)
@@ -267,15 +271,22 @@ void main() {
      vec2 n1 = vec2(-dirToNextSegment.y, dirToNextSegment.x);
 
      dotDirs = dot(dirFromPrevSegment, dirToNextSegment); // Assign to the pre-declared dotDirs
-     const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
+     // GENTLE_TURN_DOT_THRESHOLD is now defined above
 
-     if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) { // GENTLE_TURN_DOT_THRESHOLD remains 0.990
+     if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
          // For gentle turns, use the normal of the incoming segment directly.
          // n0 is already normalize(vec2(-(p - pPrev).y, (p - pPrev).x)) via dirFromPrevSegment.
          offsetNormalDir = n0;
      } else {
          // Miter calculation for all other turns (sharp or moderately sharp)
          vec2 miterSum = n0 + n1;
+
+         // VERY_SHARP_TURN_DOT_THRESHOLD is now defined earlier
+         if (dotDirs < VERY_SHARP_TURN_DOT_THRESHOLD) {
+             float scaleFactor = 0.5; // Factor to blunt the miter
+             miterSum *= scaleFactor;
+         }
+
          if (length(miterSum) < 0.0001) {
              offsetNormalDir = n1;
          } else {
@@ -300,12 +311,7 @@ void main() {
       // (Viewport scale * 0.5 because NDC ranges from -1 to 1, so viewport covers 2 NDC units)
       float screenSpaceLengthOfUnitNDCOffset = length(vec2(offsetNormalDir.x * uViewportSize.x * 0.5, offsetNormalDir.y * uViewportSize.y * 0.5));
 
-      const float VERY_SHARP_TURN_DOT_THRESHOLD = -0.97;
-      if (dotDirs < VERY_SHARP_TURN_DOT_THRESHOLD) {
-        float maxAllowedScreenSpaceLength = (uViewportSize.x + uViewportSize.y) * 0.5;
-        maxAllowedScreenSpaceLength = max(maxAllowedScreenSpaceLength, 1.0);
-        screenSpaceLengthOfUnitNDCOffset = min(screenSpaceLengthOfUnitNDCOffset, maxAllowedScreenSpaceLength);
-      }
+      // Clamping logic removed
 
       if (screenSpaceLengthOfUnitNDCOffset < 0.001) {
           newOffsetScaleNDC = 0.0; // Avoid division by zero
