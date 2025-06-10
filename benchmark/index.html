@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WebGL Plot Benchmarks</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+    <style>
+      .benchmark-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      .benchmark-card {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.3s ease, background-color 0.3s ease;
+      }
+      
+      .benchmark-card:hover {
+        transform: translateY(-5px);
+        background-color: rgba(255, 255, 255, 0.15);
+      }
+      
+      .benchmark-title {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+        color: dodgerblue;
+      }
+      
+      .benchmark-description {
+        margin-bottom: 15px;
+        font-size: 0.9em;
+        color: #ccc;
+      }
+      
+      .benchmark-link {
+        border: 2px solid dodgerblue;
+        background-color: dodgerblue;
+        border-radius: 8px;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 0.9em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .benchmark-link:hover {
+        background-color: forestgreen;
+        border-color: forestgreen;
+        color: white;
+      }
+      
+      .header {
+        text-align: center;
+        margin: 40px 0;
+      }
+      
+      .main-title {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        color: white;
+      }
+      
+      .subtitle {
+        font-size: 1.1em;
+        color: #ccc;
+        margin-bottom: 10px;
+      }
+      
+      .category-section {
+        margin: 40px 0;
+      }
+      
+      .category-title {
+        font-size: 1.5em;
+        color: dodgerblue;
+        margin-bottom: 20px;
+        text-align: center;
+        border-bottom: 2px solid dodgerblue;
+        padding-bottom: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="header">
+      <h1 class="main-title">WebGL Plot Benchmarks</h1>
+      <p class="subtitle">Performance testing and demonstrations for webgl-plot library</p>
+      <p class="subtitle">Open browser console (F12) for detailed performance logs</p>
+    </div>
+
+    <div class="category-section">
+      <h2 class="category-title">Line Plot Benchmarks</h2>
+      <div class="benchmark-grid">
+        <div class="benchmark-card">
+          <div class="benchmark-title">LinePlot Benchmark</div>
+          <div class="benchmark-description">
+            Static square wave demonstration using WbglLinePlot
+          </div>
+          <a href="bench-lineplot.html" class="benchmark-link">Run Benchmark</a>
+        </div>
+
+        <div class="benchmark-card">
+          <div class="benchmark-title">Thick Line Benchmark</div>
+          <div class="benchmark-description">
+            Performance test for thick line rendering capabilities
+          </div>
+          <a href="bench-thick-line.html" class="benchmark-link">Run Benchmark</a>
+        </div>
+
+        <div class="benchmark-card">
+          <div class="benchmark-title">Thick Line Performance</div>
+          <div class="benchmark-description">
+            Advanced performance metrics for thick line implementations
+          </div>
+          <a href="bench-thick-perf.html" class="benchmark-link">Run Benchmark</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-section">
+      <h2 class="category-title">General Benchmarks</h2>
+      <div class="benchmark-grid">
+        <div class="benchmark-card">
+          <div class="benchmark-title">Benchmark 1</div>
+          <div class="benchmark-description">
+            Basic performance testing scenario
+          </div>
+          <a href="bench1.html" class="benchmark-link">Run Benchmark</a>
+        </div>
+
+        <div class="benchmark-card">
+          <div class="benchmark-title">Benchmark 2</div>
+          <div class="benchmark-description">
+            Extended performance testing scenario
+          </div>
+          <a href="bench2.html" class="benchmark-link">Run Benchmark</a>
+        </div>
+
+        <div class="benchmark-card">
+          <div class="benchmark-title">Square Wave Benchmark</div>
+          <div class="benchmark-description">
+            Square wave pattern rendering performance test
+          </div>
+          <a href="benchSq.html" class="benchmark-link">Run Benchmark</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 
+    ADDING NEW BENCHMARKS:
+    
+    To add a new benchmark, follow these steps:
+    
+    1. Add a new category section if needed:
+    <div class="category-section">
+      <h2 class="category-title">Your Category Name</h2>
+      <div class="benchmark-grid">
+        Benchmark cards go here
+      </div>
+    </div>
+    
+    2. Or add a new card to an existing category:
+    <div class="benchmark-card">
+      <div class="benchmark-title">Your Benchmark Name</div>
+      <div class="benchmark-description">
+        Brief description of what this benchmark tests
+      </div>
+      <a href="your-benchmark.html" class="benchmark-link">Run Benchmark</a>
+    </div>
+    
+    The grid layout will automatically adjust to accommodate new benchmarks.
+    -->
+
+  </body>
+</html>
