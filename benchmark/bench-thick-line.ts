@@ -33,8 +33,8 @@ const line: LineInitData = {
 plotLine.initLines([line]);
 
 // Add a global scale to test thickness invariance
-// Simulate a zoom out by a factor of 2
-plotLine.setGlobalTransform([0.5, 0.5], [0, 0]);
+const globalScale = 1.4;
+plotLine.setGlobalTransform([globalScale, globalScale], [0, 0]);
 
 wglp.clear();
 
