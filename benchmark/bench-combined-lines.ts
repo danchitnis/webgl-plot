@@ -63,7 +63,7 @@ function main() {
   wglp.clear(); // Clear canvas once
 
   // Draw thin line(s) using WebglLinePlot
-  // thinLinePlotter.updateLine(0); // Call if Ys change dynamically, not needed for initial draw with static data
+  thinLinePlotter.updateLine(0); // Call if Ys change dynamically, not needed for initial draw with static data
   thinLinePlotter.draw();
 
   // Draw thick line(s)

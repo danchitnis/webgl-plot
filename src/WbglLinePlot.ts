@@ -3,8 +3,10 @@ import type { WebglLine, WebglPlot } from "./webglplot";
 
 export class WebglLinePlot {
   private lines: WebglLine[];
+  private lines: WebglLine[];
   private gl: WebGL2RenderingContext;
   private coord: number;
+  private colorAttribLocation: number;
   private vertexBuffer: WebGLBuffer;
   public prog: WebGLProgram;
   public lineSizes: number[];
@@ -110,8 +112,9 @@ export class WebglLinePlot {
       gl.DYNAMIC_DRAW
     );
     const uColorLocation = gl.getAttribLocation(this.prog, "a_Color");
-    gl.vertexAttribPointer(uColorLocation, 3, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(uColorLocation);
+    this.colorAttribLocation = uColorLocation;
+    gl.vertexAttribPointer(this.colorAttribLocation, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(this.colorAttribLocation);
 
     // Create a vertex buffer and bind it to the ARRAY_BUFFER target
 
@@ -158,5 +161,10 @@ export class WebglLinePlot {
     for (let i = 0; i < this.lineSizes.length; i++) {
       gl.drawArrays(gl.LINE_STRIP, this.lineSizeAccum[i], this.lineSizes[i]);
     }
+    const gl = this.gl; // Ensure gl is accessible
+    gl.disableVertexAttribArray(this.coord);
+    gl.disableVertexAttribArray(this.colorAttribLocation);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.useProgram(null);
   };
 }
