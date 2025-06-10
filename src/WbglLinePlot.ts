@@ -3,7 +3,6 @@ import type { WebglLine, WebglPlot } from "./webglplot";
 
 export class WebglLinePlot {
   private lines: WebglLine[];
-  private lines: WebglLine[];
   private gl: WebGL2RenderingContext;
   private coord: number;
   private colorAttribLocation: number;
@@ -161,10 +160,9 @@ export class WebglLinePlot {
     for (let i = 0; i < this.lineSizes.length; i++) {
       gl.drawArrays(gl.LINE_STRIP, this.lineSizeAccum[i], this.lineSizes[i]);
     }
-    const gl = this.gl; // Ensure gl is accessible
-    gl.disableVertexAttribArray(this.coord);
-    gl.disableVertexAttribArray(this.colorAttribLocation);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.useProgram(null);
+    this.gl.disableVertexAttribArray(this.coord);
+    this.gl.disableVertexAttribArray(this.colorAttribLocation);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    this.gl.useProgram(null);
   };
 }
