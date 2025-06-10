@@ -306,10 +306,12 @@ void main() {
       }
   }
 
-  vec2 finalPos = p_transformed + finalOffsetVector;
+  // Apply Global Transformation to the point first
+  vec2 p_globally_transformed = p_transformed * uGlobalScale + uGlobalOffset;
 
-  // Apply Global Transformation
-  finalPos = finalPos * uGlobalScale + uGlobalOffset;
+  // Add the screen-space offset vector
+  vec2 finalPos = p_globally_transformed + finalOffsetVector;
+
   gl_Position = vec4(finalPos, 0.0, 1.0);
 }
 `;
