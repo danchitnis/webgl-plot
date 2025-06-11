@@ -7,11 +7,12 @@ import {
 
 import { WebglLineThick, LineInitData } from "../src/webglplot";
 
-
 function main() {
-  const canvas = document.getElementById('combined_canvas') as HTMLCanvasElement;
+  const canvas = document.getElementById(
+    "combined_canvas"
+  ) as HTMLCanvasElement;
   if (!canvas) {
-    console.error('Canvas element not found: combined_canvas');
+    console.error("Canvas element not found: combined_canvas");
     return;
   }
 
@@ -24,7 +25,7 @@ function main() {
   // 1. Create and configure a thin line (WebglLine) using WebglLinePlot
   const numXThin = 500;
   const thinLine = new WebglLine();
-  const thinLineColor = new ColorRGBA(0, 0, 1, 1); // Blue color for thin line
+  const thinLineColor = new ColorRGBA(1, 1, 0, 1);
   thinLine.lineSpaceX(numXThin);
   thinLine.setColor(thinLineColor);
 
@@ -39,17 +40,12 @@ function main() {
   const thinLinePlotter = new WebglLinePlot(wglp, [thinLine]);
   // No need to call wglp.addLine(thinLine) if using WebglLinePlot
 
-
   // 2. Create and configure a thick line (WebglLineThick)
   const thickLinePlot = new WebglLineThick(wglp, 1); // For one thick line
 
   const thickLineData: LineInitData = {
     points: new Float32Array([
-      -0.8, 0.0,
-      -0.4, 0.2,
-       0.0, -0.2,
-       0.4, 0.2,
-       0.8, 0.0
+      -0.8, 0.0, -0.4, 0.2, 0.0, -0.2, 0.4, 0.2, 0.8, 0.0,
     ]),
     scale: [1, 1],
     offset: [0, -0.5], // Move thick line down a bit to avoid overlap
@@ -57,7 +53,6 @@ function main() {
     thickness: 15,
   };
   thickLinePlot.initLines([thickLineData]);
-
 
   // 3. Render both lines
   wglp.clear(); // Clear canvas once
@@ -69,7 +64,7 @@ function main() {
   // Draw thick line(s)
   thickLinePlot.draw();
 
-  console.log('Combined thin and thick lines rendering attempted.');
+  console.log("Combined thin and thick lines rendering attempted.");
 
   // Add performance measurement placeholders if this evolves into a proper benchmark
   // const startTime = performance.now();
