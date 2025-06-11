@@ -88,21 +88,20 @@ export class WebglLinePlot {
       )
       .splice(0, lineSizes.length);
 
-    const colors = Array.from({ length: lineSizes.length }, () => [
-      Math.random(),
-      Math.random(),
-      Math.random(),
-    ]);
+    //const colors = Array.from({ length: lineSizes.length }, () => [
+    //  Math.random(),
+    //  Math.random(),
+    //  Math.random(),
+    //]);
 
-    let colorData = Array.from({ length: lineSizes[0] }, (_, i) => i).flatMap(
-      () => colors[0]
-    );
-    for (let i = 1; i < lineSizes.length; i++) {
-      colorData = colorData.concat(
-        Array.from({ length: lineSizes[i] }, (_, j) => j).flatMap(
-          () => colors[i]
-        )
-      );
+    let colorData: number[] = [];
+    for (let i = 0; i < this.lines.length; i++) {
+      const line = this.lines[i];
+      const numPoints = this.lineSizes[i]; // Or line.xy.length / 2
+      const color = line.color; // this is a ColorRGBA object {r, g, b, a}
+      for (let j = 0; j < numPoints; j++) {
+        colorData.push(color.r, color.g, color.b);
+      }
     }
 
     gl.bufferData(
