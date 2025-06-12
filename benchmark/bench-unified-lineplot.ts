@@ -37,7 +37,7 @@ const lineConfigs: LineConfig[] = [
     // Should use WebglLineThick
     points: new Float32Array(numX * 2),
     color: [0, 0, 1, 1], // Blue
-    thickness: 1.5,
+    thickness: 5.0, // Changed from 1.5 to 5.0
     scale: [1, 1],
     offset: [0, -0.2], // Offset to distinguish visually
     enabled: true,
@@ -100,24 +100,18 @@ function simplifiedRender() {
   webglPlot.clear();
 
   plotObjects.forEach((plot, index) => {
-    const originalConfig = lineConfigs[index]; // Used for dynamic data generation logic
-    const currentPoints = (originalConfig.points as Float32Array);
+    const originalConfig = lineConfigs[index];
+    const xValues = (originalConfig.points as Float32Array).filter((_, idx) => idx % 2 === 0);
+    const newYData = new Float32Array(numX);
 
-    const newDynamicPoints = new Float32Array(numX * 2);
     for (let i = 0; i < numX; i++) {
-      const x = currentPoints[i*2];
-      newDynamicPoints[i*2] = x;
-      newDynamicPoints[i*2+1] = Math.sin(x * Math.PI * (2 + index*0.5) + time) * 0.15 + originalConfig.offset![1];
+      const x = xValues[i];
+      // Calculate new Y value based on X, time, line index, and original Y offset
+      newYData[i] = Math.sin(x * Math.PI * (2 + index*0.5) + time) * 0.15 + originalConfig.offset![1];
     }
 
-    // Create a new config for initLines, preserving original color, etc.
-    // The thickness from originalConfig will be processed by UnifiedLinePlot's initLines logic.
-    const updateConfig: LineConfig = {
-        ...originalConfig,
-        points: newDynamicPoints,
-    };
-
-    plot.initLines([updateConfig]); // Re-initialize with new points
+    // Update only the Y data. Line ID is 0 because each plotter instance handles one line.
+    plot.updateLineY(0, newYData);
     plot.draw(); // Call draw method on the UnifiedLinePlot instance
   });
 
