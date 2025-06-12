@@ -1,11 +1,10 @@
 import {
   WebglPlot,
-  WebglLine,
-  ColorRGBA,
-  WebglLinePlot, // Import WebglLinePlot
+  WbglLinePlot,
+  WbglLineThick,
+  ColorRGBA, // Keep if used for other things, or remove
+  LineConfig,
 } from "../src/webglplot";
-
-import { WebglLineThick, LineInitData } from "../src/webglplot";
 
 function main() {
   const canvas = document.getElementById(
@@ -22,55 +21,66 @@ function main() {
 
   const wglp = new WebglPlot(canvas);
 
-  // 1. Create and configure a thin line (WebglLine) using WebglLinePlot
+  // Instantiate Plotters
+  const thinLinePlotter = wglp.newThinLinePlotter(1); // For one thin line
+  const thickLinePlotter = wglp.newThickLinePlotter(1); // For one thick line
+
+  // Define Thin Line using LineConfig
   const numXThin = 500;
-  const thinLine = new WebglLine();
-  const thinLineColor = new ColorRGBA(1, 1, 0, 1);
-  thinLine.lineSpaceX(numXThin);
-  thinLine.setColor(thinLineColor);
-
-  const ysThin: number[] = [];
+  const thinLinePoints = new Float32Array(numXThin * 2);
   for (let i = 0; i < numXThin; i++) {
-    const x = (2 * Math.PI * i) / numXThin - Math.PI; // X from -PI to PI
-    ysThin.push(Math.sin(x) * 0.8); // Scaled sine wave
+    const x = (i / (numXThin - 1)) * 2 - 1; // X from -1 to 1
+    const y = Math.sin(x * Math.PI * 2) * 0.8; // Sine wave from -0.8 to 0.8
+    thinLinePoints[i * 2] = x;
+    thinLinePoints[i * 2 + 1] = y;
   }
-  thinLine.setYs(ysThin);
+  const thinLineConfig: LineConfig = {
+    points: thinLinePoints,
+    color: [1, 1, 0, 1], // Yellow, RGBA
+    thickness: 1.5,
+    scale: [1, 1],
+    offset: [0, 0.3], // Move thin line up a bit
+    enabled: true,
+  };
 
-  // Use WebglLinePlot for the thin line
-  const thinLinePlotter = new WebglLinePlot(wglp, [thinLine]);
-  // No need to call wglp.addLine(thinLine) if using WebglLinePlot
-
-  // 2. Create and configure a thick line (WebglLineThick)
-  const thickLinePlot = new WebglLineThick(wglp, 1); // For one thick line
-
-  const thickLineData: LineInitData = {
+  // Define Thick Line using LineConfig
+  const thickLineConfig: LineConfig = {
     points: new Float32Array([
-      -0.8, 0.0, -0.4, 0.2, 0.0, -0.2, 0.4, 0.2, 0.8, 0.0,
+      -0.8, 0.0, -0.4, -0.2, 0.0, 0.0, 0.4, -0.2, 0.8, 0.0,
     ]),
     scale: [1, 1],
-    offset: [0, -0.5], // Move thick line down a bit to avoid overlap
-    color: [1, 0, 0, 1], // Red color for thick line
+    offset: [0, -0.3], // Move thick line down
+    color: [1, 0, 0, 1], // Red
     thickness: 15,
+    enabled: true,
   };
-  thickLinePlot.initLines([thickLineData]);
 
-  // 3. Render both lines
-  wglp.clear(); // Clear canvas once
+  // Initialize Plotters
+  thinLinePlotter.initLines([thinLineConfig]);
+  thickLinePlotter.initLines([thickLineConfig]);
 
-  // Draw thin line(s) using WebglLinePlot
-  thinLinePlotter.updateLine(0); // Call if Ys change dynamically, not needed for initial draw with static data
+  // Render Both Lines
+  wglp.clear();
   thinLinePlotter.draw();
+  thickLinePlotter.draw();
 
-  // Draw thick line(s)
-  thickLinePlot.draw();
-
-  console.log("Combined thin and thick lines rendering attempted.");
+  console.log("Combined thin and thick lines rendering with new plotters.");
 
   // Add performance measurement placeholders if this evolves into a proper benchmark
   // const startTime = performance.now();
   // ... rendering ...
   // const endTime = performance.now();
   // console.log(`Rendering time: ${endTime - startTime} ms`);
+
+  // Optional: Demonstrate API usage
+  // setTimeout(() => {
+  //   thinLineConfig.color = [0, 1, 1, 1]; // Cyan
+  //   thinLinePlotter.updateLineColor(0, thinLineConfig.color);
+  //   wglp.clear();
+  //   thinLinePlotter.draw();
+  //   thickLinePlotter.draw();
+  //   console.log("Thin line color updated");
+  // }, 2000);
 }
 
 main();

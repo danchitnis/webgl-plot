@@ -18,13 +18,7 @@ type UniformLocationsMulti = {
   uViewportSize: WebGLUniformLocation | null;
 };
 
-export type LineInitData = {
-  points: Float32Array; // Original data space points [x1, y1, x2, y2, ...]
-  scale: [number, number]; // Initial per-line scale (applied before global)
-  offset: [number, number]; // Initial per-line offset (applied before global)
-  color: [number, number, number, number]; // [r, g, b, a] 0-1
-  thickness: number; // Thickness in screen pixels
-};
+import type { LineConfig } from "./LineConfig";
 
 // Type for returning bounds from autoScaleEnabledLines
 export type DataBounds = {
@@ -456,7 +450,7 @@ void main() {
    * and potentially GPU reduction resources.
    * @param lines An array of line objects to draw.
    */
-  public initLines(lines: LineInitData[]): void {
+  public initLines(lines: LineConfig[]): void {
     const gl = this.gl;
     if (!this.prog) {
       console.error("Cannot initLines, main program not initialized.");
@@ -471,9 +465,10 @@ void main() {
       lines = lines.slice(0, this.maxLines);
     }
     const validLinesData: {
-      lineObj: LineInitData;
+      lineObj: LineConfig; // Changed from LineInitData
       startIndex: number;
       numPoints: number;
+      enabled: boolean; // Added to store initial enabled state
     }[] = [];
     let currentStartIndex = 0;
     this.totalValidPoints = 0;
@@ -483,17 +478,25 @@ void main() {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      // Default value handling
+      const scale = line.scale || [1, 1];
+      const offset = line.offset || [0, 0];
+      const thickness = line.thickness === undefined ? 1.0 : line.thickness;
+      const enabled = line.enabled === undefined ? true : line.enabled;
+
       const numPts = line.points.length / 2;
       if (numPts >= 2) {
-        const lineId = validLinesData.length;
+        const lineId = validLinesData.length; // This will be the internal ID for this line
         validLinesData.push({
-          lineObj: line,
+          // Store a version of the line config with defaults applied for processing
+          lineObj: { ...line, scale, offset, thickness, enabled },
           startIndex: currentStartIndex,
           numPoints: numPts,
+          enabled: enabled, // Store initial enabled state
         });
         this.lineOriginalNumPointsCache[lineId] = numPts;
         this.lineStartIndexCache[lineId] = currentStartIndex;
-        this.lineEnabledStatus[lineId] = true;
+        this.lineEnabledStatus[lineId] = enabled; // Initialize based on config
         currentStartIndex += numPts;
         this.totalValidPoints += numPts;
       } else {
@@ -806,73 +809,27 @@ void main() {
     }
     for (let lineId = 0; lineId < this.numLines; lineId++) {
       const data = validLinesData[lineId];
-      const lineObj = data.lineObj;
+      const lineObj = data.lineObj; // This now has defaults applied for scale, offset, thickness
       const byteOffset = lineId * this.lineDataStride;
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_TRANSFORM + 0 * BYTES_PER_FLOAT,
-        lineObj.scale[0],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_TRANSFORM + 1 * BYTES_PER_FLOAT,
-        lineObj.scale[1],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_TRANSFORM + 2 * BYTES_PER_FLOAT,
-        lineObj.offset[0],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_TRANSFORM + 3 * BYTES_PER_FLOAT,
-        lineObj.offset[1],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_COLOR + 0 * BYTES_PER_FLOAT,
-        lineObj.color[0],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_COLOR + 1 * BYTES_PER_FLOAT,
-        lineObj.color[1],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_COLOR + 2 * BYTES_PER_FLOAT,
-        lineObj.color[2],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_COLOR + 3 * BYTES_PER_FLOAT,
-        lineObj.color[3],
-        true
-      );
-      this.lineDataView.setInt32(
-        byteOffset + OFFSET_INDICES + 0 * BYTES_PER_INT,
-        data.startIndex,
-        true
-      );
-      this.lineDataView.setInt32(
-        byteOffset + OFFSET_INDICES + 1 * BYTES_PER_INT,
-        data.numPoints,
-        true
-      ); // Start enabled
-      this.lineDataView.setInt32(
-        byteOffset + OFFSET_INDICES + 2 * BYTES_PER_INT,
-        0,
-        true
-      );
-      this.lineDataView.setInt32(
-        byteOffset + OFFSET_INDICES + 3 * BYTES_PER_INT,
-        0,
-        true
-      ); // Unused
-      this.lineDataView.setFloat32(
-        byteOffset + OFFSET_THICKNESS,
-        lineObj.thickness,
-        true
-      );
+
+      // scale, offset, color, thickness are guaranteed by the logic above
+      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 0 * BYTES_PER_FLOAT, lineObj.scale![0], true );
+      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 1 * BYTES_PER_FLOAT, lineObj.scale![1], true );
+      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 2 * BYTES_PER_FLOAT, lineObj.offset![0], true );
+      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 3 * BYTES_PER_FLOAT, lineObj.offset![1], true );
+
+      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 0 * BYTES_PER_FLOAT, lineObj.color[0], true );
+      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 1 * BYTES_PER_FLOAT, lineObj.color[1], true );
+      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 2 * BYTES_PER_FLOAT, lineObj.color[2], true );
+      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 3 * BYTES_PER_FLOAT, lineObj.color[3], true );
+
+      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 0 * BYTES_PER_INT, data.startIndex, true );
+      // Set numPoints in UBO to 0 if line.enabled is false
+      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 1 * BYTES_PER_INT, data.enabled ? data.numPoints : 0, true );
+      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 2 * BYTES_PER_INT, 0, true ); // Unused
+      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 3 * BYTES_PER_INT, 0, true ); // Unused
+
+      this.lineDataView.setFloat32( byteOffset + OFFSET_THICKNESS, lineObj.thickness!, true );
     }
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
     gl.bufferData(gl.UNIFORM_BUFFER, this.lineDataArrayBuffer, gl.DYNAMIC_DRAW);

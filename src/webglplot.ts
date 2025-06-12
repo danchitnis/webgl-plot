@@ -12,9 +12,10 @@ import { WebglScatterAcc } from "./WbglScatterAcc";
 import { WebglLine } from "./WbglLine";
 import { WebglLineRoll } from "./WbglLineRoll";
 import { WebglLinePlot } from "./WbglLinePlot";
-import { LineInitData, WebglLineThick } from "./WbglLineThick";
+import { WebglLineThick } from "./WbglLineThick";
+import type { LineConfig } from "./LineConfig";
 
-export type { LineInitData };
+export type { LineConfig }; // Export LineConfig instead of LineInitData
 
 export {
   WebglAux,
@@ -45,6 +46,27 @@ export class WebglPlot {
   public readonly gl: WebGL2RenderingContext;
   public width: number;
   public height: number;
+
+  /**
+   * Creates a new WebglLineThick instance for rendering thick lines.
+   * @param maxLines The maximum number of thick lines this instance can handle.
+   * @returns A new WebglLineThick instance.
+   *
+   * Note: The `lineData` parameter was removed from the factory method itself.
+   * You would call `initLines()` on the returned instance to provide the data.
+   */
+  public newThickLinePlotter(maxLines: number): WebglLineThick {
+    return new WebglLineThick({ gl: this.gl }, maxLines);
+  }
+
+  /**
+   * Creates a new WebglLinePlot instance for rendering thin lines.
+   * @param maxLines The maximum number of thin lines this instance can handle.
+   * @returns A new WebglLinePlot instance.
+   */
+  public newThinLinePlotter(maxLines: number): WebglLinePlot {
+    return new WebglLinePlot(this, maxLines);
+  }
 
   /**
    * Global horizontal scale factor
@@ -156,5 +178,18 @@ export class WebglPlot {
     if (this.debug) {
       console.log("[webgl-plot]:" + str);
     }
+  }
+
+  /**
+   * @deprecated The newThickLine method along with WebglLineThick class should be used instead.
+   */
+  public newLine(webglLine: WebglLine): void {
+    this.log(
+      "Deprecated: newLine is deprecated. Use newThickLine with WebglLineThick."
+    );
+    // This method would typically add the line to an internal list of lines to be drawn.
+    // Since the old rendering logic is being phased out, this might be a no-op or
+    // delegate to a compatible structure if one exists.
+    // For now, as we are focusing on WebglLineThick, we'll just log the deprecation.
   }
 }
