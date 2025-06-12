@@ -13,9 +13,11 @@ import { WebglLine } from "./WbglLine";
 import { WebglLineRoll } from "./WbglLineRoll";
 import { WebglLinePlot } from "./WbglLinePlot";
 import { WebglLineThick } from "./WbglLineThick";
+import { UnifiedLinePlot } from "./UnifiedLinePlot"; // Added import
 import type { LineConfig } from "./LineConfig";
 
 export type { LineConfig }; // Export LineConfig instead of LineInitData
+export { UnifiedLinePlot }; // Added export
 
 export {
   WebglAux,
@@ -23,8 +25,12 @@ export {
   WebglScatterAcc,
   WebglLine,
   WebglLineRoll,
+  // WebglLinePlot, // Direct export might be removed if UnifiedLinePlot is preferred
+  // WebglLineThick, // Direct export might be removed if UnifiedLinePlot is preferred
+  // Keeping them exported for now for backward compatibility or direct use.
   WebglLinePlot,
   WebglLineThick,
+  // UnifiedLinePlot is exported above via `export { UnifiedLinePlot };`
 };
 
 type WebglPlotConfig = {
@@ -194,34 +200,11 @@ export class WebglPlot {
   }
 
   /**
-   * Creates a new line plot, deciding between WebglLinePlot (thin) and WebglLineThick (thick)
-   * based on the provided LineConfig.
-   * @param lineConfig Configuration for the line.
-   * @returns A WebglLinePlot or WebglLineThick instance.
+   * Creates a new UnifiedLinePlot instance which internally manages WebglLinePlot or WebglLineThick.
+   * @param maxLines The maximum number of lines this instance can handle.
+   * @returns A new UnifiedLinePlot instance.
    */
-  public createLinePlot(lineConfig: LineConfig): WebglLinePlot | WebglLineThick {
-    let thickness = lineConfig.thickness;
-
-    if (thickness === undefined) {
-      thickness = 1.0;
-    }
-
-    if (thickness < 1.0) {
-      thickness = 1.0;
-    }
-
-    // Update lineConfig with the adjusted thickness, as it's passed to the constructor.
-    // Create a new object to avoid modifying the original user-provided config.
-    const adjustedLineConfig: LineConfig = { ...lineConfig, thickness: thickness };
-
-    if (thickness <= 1.0) {
-      const linePlot = new WebglLinePlot(this, 1); // maxLines is 1 for a single line
-      linePlot.initLines([adjustedLineConfig]);
-      return linePlot;
-    } else {
-      const linePlot = new WebglLineThick({ gl: this.gl }, 1); // maxLines is 1 for a single line
-      linePlot.initLines([adjustedLineConfig]);
-      return linePlot;
-    }
+  public newUnifiedLinePlotter(maxLines: number): UnifiedLinePlot {
+    return new UnifiedLinePlot(this, maxLines);
   }
 }

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Webgl line plotting framework - UnifiedLinePlot Benchmark</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+  </head>
+
+  <body>
+    <div>
+      <canvas class="canvas" id="my_canvas"></canvas>
+      <p><strong>UnifiedLinePlot</strong> - Dynamic lines with varying thicknesses</p>
+      <p>Open the console (F12) for setup logs and thickness verification</p>
+    </div>
+  </body>
+
+  <!--
+    The benchmark TS files are typically compiled to JS in the same directory.
+    The 'type="module"' allows using ES module syntax if the compiled output uses it.
+    The tsconfig.json and vite/tsc compilation process determine the exact output format.
+    For this project, direct .ts execution in browser might be handled by vite during dev,
+    but for a static HTML, it should point to the compiled .js file.
+    Let's assume the compilation process (e.g. `npx tsc ./benchmark/*.ts`) generates
+    `./bench-unified-lineplot.js` which is an ES module.
+  -->
+  <script type="module" src="./bench-unified-lineplot.js"></script>
+</html>
