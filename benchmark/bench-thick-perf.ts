@@ -1,5 +1,4 @@
-import { LineInitData } from "../src/WbglLineThick.ts";
-import { WebglPlot, WebglLineThick } from "../src/webglplot.ts";
+import { WebglPlot, WebglLineThick, LineConfig } from "../src/webglplot";
 
 const fpsElem = document.getElementById("fps");
 const btClick = document.getElementById("btClick");
@@ -30,7 +29,7 @@ let prevTime = new Date();
 
 const array = new Float32Array(numX * 2);
 
-const arrays: LineInitData[] = [];
+const arrays: LineConfig[] = [];
 
 for (let i = 0; i < maxLines; i++) {
   for (let j = 0; j < numX; j++) {

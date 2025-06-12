@@ -1,5 +1,4 @@
-import { LineInitData } from "../src/WbglLineThick.ts";
-import { WebglPlot, WebglLineThick } from "../src/webglplot.ts";
+import { WebglPlot, WebglLineThick, LineConfig } from "../src/webglplot";
 
 const canvas = document.getElementById("myCanvas") as HTMLCanvasElement | null;
 if (!canvas) {
@@ -22,7 +21,7 @@ const wglp = new WebglPlot(canvas);
 
 const plotLine = new WebglLineThick(wglp, maxLines);
 
-const line: LineInitData = {
+const line: LineConfig = {
   points: new Float32Array([0, 0, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.6]),
   scale: [1, 1],
   offset: [0, 0],

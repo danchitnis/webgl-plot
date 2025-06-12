@@ -3,6 +3,7 @@ import {
   WebglLine,
   ColorRGBA,
   WebglLinePlot,
+  LineConfig,
 } from "../src/webglplot";
 
 const canvas = document.getElementById("my_canvas") as HTMLCanvasElement | null;
@@ -25,7 +26,16 @@ line.lineSpaceX(numX); // This creates the X coordinates
 line.setColor(color);
 
 // Create the LinePlot instance with single line
-const linePlot = new WebglLinePlot(wglp, [line]);
+const linePlot = new WebglLinePlot(wglp, 1); // Specify number of lines
+const lineConfig: LineConfig = {
+  points: new Float32Array(line.xy),
+  color: [line.color.r, line.color.g, line.color.b, line.color.a],
+  thickness: 1, // Default thickness
+  scale: [1, 1], // Default scale
+  offset: [0, 0], // Default offset
+  enabled: true, // Default enabled state
+};
+linePlot.initLines([lineConfig]); // Initialize lines with LineConfig
 
 console.log("Created WebglLinePlot with a single red line");
 
@@ -45,7 +55,7 @@ line.setYs(ys);
 
 // Clear canvas and draw the line
 wglp.clear();
-linePlot.updateLine(0);
+linePlot.updateLineY(0, new Float32Array(ys));
 linePlot.draw();
 
 console.log("Line drawn successfully");

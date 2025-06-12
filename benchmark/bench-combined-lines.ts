@@ -1,7 +1,7 @@
 import {
   WebglPlot,
-  WbglLinePlot,
-  WbglLineThick,
+  WebglLinePlot,
+  WebglLineThick,
   ColorRGBA, // Keep if used for other things, or remove
   LineConfig,
 } from "../src/webglplot";
