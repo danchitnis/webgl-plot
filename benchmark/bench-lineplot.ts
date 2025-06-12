@@ -29,7 +29,7 @@ line.setColor(color);
 const linePlot = new WebglLinePlot(wglp, 1); // Specify number of lines
 const lineConfig: LineConfig = {
   points: new Float32Array(line.xy),
-  color: [line.color.r, line.color.g, line.color.b, line.color.a],
+  color: [0, 1, 0, 1], // Green color in RGBA format
   thickness: 1, // Default thickness
   scale: [1, 1], // Default scale
   offset: [0, 0], // Default offset
