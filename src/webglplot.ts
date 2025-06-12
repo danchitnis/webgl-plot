@@ -192,4 +192,36 @@ export class WebglPlot {
     // delegate to a compatible structure if one exists.
     // For now, as we are focusing on WebglLineThick, we'll just log the deprecation.
   }
+
+  /**
+   * Creates a new line plot, deciding between WebglLinePlot (thin) and WebglLineThick (thick)
+   * based on the provided LineConfig.
+   * @param lineConfig Configuration for the line.
+   * @returns A WebglLinePlot or WebglLineThick instance.
+   */
+  public createLinePlot(lineConfig: LineConfig): WebglLinePlot | WebglLineThick {
+    let thickness = lineConfig.thickness;
+
+    if (thickness === undefined) {
+      thickness = 1.0;
+    }
+
+    if (thickness < 1.0) {
+      thickness = 1.0;
+    }
+
+    // Update lineConfig with the adjusted thickness, as it's passed to the constructor.
+    // Create a new object to avoid modifying the original user-provided config.
+    const adjustedLineConfig: LineConfig = { ...lineConfig, thickness: thickness };
+
+    if (thickness <= 1.0) {
+      const linePlot = new WebglLinePlot(this, 1); // maxLines is 1 for a single line
+      linePlot.initLines([adjustedLineConfig]);
+      return linePlot;
+    } else {
+      const linePlot = new WebglLineThick({ gl: this.gl }, 1); // maxLines is 1 for a single line
+      linePlot.initLines([adjustedLineConfig]);
+      return linePlot;
+    }
+  }
 }

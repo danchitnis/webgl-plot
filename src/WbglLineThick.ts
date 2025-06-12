@@ -1373,4 +1373,61 @@ void main() {
 
     console.log("WebglLineThick resources cleaned up.");
   }
+
+  /**
+   * Gets the configuration for a specific line by reading from the UBO data view.
+   * Note: This returns a partial LineConfig as not all original data might be stored or easily retrievable.
+   * Specifically, 'points' are on the GPU texture and not returned here.
+   * @param lineId The ID of the line.
+   * @returns A Partial<LineConfig> object or undefined if not found or UBO not ready.
+   */
+  public getLineConfig(lineId: number): Partial<LineConfig> | undefined {
+    if (lineId < 0 || lineId >= this.numLines) {
+      console.warn(`Invalid lineId ${lineId} for getLineConfig`);
+      return undefined;
+    }
+
+    if (!this.lineDataView || this.lineDataArrayBuffer.byteLength === 0) {
+      console.warn("getLineConfig: Line data view or UBO not initialized.");
+      return undefined;
+    }
+
+    const byteOffset = lineId * this.lineDataStride;
+
+    // Ensure the offset is within bounds
+    if (byteOffset + OFFSET_THICKNESS + BYTES_PER_FLOAT > this.lineDataView.byteLength) {
+        console.warn(`getLineConfig: lineId ${lineId} results in offset out of bounds for lineDataView.`);
+        return undefined;
+    }
+
+    const config: Partial<LineConfig> = {};
+
+    // Read transform: scale.x, scale.y, offset.x, offset.y
+    config.scale = [
+      this.lineDataView.getFloat32(byteOffset + OFFSET_TRANSFORM + 0 * BYTES_PER_FLOAT, true),
+      this.lineDataView.getFloat32(byteOffset + OFFSET_TRANSFORM + 1 * BYTES_PER_FLOAT, true),
+    ];
+    config.offset = [
+      this.lineDataView.getFloat32(byteOffset + OFFSET_TRANSFORM + 2 * BYTES_PER_FLOAT, true),
+      this.lineDataView.getFloat32(byteOffset + OFFSET_TRANSFORM + 3 * BYTES_PER_FLOAT, true),
+    ];
+
+    // Read color: r, g, b, a
+    config.color = [
+      this.lineDataView.getFloat32(byteOffset + OFFSET_COLOR + 0 * BYTES_PER_FLOAT, true),
+      this.lineDataView.getFloat32(byteOffset + OFFSET_COLOR + 1 * BYTES_PER_FLOAT, true),
+      this.lineDataView.getFloat32(byteOffset + OFFSET_COLOR + 2 * BYTES_PER_FLOAT, true),
+      this.lineDataView.getFloat32(byteOffset + OFFSET_COLOR + 3 * BYTES_PER_FLOAT, true),
+    ];
+
+    // Read thickness
+    config.thickness = this.lineDataView.getFloat32(byteOffset + OFFSET_THICKNESS, true);
+
+    // Read enabled status (derived from uLines[lineId].indices.y which is numPoints)
+    // If numPoints is 0, it's disabled.
+    const numPoints = this.lineDataView.getInt32(byteOffset + OFFSET_INDICES + 1 * BYTES_PER_INT, true);
+    config.enabled = numPoints > 0;
+
+    return config;
+  }
 }

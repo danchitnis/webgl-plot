@@ -532,7 +532,7 @@ export class WebglLinePlot {
       gl.uniform2f(this.locations.u_line_offset, line.offset[0], line.offset[1]);
       gl.uniform1f(this.locations.u_opacity, line.color[3]); // Alpha for opacity
 
-      gl.lineWidth(line.thickness); // Note: WebGL line thickness is often limited to 1.0 on many systems
+      gl.lineWidth(line.thickness!); // thickness is guaranteed by initLines
       gl.drawArrays(gl.LINE_STRIP, this.lineStarts[i], this.lineLengths[i]);
     }
 
@@ -542,4 +542,17 @@ export class WebglLinePlot {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.useProgram(null);
   };
+
+  /**
+   * Gets the configuration for a specific line.
+   * @param lineId The ID of the line.
+   * @returns The LineConfig object or undefined if not found.
+   */
+  public getLineConfig(lineId: number): LineConfig | undefined {
+    if (lineId < 0 || lineId >= this.numLines) {
+      console.warn(`Invalid lineId ${lineId} for getLineConfig`);
+      return undefined;
+    }
+    return this.linesConfig[lineId];
+  }
 }
