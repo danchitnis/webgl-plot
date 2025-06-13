@@ -13,42 +13,46 @@ const numX = 500; // Number of points for each line
 
 const webglPlot = new WebglPlot(canvas);
 
+// Define Y offsets for generating point data to ensure visual separation
+const pointGenerationYOffsets = [0.6, 0.2, -0.2, -0.6];
+const lineAmplitude = 0.15; // Amplitude of the sine wave for points
+
 // Line configurations
 const lineConfigs: LineConfig[] = [
   {
-    // Should round up to 1.0 and use WebglLinePlot
-    points: new Float32Array(numX * 2),
+    // Red line
+    points: new Float32Array(numX * 2), // Points will be populated below
     color: [1, 0, 0, 1], // Red
-    thickness: 0.5,
+    thickness: 0.5,      // Thin, will be rounded to 1.0 by UnifiedLinePlot logic for WebglLinePlot
     scale: [1, 1],
-    offset: [0, 0.6], // Offset to distinguish visually
+    offset: [0, 0],      // Explicitly [0,0] - visual separation via points
     enabled: true,
   },
   {
-    // Should use WebglLinePlot
+    // Green line
     points: new Float32Array(numX * 2),
     color: [0, 1, 0, 1], // Green
     thickness: 1.0,
     scale: [1, 1],
-    offset: [0, 0.2], // Offset to distinguish visually
+    offset: [0, 0],      // Explicitly [0,0]
     enabled: true,
   },
   {
-    // Should use WebglLineThick
+    // Blue line
     points: new Float32Array(numX * 2),
     color: [0, 0, 1, 1], // Blue
-    thickness: 5.0, // Changed from 1.5 to 5.0
+    thickness: 5.0,      // Thick
     scale: [1, 1],
-    offset: [0, -0.2], // Offset to distinguish visually
+    offset: [0, 0],      // Explicitly [0,0]
     enabled: true,
   },
   {
-    // Should default to 1.0 and use WebglLinePlot
+    // Yellow line
     points: new Float32Array(numX * 2),
     color: [1, 1, 0, 1], // Yellow
-    // No thickness specified
+    // No thickness specified (will default to 1.0)
     scale: [1, 1],
-    offset: [0, -0.6], // Offset to distinguish visually
+    offset: [0, 0],      // Explicitly [0,0]
     enabled: true,
   },
 ];
@@ -56,11 +60,11 @@ const lineConfigs: LineConfig[] = [
 // Populate initial points for each configuration
 lineConfigs.forEach((config, index) => {
     const xy = new Float32Array(numX * 2);
+    const yBase = pointGenerationYOffsets[index];
     for (let i = 0; i < numX; i++) {
         const x = (2 * i) / numX - 1; // X coordinate from -1 to 1
-        // Sine wave with varying frequency and phase, using the offset for vertical separation
         xy[i*2] = x;
-        xy[i*2+1] = Math.sin(x * Math.PI * (2 + index * 0.5)) * 0.15;
+        xy[i*2+1] = Math.sin(x * Math.PI * (2 + index * 0.5)) * lineAmplitude + yBase;
     }
     config.points = xy;
 });
@@ -101,13 +105,14 @@ function simplifiedRender() {
 
   plotObjects.forEach((plot, index) => {
     const originalConfig = lineConfigs[index];
-    const xValues = (originalConfig.points as Float32Array).filter((_, idx) => idx % 2 === 0);
+    const xValues = (originalConfig.points as Float32Array).filter((_, idx) => idx % 2 === 0); // X values remain constant
     const newYData = new Float32Array(numX);
+    const yBase = pointGenerationYOffsets[index]; // Use the same base Y offset for animation
 
     for (let i = 0; i < numX; i++) {
       const x = xValues[i];
-      // Calculate new Y value based on X, time, line index, and original Y offset
-      newYData[i] = Math.sin(x * Math.PI * (2 + index * 0.5) + time) * 0.15 + originalConfig.offset![1];
+      // Calculate new Y value based on X, time, line index, and the original yBase for this line
+      newYData[i] = Math.sin(x * Math.PI * (2 + index * 0.5) + time) * lineAmplitude + yBase;
     }
 
     // Update only the Y data. Line ID is 0 because each plotter instance handles one line.
