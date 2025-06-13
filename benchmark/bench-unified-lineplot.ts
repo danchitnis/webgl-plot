@@ -107,7 +107,7 @@ function simplifiedRender() {
     for (let i = 0; i < numX; i++) {
       const x = xValues[i];
       // Calculate new Y value based on X, time, line index, and original Y offset
-      newYData[i] = Math.sin(x * Math.PI * (2 + index*0.5) + time) * 0.15 + originalConfig.offset![1];
+      newYData[i] = Math.sin(x * Math.PI * (2 + index * 0.5) + time) * 0.15 + originalConfig.offset![1];
     }
 
     // Update only the Y data. Line ID is 0 because each plotter instance handles one line.

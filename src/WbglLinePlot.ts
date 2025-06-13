@@ -532,6 +532,24 @@ export class WebglLinePlot {
       gl.uniform2f(this.locations.u_line_offset, line.offset[0], line.offset[1]);
       gl.uniform1f(this.locations.u_opacity, line.color[3]); // Alpha for opacity
 
+      // Add a distinguishing log to easily find these messages
+      console.log(`--- WbglLinePlot.draw() line index: ${i} (internal to this plotter instance) ---`);
+      console.log(`  Enabled: ${line.enabled}`);
+      console.log(`  Color (RGBA): [${line.color[0]}, ${line.color[1]}, ${line.color[2]}, ${line.color[3]}]`);
+      console.log(`  Per-Line Scale: [${line.scale ? line.scale[0] : 'N/A'}, ${line.scale ? line.scale[1] : 'N/A'}]`);
+      console.log(`  Per-Line Offset: [${line.offset ? line.offset[0] : 'N/A'}, ${line.offset ? line.offset[1] : 'N/A'}]`);
+      console.log(`  Global Scale: [${this.globalScale[0]}, ${this.globalScale[1]}]`);
+      console.log(`  Global Offset: [${this.globalOffset[0]}, ${this.globalOffset[1]}]`);
+      console.log(`  Calculated Draw Start Index: ${this.lineStarts[i]}`);
+      console.log(`  Calculated Draw Length (num points): ${this.lineLengths[i]}`);
+      console.log(`  Thickness: ${line.thickness}`);
+      if (line.points && line.points.length > 0) {
+        console.log(`  Sample Points (first 4 values): [${line.points.slice(0,4).join(', ')}]`);
+      } else {
+        console.log("  Sample Points: No points available or empty array.");
+      }
+      console.log(`--- End WbglLinePlot.draw() line index: ${i} ---`);
+
       gl.lineWidth(line.thickness!); // thickness is guaranteed by initLines
       gl.drawArrays(gl.LINE_STRIP, this.lineStarts[i], this.lineLengths[i]);
     }
