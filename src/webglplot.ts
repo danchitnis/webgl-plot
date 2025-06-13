@@ -187,19 +187,6 @@ export class WebglPlot {
   }
 
   /**
-   * @deprecated The newThickLine method along with WebglLineThick class should be used instead.
-   */
-  public newLine(webglLine: WebglLine): void {
-    this.log(
-      "Deprecated: newLine is deprecated. Use newThickLine with WebglLineThick."
-    );
-    // This method would typically add the line to an internal list of lines to be drawn.
-    // Since the old rendering logic is being phased out, this might be a no-op or
-    // delegate to a compatible structure if one exists.
-    // For now, as we are focusing on WebglLineThick, we'll just log the deprecation.
-  }
-
-  /**
    * Creates a new UnifiedLinePlot instance which internally manages WebglLinePlot or WebglLineThick.
    * @param maxLines The maximum number of lines this instance can handle.
    * @returns A new UnifiedLinePlot instance.

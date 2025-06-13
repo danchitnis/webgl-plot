@@ -1,4 +1,4 @@
-import { WebglPlot, WebglPlotConfig } from "./webglplot";
+import { WebglPlot } from "./webglplot";
 
 export interface PolygonConfig {
   fillColor: [number, number, number, number];
@@ -61,7 +61,8 @@ export class WbglPolygonPlot {
   private globalScale: [number, number] = [1, 1];
   private globalOffset: [number, number] = [0, 0];
 
-  constructor(wglp: WebglPlot, maxPolygons: number) { // maxPolygons might be used for pre-allocation if desired, but current setup is dynamic
+  constructor(wglp: WebglPlot) {
+    // maxPolygons might be used for pre-allocation if desired, but current setup is dynamic
     this.gl = wglp.gl;
     this.wglp = wglp;
     //this.maxPolygons = maxPolygons;
@@ -74,13 +75,31 @@ export class WbglPolygonPlot {
     }
 
     this.locations = {
-      a_position: this.gl.getAttribLocation(this.prog as WebGLProgram, "a_position"),
-      u_polygon_scale: this.gl.getUniformLocation(this.prog as WebGLProgram, "u_polygon_scale"),
-      u_polygon_offset: this.gl.getUniformLocation(this.prog as WebGLProgram, "u_polygon_offset"),
-      u_global_scale: this.gl.getUniformLocation(this.prog as WebGLProgram, "u_global_scale"),
-      u_global_offset: this.gl.getUniformLocation(this.prog as WebGLProgram, "u_global_offset"),
+      a_position: this.gl.getAttribLocation(
+        this.prog as WebGLProgram,
+        "a_position"
+      ),
+      u_polygon_scale: this.gl.getUniformLocation(
+        this.prog as WebGLProgram,
+        "u_polygon_scale"
+      ),
+      u_polygon_offset: this.gl.getUniformLocation(
+        this.prog as WebGLProgram,
+        "u_polygon_offset"
+      ),
+      u_global_scale: this.gl.getUniformLocation(
+        this.prog as WebGLProgram,
+        "u_global_scale"
+      ),
+      u_global_offset: this.gl.getUniformLocation(
+        this.prog as WebGLProgram,
+        "u_global_offset"
+      ),
       u_color: this.gl.getUniformLocation(this.prog as WebGLProgram, "u_color"),
-      u_opacity: this.gl.getUniformLocation(this.prog as WebGLProgram, "u_opacity"),
+      u_opacity: this.gl.getUniformLocation(
+        this.prog as WebGLProgram,
+        "u_opacity"
+      ),
     };
 
     // Enable blending
@@ -90,7 +109,7 @@ export class WbglPolygonPlot {
 
   public initPolygons(polygonsConfig: PolygonConfig[]): void {
     // Deep copy to avoid external modification issues and set defaults
-    this.polygonsConfig = polygonsConfig.map(p => ({
+    this.polygonsConfig = polygonsConfig.map((p) => ({
       ...p,
       scale: p.scale || [1, 1],
       offset: p.offset || [0, 0],
@@ -117,7 +136,9 @@ export class WbglPolygonPlot {
     let totalVertices = 0;
     for (const polygon of this.polygonsConfig) {
       if (polygon.points.length % 2 !== 0) {
-        console.warn("WbglPolygonPlot: Polygon points array length should be even (x,y pairs). Skipping polygon.");
+        console.warn(
+          "WbglPolygonPlot: Polygon points array length should be even (x,y pairs). Skipping polygon."
+        );
         // Or handle this more gracefully, e.g. by marking polygon as invalid
         continue;
       }
@@ -128,28 +149,37 @@ export class WbglPolygonPlot {
     }
 
     if (totalVertices === 0 && this.numPolygons > 0) {
-        console.warn("WbglPolygonPlot: No valid vertices found in polygon configurations.");
-        this.numPolygons = 0; // Correct numPolygons if all were invalid
-        return;
+      console.warn(
+        "WbglPolygonPlot: No valid vertices found in polygon configurations."
+      );
+      this.numPolygons = 0; // Correct numPolygons if all were invalid
+      return;
     }
-
 
     const allVertexData = new Float32Array(totalVertices);
     let offset = 0;
     for (const polygon of this.polygonsConfig) {
-        // Only add valid polygons' data
-        if (polygon.points.length > 0 && polygon.points.length % 2 === 0) {
-            allVertexData.set(polygon.points, offset);
-            offset += polygon.points.length;
-        }
+      // Only add valid polygons' data
+      if (polygon.points.length > 0 && polygon.points.length % 2 === 0) {
+        allVertexData.set(polygon.points, offset);
+        offset += polygon.points.length;
+      }
     }
 
     this.vertexBuffer = this.gl.createBuffer();
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, allVertexData, this.gl.STATIC_DRAW);
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
+      allVertexData,
+      this.gl.STATIC_DRAW
+    );
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null); // Unbind
 
-    if (this.prog && this.locations.u_global_scale && this.locations.u_global_offset) {
+    if (
+      this.prog &&
+      this.locations.u_global_scale &&
+      this.locations.u_global_offset
+    ) {
       this.gl.useProgram(this.prog);
       this.gl.uniform2fv(this.locations.u_global_scale, this.globalScale);
       this.gl.uniform2fv(this.locations.u_global_offset, this.globalOffset);
@@ -177,12 +207,16 @@ export class WbglPolygonPlot {
 
   public updatePolygonPoints(polygonId: number, points: Float32Array): void {
     if (polygonId < 0 || polygonId >= this.numPolygons || !this.vertexBuffer) {
-      console.warn("WbglPolygonPlot: Invalid polygonId or buffer not initialized for updatePolygonPoints.");
+      console.warn(
+        "WbglPolygonPlot: Invalid polygonId or buffer not initialized for updatePolygonPoints."
+      );
       return;
     }
     const polygon = this.polygonsConfig[polygonId];
     if (points.length !== polygon.points.length) {
-      console.error("WbglPolygonPlot: New points array length must match the original for updatePolygonPoints. For resizing, re-initialize polygons.");
+      console.error(
+        "WbglPolygonPlot: New points array length must match the original for updatePolygonPoints. For resizing, re-initialize polygons."
+      );
       return;
     }
 
@@ -192,7 +226,8 @@ export class WbglPolygonPlot {
     // polygonStarts stores the starting *vertex* index, not component index
     let byteOffset = 0;
     for (let i = 0; i < polygonId; i++) {
-        byteOffset += this.polygonsConfig[i].points.length * Float32Array.BYTES_PER_ELEMENT;
+      byteOffset +=
+        this.polygonsConfig[i].points.length * Float32Array.BYTES_PER_ELEMENT;
     }
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -200,9 +235,15 @@ export class WbglPolygonPlot {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
   }
 
-  public updatePolygonTransform(polygonId: number, scale: [number, number], offset: [number, number]): void {
+  public updatePolygonTransform(
+    polygonId: number,
+    scale: [number, number],
+    offset: [number, number]
+  ): void {
     if (polygonId < 0 || polygonId >= this.numPolygons) {
-      console.warn("WbglPolygonPlot: Invalid polygonId for updatePolygonTransform.");
+      console.warn(
+        "WbglPolygonPlot: Invalid polygonId for updatePolygonTransform."
+      );
       return;
     }
     this.polygonsConfig[polygonId].scale = scale;
@@ -211,10 +252,17 @@ export class WbglPolygonPlot {
 
   public updatePolygonStyle(
     polygonId: number,
-    style: Partial<Pick<PolygonConfig, 'fillColor' | 'strokeColor' | 'strokeWeight' | 'isFilled' | 'isStroked'>>
+    style: Partial<
+      Pick<
+        PolygonConfig,
+        "fillColor" | "strokeColor" | "strokeWeight" | "isFilled" | "isStroked"
+      >
+    >
   ): void {
     if (polygonId < 0 || polygonId >= this.numPolygons) {
-      console.warn("WbglPolygonPlot: Invalid polygonId for updatePolygonStyle.");
+      console.warn(
+        "WbglPolygonPlot: Invalid polygonId for updatePolygonStyle."
+      );
       return;
     }
     // Use Object.assign to update only provided properties
@@ -229,10 +277,17 @@ export class WbglPolygonPlot {
     this.polygonsConfig[polygonId].enabled = enabled;
   }
 
-  public setGlobalTransform(scale: [number, number], offset: [number, number]): void {
+  public setGlobalTransform(
+    scale: [number, number],
+    offset: [number, number]
+  ): void {
     this.globalScale = scale;
     this.globalOffset = offset;
-    if (this.prog && this.locations.u_global_scale && this.locations.u_global_offset) {
+    if (
+      this.prog &&
+      this.locations.u_global_scale &&
+      this.locations.u_global_offset
+    ) {
       this.gl.useProgram(this.prog);
       this.gl.uniform2fv(this.locations.u_global_scale, this.globalScale);
       this.gl.uniform2fv(this.locations.u_global_offset, this.globalOffset);
@@ -241,7 +296,12 @@ export class WbglPolygonPlot {
   }
 
   public draw(): void {
-    if (!this.prog || !this.vertexBuffer || this.numPolygons === 0 || !this.locations) {
+    if (
+      !this.prog ||
+      !this.vertexBuffer ||
+      this.numPolygons === 0 ||
+      !this.locations
+    ) {
       return;
     }
 
@@ -259,7 +319,7 @@ export class WbglPolygonPlot {
       gl.FLOAT, // type
       false, // normalize
       0, // stride (0 = use size * sizeof(type))
-      0  // offset (0 = start from the beginning of the buffer)
+      0 // offset (0 = start from the beginning of the buffer)
     );
     gl.enableVertexAttribArray(this.locations.a_position);
 
@@ -270,8 +330,8 @@ export class WbglPolygonPlot {
       }
 
       // Default scale and offset if not provided in config (should be handled by initPolygons)
-      const scale = polygon.scale || [1,1];
-      const offset = polygon.offset || [0,0];
+      const scale = polygon.scale || [1, 1];
+      const offset = polygon.offset || [0, 0];
 
       gl.uniform2fv(this.locations.u_polygon_scale, scale);
       gl.uniform2fv(this.locations.u_polygon_offset, offset);
@@ -281,15 +341,20 @@ export class WbglPolygonPlot {
 
       if (numVertices === 0) continue;
 
-
       if (polygon.isFilled) {
-        gl.uniform4fv(this.locations.u_color, polygon.fillColor.slice(0,3).concat(1.0)); // Use full opacity for color
+        gl.uniform4fv(
+          this.locations.u_color,
+          polygon.fillColor.slice(0, 3).concat(1.0)
+        ); // Use full opacity for color
         gl.uniform1f(this.locations.u_opacity, polygon.fillColor[3]); // Separate opacity
         gl.drawArrays(gl.TRIANGLE_FAN, startVertex, numVertices);
       }
 
       if (polygon.isStroked && polygon.strokeWeight > 0) {
-        gl.uniform4fv(this.locations.u_color, polygon.strokeColor.slice(0,3).concat(1.0));
+        gl.uniform4fv(
+          this.locations.u_color,
+          polygon.strokeColor.slice(0, 3).concat(1.0)
+        );
         gl.uniform1f(this.locations.u_opacity, polygon.strokeColor[3]);
         gl.lineWidth(polygon.strokeWeight);
         gl.drawArrays(gl.LINE_LOOP, startVertex, numVertices);
@@ -301,7 +366,10 @@ export class WbglPolygonPlot {
     gl.useProgram(null);
   }
 
-  private _createShaderProgram(vsSource: string, fsSource: string): WebGLProgram | null {
+  private _createShaderProgram(
+    vsSource: string,
+    fsSource: string
+  ): WebGLProgram | null {
     const gl = this.gl;
 
     const vertexShader = this._compileShader(gl.VERTEX_SHADER, vsSource);
@@ -322,7 +390,10 @@ export class WbglPolygonPlot {
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error("Shader program linking error:", gl.getProgramInfoLog(program));
+      console.error(
+        "Shader program linking error:",
+        gl.getProgramInfoLog(program)
+      );
       gl.deleteProgram(program);
       gl.deleteShader(vertexShader);
       gl.deleteShader(fragmentShader);
@@ -349,7 +420,10 @@ export class WbglPolygonPlot {
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       const shaderType = type === gl.VERTEX_SHADER ? "Vertex" : "Fragment";
-      console.error(`${shaderType} shader compilation error:`, gl.getShaderInfoLog(shader));
+      console.error(
+        `${shaderType} shader compilation error:`,
+        gl.getShaderInfoLog(shader)
+      );
       gl.deleteShader(shader);
       return null;
     }
@@ -376,7 +450,7 @@ export class WbglPolygonPlot {
       radius,
       rotation = 0,
       fillColor = [0.8, 0.8, 0.8, 0.5], // Default: semi-transparent grey
-      strokeColor = [0, 0, 0, 1],       // Default: black
+      strokeColor = [0, 0, 0, 1], // Default: black
       strokeWeight = 1,
       isFilled = true,
       isStroked = false,
@@ -496,8 +570,10 @@ export class WbglPolygonPlot {
     } = config;
 
     if (segments < 3) {
-        console.warn("WbglPolygonPlot.createCircle: segments must be 3 or more. Defaulting to 3.");
-        // segments = 3; // Or throw error, depending on desired strictness
+      console.warn(
+        "WbglPolygonPlot.createCircle: segments must be 3 or more. Defaulting to 3."
+      );
+      // segments = 3; // Or throw error, depending on desired strictness
     }
 
     const points = new Float32Array(segments * 2);

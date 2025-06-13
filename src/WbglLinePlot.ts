@@ -108,7 +108,10 @@ export class WebglLinePlot {
     gl.shaderSource(vertexShader, vsSource);
     gl.compileShader(vertexShader);
     if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-      console.error("Error compiling vertex shader:", gl.getShaderInfoLog(vertexShader));
+      console.error(
+        "Error compiling vertex shader:",
+        gl.getShaderInfoLog(vertexShader)
+      );
       gl.deleteShader(vertexShader);
       return null;
     }
@@ -122,7 +125,10 @@ export class WebglLinePlot {
     gl.shaderSource(fragmentShader, fsSource);
     gl.compileShader(fragmentShader);
     if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-      console.error("Error compiling fragment shader:", gl.getShaderInfoLog(fragmentShader));
+      console.error(
+        "Error compiling fragment shader:",
+        gl.getShaderInfoLog(fragmentShader)
+      );
       gl.deleteShader(vertexShader);
       gl.deleteShader(fragmentShader);
       return null;
@@ -140,7 +146,10 @@ export class WebglLinePlot {
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error("Error linking shader program:", gl.getProgramInfoLog(program));
+      console.error(
+        "Error linking shader program:",
+        gl.getProgramInfoLog(program)
+      );
       gl.deleteProgram(program);
       gl.deleteShader(vertexShader);
       gl.deleteShader(fragmentShader);
@@ -164,7 +173,9 @@ export class WebglLinePlot {
       console.warn(
         `Number of lines (${linesConfig.length}) exceeds maxLines (${this.maxLines}). Slicing.`
       );
-      this.linesConfig = linesConfig.slice(0, this.maxLines).map((lc) => ({ ...lc }));
+      this.linesConfig = linesConfig
+        .slice(0, this.maxLines)
+        .map((lc) => ({ ...lc }));
     } else {
       this.linesConfig = linesConfig.map((lc) => ({ ...lc })); // Create copies
     }
@@ -231,10 +242,22 @@ export class WebglLinePlot {
     gl.bindBuffer(gl.ARRAY_BUFFER, null); // Unbind
 
     // 5. Set Initial Global Uniforms
-    if (this.prog && this.locations.u_global_scale && this.locations.u_global_offset) {
+    if (
+      this.prog &&
+      this.locations.u_global_scale &&
+      this.locations.u_global_offset
+    ) {
       gl.useProgram(this.prog);
-      gl.uniform2f(this.locations.u_global_scale, this.globalScale[0], this.globalScale[1]);
-      gl.uniform2f(this.locations.u_global_offset, this.globalOffset[0], this.globalOffset[1]);
+      gl.uniform2f(
+        this.locations.u_global_scale,
+        this.globalScale[0],
+        this.globalScale[1]
+      );
+      gl.uniform2f(
+        this.locations.u_global_offset,
+        this.globalOffset[0],
+        this.globalOffset[1]
+      );
       gl.useProgram(null);
     }
   }
@@ -326,7 +349,10 @@ export class WebglLinePlot {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
-  public updateLineColor(lineId: number, color: [number, number, number, number]): void {
+  public updateLineColor(
+    lineId: number,
+    color: [number, number, number, number]
+  ): void {
     if (lineId < 0 || lineId >= this.numLines) {
       console.warn(`Invalid lineId ${lineId} for updateLineColor`);
       return;
@@ -387,14 +413,29 @@ export class WebglLinePlot {
     this.linesConfig[lineId].enabled = enabled;
   }
 
-  public setGlobalTransform(scale: [number, number], offset: [number, number]): void {
+  public setGlobalTransform(
+    scale: [number, number],
+    offset: [number, number]
+  ): void {
     this.globalScale = scale;
     this.globalOffset = offset;
 
-    if (this.prog && this.locations.u_global_scale && this.locations.u_global_offset) {
+    if (
+      this.prog &&
+      this.locations.u_global_scale &&
+      this.locations.u_global_offset
+    ) {
       this.gl.useProgram(this.prog);
-      this.gl.uniform2f(this.locations.u_global_scale, this.globalScale[0], this.globalScale[1]);
-      this.gl.uniform2f(this.locations.u_global_offset, this.globalOffset[0], this.globalOffset[1]);
+      this.gl.uniform2f(
+        this.locations.u_global_scale,
+        this.globalScale[0],
+        this.globalScale[1]
+      );
+      this.gl.uniform2f(
+        this.locations.u_global_offset,
+        this.globalOffset[0],
+        this.globalOffset[1]
+      );
       this.gl.useProgram(null);
     }
   }
@@ -505,8 +546,16 @@ export class WebglLinePlot {
     gl.useProgram(this.prog);
 
     // Set Global Uniforms
-    gl.uniform2f(this.locations.u_global_scale, this.globalScale[0], this.globalScale[1]);
-    gl.uniform2f(this.locations.u_global_offset, this.globalOffset[0], this.globalOffset[1]);
+    gl.uniform2f(
+      this.locations.u_global_scale,
+      this.globalScale[0],
+      this.globalScale[1]
+    );
+    gl.uniform2f(
+      this.locations.u_global_offset,
+      this.globalOffset[0],
+      this.globalOffset[1]
+    );
 
     // Bind Vertex Buffer and Set Attributes
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
@@ -526,11 +575,15 @@ export class WebglLinePlot {
       }
 
       // Set line-specific uniforms
-      // ts-ignore because line.scale and line.offset are guaranteed to be initialized in initLines
-      // @ts-ignore
-      gl.uniform2f(this.locations.u_line_scale, line.scale[0], line.scale[1]);
-      // @ts-ignore
-      gl.uniform2f(this.locations.u_line_offset, line.offset[0], line.offset[1]);
+
+      gl.uniform2f(this.locations.u_line_scale, line.scale![0], line.scale![1]);
+
+      // Use non-null assertion since line.offset is guaranteed to be initialized in initLines
+      gl.uniform2f(
+        this.locations.u_line_offset,
+        line.offset![0],
+        line.offset![1]
+      );
       gl.uniform1f(this.locations.u_opacity, line.color[3]); // Alpha for opacity
 
       gl.lineWidth(line.thickness!); // thickness is guaranteed by initLines
