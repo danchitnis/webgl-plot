@@ -1,6 +1,7 @@
 //import { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
 import type { LineConfig } from "./LineConfig";
+export type { LineConfig }; // Re-export LineConfig
 
 export class WebglLinePlot {
   private wglp: WebglPlot;

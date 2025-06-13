@@ -3,29 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGL Polygon Plot Benchmark</title>
-    <style>
-        body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-        }
-        canvas {
-            border: 1px solid black;
-            background-color: #ffffff; /* Add a white background to the canvas itself */
-        }
-    </style>
+    <title>WebGL Polygon Plot Benchmark - Combined Demo</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
 </head>
 <body>
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <!--
-      Using type="module" and pointing directly to .ts is typical for development environments
-      that handle TypeScript compilation on the fly (e.g., Vite, Snowpack, or esbuild with a dev server).
-      For a production build, this would typically point to a compiled .js file.
-    -->
-    <script type="module" src="./bench-polygonplot.ts"></script>
+    <div class="items">
+        <p><strong>WbglPolygonPlot & WbglLinePlot</strong> - Combined shapes and lines demo</p>
+        <p>Open the console (F12) for setup logs</p>
+
+        <canvas id="my_canvas" class="canvas"></canvas>
+
+        <!--
+          Using type="module" and pointing directly to .ts is typical for development environments
+          that handle TypeScript compilation on the fly (e.g., Vite, Snowpack, or esbuild with a dev server).
+          For a production build, this would typically point to a compiled .js file.
+        -->
+        <script type="module" src="./bench-polygonplot.ts"></script>
+    </div>
 </body>
 </html>
