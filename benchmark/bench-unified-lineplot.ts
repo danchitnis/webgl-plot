@@ -1,4 +1,4 @@
-import { WebglPlot, ColorRGBA, LineConfig, UnifiedLinePlot } from "../src/webglplot";
+import { WebglPlot, LineConfig } from "../src/webglplot";
 
 const canvas = document.getElementById("my_canvas") as HTMLCanvasElement | null;
 if (!canvas) {
@@ -13,8 +13,6 @@ const numX = 500; // Number of points for each line
 
 const webglPlot = new WebglPlot(canvas);
 
-// Define Y offsets for generating point data to ensure visual separation
-const pointGenerationYOffsets = [0.6, 0.2, -0.2, -0.6];
 const lineAmplitude = 0.15; // Amplitude of the sine wave for points
 
 // Line configurations
@@ -23,9 +21,9 @@ const lineConfigs: LineConfig[] = [
     // Red line
     points: new Float32Array(numX * 2), // Points will be populated below
     color: [1, 0, 0, 1], // Red
-    thickness: 0.5,      // Thin, will be rounded to 1.0 by UnifiedLinePlot logic for WebglLinePlot
+    thickness: 0.5, // Thin, will be rounded to 1.0 by UnifiedLinePlot logic for WebglLinePlot
     scale: [1, 1],
-    offset: [0, 0],      // Explicitly [0,0] - visual separation via points
+    offset: [0, 0.6],
     enabled: true,
   },
   {
@@ -34,16 +32,16 @@ const lineConfigs: LineConfig[] = [
     color: [0, 1, 0, 1], // Green
     thickness: 1.0,
     scale: [1, 1],
-    offset: [0, 0],      // Explicitly [0,0]
+    offset: [0, 0.2],
     enabled: true,
   },
   {
     // Blue line
     points: new Float32Array(numX * 2),
     color: [0, 0, 1, 1], // Blue
-    thickness: 5.0,      // Thick
+    thickness: 5.0, // Thick
     scale: [1, 1],
-    offset: [0, 0],      // Explicitly [0,0]
+    offset: [0, -0.2],
     enabled: true,
   },
   {
@@ -52,25 +50,24 @@ const lineConfigs: LineConfig[] = [
     color: [1, 1, 0, 1], // Yellow
     // No thickness specified (will default to 1.0)
     scale: [1, 1],
-    offset: [0, 0],      // Explicitly [0,0]
+    offset: [0, -0.6],
     enabled: true,
   },
 ];
 
 // Populate initial points for each configuration
 lineConfigs.forEach((config, index) => {
-    const xy = new Float32Array(numX * 2);
-    const yBase = pointGenerationYOffsets[index];
-    for (let i = 0; i < numX; i++) {
-        const x = (2 * i) / numX - 1; // X coordinate from -1 to 1
-        xy[i*2] = x;
-        xy[i*2+1] = Math.sin(x * Math.PI * (2 + index * 0.5)) * lineAmplitude + yBase;
-    }
-    config.points = xy;
+  const xy = new Float32Array(numX * 2);
+  for (let i = 0; i < numX; i++) {
+    const x = (2 * i) / numX - 1; // X coordinate from -1 to 1
+    xy[i * 2] = x;
+    xy[i * 2 + 1] = Math.sin(x * Math.PI * (2 + index * 0.5)) * lineAmplitude;
+  }
+  config.points = xy;
 });
 
 // Create UnifiedLinePlot instances for each configuration
-const plotObjects = lineConfigs.map(config => {
+const plotObjects = lineConfigs.map((config) => {
   // Each UnifiedLinePlot instance will manage one line as per this benchmark's goal
   const unifiedPlotter = webglPlot.newUnifiedLinePlotter(1);
   // Initialize with this specific line's config.
@@ -79,7 +76,9 @@ const plotObjects = lineConfigs.map(config => {
   return unifiedPlotter;
 });
 
-console.log("UnifiedLinePlot instances created. Verifying effective thicknesses:");
+console.log(
+  "UnifiedLinePlot instances created. Verifying effective thicknesses:"
+);
 plotObjects.forEach((plot, index) => {
   const originalConfig = lineConfigs[index];
   const effectiveConfig = plot.getLineConfig(0); // Get config from the UnifiedLinePlot instance
@@ -93,7 +92,13 @@ plotObjects.forEach((plot, index) => {
   // The getLineConfig on UnifiedLinePlot should reflect what its internal plotter is using.
 
   console.log(
-    `Line ${index}: Input thickness = ${originalConfig.thickness === undefined ? "undefined" : originalConfig.thickness}, Effective Thickness from getLineConfig = ${effectiveConfig?.thickness?.toFixed(1)}`
+    `Line ${index}: Input thickness = ${
+      originalConfig.thickness === undefined
+        ? "undefined"
+        : originalConfig.thickness
+    }, Effective Thickness from getLineConfig = ${effectiveConfig?.thickness?.toFixed(
+      1
+    )}`
   );
   // TODO: Add a way to see internal plotter type from UnifiedLinePlot if needed for more detailed logging.
 });
@@ -105,14 +110,16 @@ function simplifiedRender() {
 
   plotObjects.forEach((plot, index) => {
     const originalConfig = lineConfigs[index];
-    const xValues = (originalConfig.points as Float32Array).filter((_, idx) => idx % 2 === 0); // X values remain constant
+    const xValues = (originalConfig.points as Float32Array).filter(
+      (_, idx) => idx % 2 === 0
+    ); // X values remain constant
     const newYData = new Float32Array(numX);
-    const yBase = pointGenerationYOffsets[index]; // Use the same base Y offset for animation
 
     for (let i = 0; i < numX; i++) {
       const x = xValues[i];
       // Calculate new Y value based on X, time, line index, and the original yBase for this line
-      newYData[i] = Math.sin(x * Math.PI * (2 + index * 0.5) + time) * lineAmplitude + yBase;
+      newYData[i] =
+        Math.sin(x * Math.PI * (2 + index * 0.5) + time) * lineAmplitude;
     }
 
     // Update only the Y data. Line ID is 0 because each plotter instance handles one line.
@@ -126,4 +133,6 @@ function simplifiedRender() {
 // Start the animation loop
 simplifiedRender();
 
-console.log("Rendering loop started with multiple lines of varying thicknesses and types.");
+console.log(
+  "Rendering loop started with multiple lines of varying thicknesses and types."
+);
