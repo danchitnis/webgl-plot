@@ -33,7 +33,7 @@ export {
   // UnifiedLinePlot is exported above via `export { UnifiedLinePlot };`
 };
 
-type WebglPlotConfig = {
+export type WebglPlotConfig = {
   antialias?: boolean;
   transparent?: boolean;
   powerPerformance?: "default" | "high-performance" | "low-power";
