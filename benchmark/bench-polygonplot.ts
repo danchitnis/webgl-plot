@@ -1,6 +1,6 @@
 import { WebglPlot } from "../src/webglplot";
-import { WbglPolygonPlot, PolygonConfig } from "../src/WbglPolygonPlot";
-import { WebglLinePlot, LineConfig } from "../src/WbglLinePlot"; // Corrected import name
+import { WebglPolygonPlot, PolygonConfig } from "../src/WebglPolygonPlot";
+import { WebglLinePlot, LineConfig } from "../src/WebglLinePlot"; // Corrected import name
 
 document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("my_canvas") as HTMLCanvasElement; // Updated ID
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const wglp = new WebglPlot(canvas);
 
   // Initialize WbglPolygonPlot
-  const polygonPlot = new WbglPolygonPlot(wglp);
+  const polygonPlot = new WebglPolygonPlot(wglp);
 
   // Initialize WbglLinePlot
   const linePlot = new WebglLinePlot(wglp, 2); // Corrected class name
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Triangle examples
   polygonConfigs.push(
-    WbglPolygonPlot.createTriangle({
+    WebglPolygonPlot.createTriangle({
       center: [-0.8, 0.7],
       radius: 0.1,
       fillColor: [1, 0, 0, 0.5], // Red, semi-transparent
@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   polygonConfigs.push(
-    WbglPolygonPlot.createTriangle({
+    WebglPolygonPlot.createTriangle({
       center: [-0.6, 0.7],
       radius: 0.08,
       rotation: Math.PI / 4, // 45 degrees
@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Square examples
   polygonConfigs.push(
-    WbglPolygonPlot.createSquare({
+    WebglPolygonPlot.createSquare({
       center: [-0.2, 0.5],
       size: 0.2,
       fillColor: [0, 1, 0, 0.6], // Green
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
   polygonConfigs.push(
-    WbglPolygonPlot.createSquare({
+    WebglPolygonPlot.createSquare({
       center: [0.1, 0.5],
       size: 0.15,
       rotation: Math.PI / 6, // 30 degrees
@@ -74,19 +74,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Circle examples
   polygonConfigs.push(
-    WbglPolygonPlot.createCircle({
+    WebglPolygonPlot.createCircle({
       center: [0.5, 0.6],
       radius: 0.1,
       fillColor: [1, 0, 1, 0.7], // Magenta
-      isFilled: true,
+      isFilled: false,
       isStroked: true,
-      strokeColor: [0.2, 0.2, 0.2, 1],
-      strokeWeight: 1,
+      strokeColor: [0.8, 0.2, 0.2, 1],
+      strokeWeight: 10,
     })
   );
 
   polygonConfigs.push(
-    WbglPolygonPlot.createCircle({
+    WebglPolygonPlot.createCircle({
       center: [0.8, 0.6],
       radius: 0.07,
       segments: 8, // Octagon
