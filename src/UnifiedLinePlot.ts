@@ -1,6 +1,6 @@
 import type { WebglPlot } from "./webglplot"; // This will be the main class, ok for type
-import { WebglLinePlot } from "./WbglLinePlot"; // Corrected import
-import { WebglLineThick, DataBounds } from "./WbglLineThick"; // Corrected import
+import { WebglLinePlot } from "./WebglLinePlot"; // Corrected import
+import { WebglLineThick, DataBounds } from "./WebglLineThick"; // Corrected import
 import type { LineConfig } from "./LineConfig";
 
 export class UnifiedLinePlot {
@@ -48,18 +48,22 @@ export class UnifiedLinePlot {
         this.internalPlotter = new WebglLinePlot(this.wglp, this.maxLines);
       }
       // Adjust all line configs for the thin plotter: thicknesses become 1.0
-      const thinLinesConfig = linesConfig.map(config => ({
+      const thinLinesConfig = linesConfig.map((config) => ({
         ...config,
         thickness: 1.0, // All lines will be 1.0 for WebglLinePlot via this unified interface
       }));
       this.internalPlotter.initLines(thinLinesConfig);
-    } else { // Use thick plotter
+    } else {
+      // Use thick plotter
       if (!(this.internalPlotter instanceof WebglLineThick)) {
         if (this.internalPlotter) {
           this.internalPlotter.cleanup();
         }
         // WebglLineThick constructor expects { gl: WebGL2RenderingContext }
-        this.internalPlotter = new WebglLineThick({ gl: this.gl }, this.maxLines);
+        this.internalPlotter = new WebglLineThick(
+          { gl: this.gl },
+          this.maxLines
+        );
       }
       // WebglLineThick can handle varied thicknesses, pass original (or default-adjusted) configs
       // No, it should also use the primaryThickness to decide if all lines are thick.
@@ -94,8 +98,8 @@ export class UnifiedLinePlot {
       // updateLineY can update Y values if X values are presumed constant or managed elsewhere.
       console.warn(
         "updateLinePoints(xy) is not directly supported when WebglLineThick is active. " +
-        "Consider re-initializing the line with initLines() for full XY updates, " +
-        "or use updateLineY() if only Y values need changing and X values are stable."
+          "Consider re-initializing the line with initLines() for full XY updates, " +
+          "or use updateLineY() if only Y values need changing and X values are stable."
       );
     } else {
       console.warn("updateLinePoints: plotter not initialized.");
@@ -105,17 +109,24 @@ export class UnifiedLinePlot {
   public updateLineY(lineId: number, newY: Float32Array): void {
     if (this.internalPlotter) {
       // WebglLinePlot has updateLineY, WebglLineThick has updateLineY
-       this.internalPlotter.updateLineY(lineId, newY);
+      this.internalPlotter.updateLineY(lineId, newY);
     }
   }
 
-  public updateLineColor(lineId: number, color: [number, number, number, number]): void {
+  public updateLineColor(
+    lineId: number,
+    color: [number, number, number, number]
+  ): void {
     if (this.internalPlotter) {
-        this.internalPlotter.updateLineColor(lineId, color);
+      this.internalPlotter.updateLineColor(lineId, color);
     }
   }
 
-  public updateLineTransform(lineId: number, scale: [number, number], offset: [number, number]): void {
+  public updateLineTransform(
+    lineId: number,
+    scale: [number, number],
+    offset: [number, number]
+  ): void {
     if (this.internalPlotter) {
       // Both WebglLinePlot and WebglLineThick have updateLineTransform
       this.internalPlotter.updateLineTransform(lineId, scale, offset);
@@ -131,40 +142,47 @@ export class UnifiedLinePlot {
     // For now, if a WebglLineThick is active, pass it through.
     // If WebglLinePlot is active, this call might be ignored or warn.
     if (this.internalPlotter instanceof WebglLineThick) {
-        this.internalPlotter.updateLineThickness(lineId, thickness);
+      this.internalPlotter.updateLineThickness(lineId, thickness);
     } else if (this.internalPlotter instanceof WebglLinePlot) {
-        // WebglLinePlot uses thickness 1.0. We could warn or update its config if needed.
-        // For now, let's assume its `updateLineThickness` handles it (it does store the config).
-        (this.internalPlotter as WebglLinePlot).updateLineThickness(lineId, 1.0); // Force 1.0
-        console.warn("UnifiedLinePlot: WebglLinePlot is active, thickness forced to 1.0.");
+      // WebglLinePlot uses thickness 1.0. We could warn or update its config if needed.
+      // For now, let's assume its `updateLineThickness` handles it (it does store the config).
+      (this.internalPlotter as WebglLinePlot).updateLineThickness(lineId, 1.0); // Force 1.0
+      console.warn(
+        "UnifiedLinePlot: WebglLinePlot is active, thickness forced to 1.0."
+      );
     }
   }
-
 
   public setLineEnabled(lineId: number, enabled: boolean): void {
     if (this.internalPlotter) {
-        this.internalPlotter.setLineEnabled(lineId, enabled);
+      this.internalPlotter.setLineEnabled(lineId, enabled);
     }
   }
 
-  public setGlobalTransform(scale: [number, number], offset: [number, number]): void {
+  public setGlobalTransform(
+    scale: [number, number],
+    offset: [number, number]
+  ): void {
     if (this.internalPlotter) {
-        this.internalPlotter.setGlobalTransform(scale, offset);
+      this.internalPlotter.setGlobalTransform(scale, offset);
     }
   }
 
-  public autoScaleEnabledLines(): DataBounds | null | void { // void because WebglLinePlot returns void
+  public autoScaleEnabledLines(): DataBounds | null | void {
+    // void because WebglLinePlot returns void
     if (this.internalPlotter) {
-        return this.internalPlotter.autoScaleEnabledLines();
+      return this.internalPlotter.autoScaleEnabledLines();
     }
     return null;
   }
 
-  public getLineConfig(lineId: number): Partial<LineConfig> | LineConfig | undefined {
-     if (this.internalPlotter) {
-        return this.internalPlotter.getLineConfig(lineId);
-     }
-     return undefined;
+  public getLineConfig(
+    lineId: number
+  ): Partial<LineConfig> | LineConfig | undefined {
+    if (this.internalPlotter) {
+      return this.internalPlotter.getLineConfig(lineId);
+    }
+    return undefined;
   }
 
   /**
@@ -172,13 +190,13 @@ export class UnifiedLinePlot {
    * @returns A string indicating the type of the internal plotter:
    * 'WebglLinePlot', 'WebglLineThick', or 'null'.
    */
-  public getInternalPlotterType(): 'WebglLinePlot' | 'WebglLineThick' | 'null' {
+  public getInternalPlotterType(): "WebglLinePlot" | "WebglLineThick" | "null" {
     if (this.internalPlotter instanceof WebglLinePlot) {
-      return 'WebglLinePlot';
+      return "WebglLinePlot";
     }
     if (this.internalPlotter instanceof WebglLineThick) {
-      return 'WebglLineThick';
+      return "WebglLineThick";
     }
-    return 'null';
+    return "null";
   }
 }

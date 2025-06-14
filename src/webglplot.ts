@@ -7,16 +7,17 @@
  */
 
 import { ColorRGBA } from "./ColorRGBA";
-import { WebglAux } from "./WbglAux";
-import { WebglScatterAcc } from "./WbglScatterAcc";
-import { WebglLine } from "./WbglLine";
-import { WebglLineRoll } from "./WbglLineRoll";
-import { WebglLinePlot } from "./WbglLinePlot";
-import { WebglLineThick } from "./WbglLineThick";
+import { WebglAux } from "./WebglAux";
+import { WebglScatterAcc } from "./WebglScatterAcc";
+import { WebglLine } from "./WebglLine";
+import { WebglLineRoll } from "./WebglLineRoll";
+import { WebglLinePlot } from "./WebglLinePlot";
+import { WebglLineThick } from "./WebglLineThick";
+import { WebglPolygonPlot, type PolygonConfig } from "./WebglPolygonPlot";
 import { UnifiedLinePlot } from "./UnifiedLinePlot"; // Added import
 import type { LineConfig } from "./LineConfig";
 
-export type { LineConfig }; // Export LineConfig instead of LineInitData
+export type { LineConfig, PolygonConfig }; // Export LineConfig and PolygonConfig
 export { UnifiedLinePlot }; // Added export
 
 export {
@@ -25,6 +26,7 @@ export {
   WebglScatterAcc,
   WebglLine,
   WebglLineRoll,
+  WebglPolygonPlot,
   // WebglLinePlot, // Direct export might be removed if UnifiedLinePlot is preferred
   // WebglLineThick, // Direct export might be removed if UnifiedLinePlot is preferred
   // Keeping them exported for now for backward compatibility or direct use.

@@ -1,5 +1,5 @@
 import type { WebglPlot } from "./webglplot";
-import type { WebglLine } from "./WbglLine";
+import type { WebglLine } from "./WebglLine";
 
 /*type Line = {
   xy: number[];
