@@ -16,6 +16,6 @@
       "*": ["node_modules/*"]
     }
   },
-  "include": ["src/**/*", "benchmark/**/*.ts", "test/**/*.ts"]
+  "include": ["src/**/*", "benchmark/**/*.ts"]
 
 }
