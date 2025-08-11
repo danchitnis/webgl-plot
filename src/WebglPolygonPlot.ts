@@ -12,8 +12,8 @@ export interface PolygonConfig {
   enabled?: boolean;
 }
 
-const vsSource = `
-  attribute vec2 a_position;
+const vsSource = `#version 300 es
+  layout(location = 0) in vec2 a_position;
 
   uniform vec2 u_polygon_scale;
   uniform vec2 u_polygon_offset;
@@ -26,10 +26,10 @@ const vsSource = `
   }
 `;
 
-const vsStrokeSource = `
-  attribute vec2 a_position;
-  attribute vec2 a_normal;
-  attribute float a_side;
+const vsStrokeSource = `#version 300 es
+  layout(location = 0) in vec2 a_position;
+  layout(location = 1) in vec2 a_normal;
+  layout(location = 2) in float a_side;
 
   uniform vec2 u_polygon_scale;
   uniform vec2 u_polygon_offset;
@@ -42,29 +42,27 @@ const vsStrokeSource = `
     vec2 scaled_position = a_position * u_polygon_scale + u_polygon_offset;
     vec2 ndc_position = scaled_position * u_global_scale + u_global_offset;
     
-    // Convert stroke weight from pixels to NDC
     vec2 pixel_to_ndc = 2.0 / u_viewport_size;
     float stroke_radius_ndc = u_stroke_weight * 0.5;
     
-    // Apply normal offset for stroke thickness
     vec2 offset = a_normal * pixel_to_ndc * stroke_radius_ndc * a_side;
     
     gl_Position = vec4(ndc_position + offset, 0.0, 1.0);
   }
 `;
 
-const fsSource = `
+const fsSource = `#version 300 es
   precision mediump float;
   uniform vec4 u_color;
   uniform float u_opacity;
+  out vec4 outColor;
 
   void main() {
-    gl_FragColor = vec4(u_color.rgb, u_color.a * u_opacity);
+    outColor = vec4(u_color.rgb, u_color.a * u_opacity);
   }
 `;
 
-interface ShaderLocations {
-  a_position: number;
+interface UniformLocations {
   u_polygon_scale: WebGLUniformLocation | null;
   u_polygon_offset: WebGLUniformLocation | null;
   u_global_scale: WebGLUniformLocation | null;
@@ -73,28 +71,28 @@ interface ShaderLocations {
   u_opacity: WebGLUniformLocation | null;
 }
 
-interface StrokeShaderLocations {
-  a_position: number;
-  a_normal: number;
-  a_side: number;
-  u_polygon_scale: WebGLUniformLocation | null;
-  u_polygon_offset: WebGLUniformLocation | null;
-  u_global_scale: WebGLUniformLocation | null;
-  u_global_offset: WebGLUniformLocation | null;
+interface StrokeUniformLocations extends UniformLocations {
   u_viewport_size: WebGLUniformLocation | null;
   u_stroke_weight: WebGLUniformLocation | null;
-  u_color: WebGLUniformLocation | null;
-  u_opacity: WebGLUniformLocation | null;
+}
+
+interface CachedState {
+  viewport: [number, number, number, number];
+  globalScale: [number, number];
+  globalOffset: [number, number];
+  globalTransformDirty: boolean;
+  viewportDirty: boolean;
 }
 
 export class WebglPolygonPlot {
-  private gl: WebGLRenderingContext;
+  private gl: WebGL2RenderingContext;
   private wglp: WebglPlot;
-  //private maxPolygons: number; // This seems redundant if we use polygonsConfig.length after init
   private prog: WebGLProgram | null;
   private strokeProg: WebGLProgram | null;
-  private locations: ShaderLocations;
-  private strokeLocations: StrokeShaderLocations;
+  private fillVAO: WebGLVertexArrayObject | null = null;
+  private strokeVAO: WebGLVertexArrayObject | null = null;
+  private uniformLocations: UniformLocations;
+  private strokeUniformLocations: StrokeUniformLocations;
 
   public polygonsConfig: PolygonConfig[] = [];
   public numPolygons = 0;
@@ -104,115 +102,70 @@ export class WebglPolygonPlot {
   private polygonLengths: number[] = [];
   private strokePolygonStarts: number[] = [];
   private strokePolygonLengths: number[] = [];
-  private globalScale: [number, number] = [1, 1];
-  private globalOffset: [number, number] = [0, 0];
+  private cachedState: CachedState;
+  private tempArrays: {
+    colorArray: Float32Array;
+    opacityArray: Float32Array;
+  };
 
   constructor(wglp: WebglPlot) {
-    // maxPolygons might be used for pre-allocation if desired, but current setup is dynamic
-    this.gl = wglp.gl;
+    this.gl = wglp.gl as WebGL2RenderingContext;
     this.wglp = wglp;
-    //this.maxPolygons = maxPolygons;
+    
+    // Initialize cached state
+    const viewport = this.gl.getParameter(this.gl.VIEWPORT) as [number, number, number, number];
+    this.cachedState = {
+      viewport,
+      globalScale: [1, 1],
+      globalOffset: [0, 0],
+      globalTransformDirty: true,
+      viewportDirty: false
+    };
+    
+    // Pre-allocate temporary arrays for draw operations
+    this.tempArrays = {
+      colorArray: new Float32Array(4),
+      opacityArray: new Float32Array(1)
+    };
 
     this.prog = this._createShaderProgram(vsSource, fsSource);
     this.strokeProg = this._createShaderProgram(vsStrokeSource, fsSource);
 
     if (!this.prog) {
-      console.error("WbglPolygonPlot: Failed to create shader program.");
-      // Consider how to handle this error, perhaps by disabling rendering for this plot.
+      throw new Error("WebglPolygonPlot: Failed to create fill shader program.");
     }
 
     if (!this.strokeProg) {
-      console.error("WbglPolygonPlot: Failed to create stroke shader program.");
+      throw new Error("WebglPolygonPlot: Failed to create stroke shader program.");
     }
 
-    this.locations = {
-      a_position: this.gl.getAttribLocation(
-        this.prog as WebGLProgram,
-        "a_position"
-      ),
-      u_polygon_scale: this.gl.getUniformLocation(
-        this.prog as WebGLProgram,
-        "u_polygon_scale"
-      ),
-      u_polygon_offset: this.gl.getUniformLocation(
-        this.prog as WebGLProgram,
-        "u_polygon_offset"
-      ),
-      u_global_scale: this.gl.getUniformLocation(
-        this.prog as WebGLProgram,
-        "u_global_scale"
-      ),
-      u_global_offset: this.gl.getUniformLocation(
-        this.prog as WebGLProgram,
-        "u_global_offset"
-      ),
-      u_color: this.gl.getUniformLocation(this.prog as WebGLProgram, "u_color"),
-      u_opacity: this.gl.getUniformLocation(
-        this.prog as WebGLProgram,
-        "u_opacity"
-      ),
+    // Initialize uniform locations with unified helper
+    this.uniformLocations = this._getUniformLocations(this.prog);
+    this.strokeUniformLocations = {
+      ...this._getUniformLocations(this.strokeProg),
+      u_viewport_size: this.gl.getUniformLocation(this.strokeProg, "u_viewport_size"),
+      u_stroke_weight: this.gl.getUniformLocation(this.strokeProg, "u_stroke_weight")
     };
-
-    this.strokeLocations = {
-      a_position: this.gl.getAttribLocation(
-        this.strokeProg as WebGLProgram,
-        "a_position"
-      ),
-      a_normal: this.gl.getAttribLocation(
-        this.strokeProg as WebGLProgram,
-        "a_normal"
-      ),
-      a_side: this.gl.getAttribLocation(
-        this.strokeProg as WebGLProgram,
-        "a_side"
-      ),
-      u_polygon_scale: this.gl.getUniformLocation(
-        this.strokeProg as WebGLProgram,
-        "u_polygon_scale"
-      ),
-      u_polygon_offset: this.gl.getUniformLocation(
-        this.strokeProg as WebGLProgram,
-        "u_polygon_offset"
-      ),
-      u_global_scale: this.gl.getUniformLocation(
-        this.strokeProg as WebGLProgram,
-        "u_global_scale"
-      ),
-      u_global_offset: this.gl.getUniformLocation(
-        this.strokeProg as WebGLProgram,
-        "u_global_offset"
-      ),
-      u_viewport_size: this.gl.getUniformLocation(
-        this.strokeProg as WebGLProgram,
-        "u_viewport_size"
-      ),
-      u_stroke_weight: this.gl.getUniformLocation(
-        this.strokeProg as WebGLProgram,
-        "u_stroke_weight"
-      ),
-      u_color: this.gl.getUniformLocation(this.strokeProg as WebGLProgram, "u_color"),
-      u_opacity: this.gl.getUniformLocation(
-        this.strokeProg as WebGLProgram,
-        "u_opacity"
-      ),
-    };
+    
+    // Create VAOs for efficient vertex setup
+    this.fillVAO = this.gl.createVertexArray();
+    this.strokeVAO = this.gl.createVertexArray();
+    
+    if (!this.fillVAO || !this.strokeVAO) {
+      throw new Error("WebglPolygonPlot: Failed to create vertex array objects.");
+    }
 
     // Enable blending
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+    
+    // Set up resize observer for viewport changes
+    this._setupViewportTracking();
   }
 
   public initPolygons(polygonsConfig: PolygonConfig[]): void {
-    // Deep copy to avoid external modification issues and set defaults
-    this.polygonsConfig = polygonsConfig.map((p) => ({
-      ...p,
-      scale: p.scale || [1, 1],
-      offset: p.offset || [0, 0],
-      enabled: p.enabled === undefined ? true : p.enabled,
-      isFilled: p.isFilled === undefined ? true : p.isFilled,
-      isStroked: p.isStroked === undefined ? false : p.isStroked,
-      strokeWeight: p.strokeWeight === undefined ? 1 : p.strokeWeight,
-    }));
+    // Normalize configurations with defaults
+    this.polygonsConfig = polygonsConfig.map(config => this._normalizePolygonConfig(config));
     this.numPolygons = this.polygonsConfig.length;
 
     if (this.vertexBuffer) {
@@ -229,8 +182,6 @@ export class WebglPolygonPlot {
     this.strokePolygonLengths = [];
 
     if (this.numPolygons === 0) {
-      // Consider also cleaning up shader program if no polygons?
-      // Or keep it for future additions. For now, just return.
       return;
     }
 
@@ -239,12 +190,11 @@ export class WebglPolygonPlot {
     for (const polygon of this.polygonsConfig) {
       if (polygon.points.length % 2 !== 0) {
         console.warn(
-          "WbglPolygonPlot: Polygon points array length should be even (x,y pairs). Skipping polygon."
+          "WebglPolygonPlot: Polygon points array length should be even (x,y pairs). Skipping polygon."
         );
-        // Or handle this more gracefully, e.g. by marking polygon as invalid
         continue;
       }
-      this.polygonStarts.push(totalVertices / 2); // Store vertex count, not byte offset
+      this.polygonStarts.push(totalVertices / 2);
       const numPolygonVertices = polygon.points.length / 2;
       this.polygonLengths.push(numPolygonVertices);
       totalVertices += polygon.points.length;
@@ -252,9 +202,9 @@ export class WebglPolygonPlot {
 
     if (totalVertices === 0 && this.numPolygons > 0) {
       console.warn(
-        "WbglPolygonPlot: No valid vertices found in polygon configurations."
+        "WebglPolygonPlot: No valid vertices found in polygon configurations."
       );
-      this.numPolygons = 0; // Correct numPolygons if all were invalid
+      this.numPolygons = 0;
       return;
     }
 
@@ -262,7 +212,6 @@ export class WebglPolygonPlot {
     const allVertexData = new Float32Array(totalVertices);
     let offset = 0;
     for (const polygon of this.polygonsConfig) {
-      // Only add valid polygons' data
       if (polygon.points.length > 0 && polygon.points.length % 2 === 0) {
         allVertexData.set(polygon.points, offset);
         offset += polygon.points.length;
@@ -276,21 +225,16 @@ export class WebglPolygonPlot {
       allVertexData,
       this.gl.STATIC_DRAW
     );
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null); // Unbind
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 
     // Initialize stroke vertices
     this._generateStrokeGeometry();
 
-    if (
-      this.prog &&
-      this.locations.u_global_scale &&
-      this.locations.u_global_offset
-    ) {
-      this.gl.useProgram(this.prog);
-      this.gl.uniform2fv(this.locations.u_global_scale, this.globalScale);
-      this.gl.uniform2fv(this.locations.u_global_offset, this.globalOffset);
-      this.gl.useProgram(null);
-    }
+    // Set up fill VAO
+    this._setupFillVAO();
+    
+    // Mark global transforms as dirty to ensure they're updated on next draw
+    this.cachedState.globalTransformDirty = true;
   }
 
   public cleanup(): void {
@@ -310,36 +254,37 @@ export class WebglPolygonPlot {
       this.gl.deleteBuffer(this.strokeVertexBuffer);
       this.strokeVertexBuffer = null;
     }
+    if (this.fillVAO) {
+      this.gl.deleteVertexArray(this.fillVAO);
+      this.fillVAO = null;
+    }
+    if (this.strokeVAO) {
+      this.gl.deleteVertexArray(this.strokeVAO);
+      this.strokeVAO = null;
+    }
     this.polygonsConfig = [];
     this.numPolygons = 0;
     this.polygonStarts = [];
     this.polygonLengths = [];
     this.strokePolygonStarts = [];
     this.strokePolygonLengths = [];
-    // Reset global transforms? Or assume they might be reused?
-    // this.globalScale = [1, 1];
-    // this.globalOffset = [0, 0];
   }
 
   public updatePolygonPoints(polygonId: number, points: Float32Array): void {
-    if (polygonId < 0 || polygonId >= this.numPolygons || !this.vertexBuffer) {
-      console.warn(
-        "WbglPolygonPlot: Invalid polygonId or buffer not initialized for updatePolygonPoints."
-      );
+    if (!this._validatePolygonId(polygonId, "updatePolygonPoints") || !this.vertexBuffer) {
       return;
     }
     const polygon = this.polygonsConfig[polygonId];
     if (points.length !== polygon.points.length) {
       console.error(
-        "WbglPolygonPlot: New points array length must match the original for updatePolygonPoints. For resizing, re-initialize polygons."
+        "WebglPolygonPlot: New points array length must match the original for updatePolygonPoints. For resizing, re-initialize polygons."
       );
       return;
     }
 
-    polygon.points = new Float32Array(points); // Update internal storage
+    polygon.points = new Float32Array(points);
 
     // Calculate byte offset for bufferSubData
-    // polygonStarts stores the starting *vertex* index, not component index
     let byteOffset = 0;
     for (let i = 0; i < polygonId; i++) {
       byteOffset +=
@@ -350,9 +295,9 @@ export class WebglPolygonPlot {
     this.gl.bufferSubData(this.gl.ARRAY_BUFFER, byteOffset, polygon.points);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
 
-    // Regenerate stroke geometry if needed
-    if (polygon.isStroked && polygon.strokeWeight > 0) {
-      this._generateStrokeGeometry();
+    // Regenerate stroke geometry if needed (smart regeneration for single polygon)
+    if (polygon.isStroked && polygon.strokeWeight! > 0) {
+      this._regeneratePolygonStroke(polygonId);
     }
   }
 
@@ -361,12 +306,8 @@ export class WebglPolygonPlot {
     scale: [number, number],
     offset: [number, number]
   ): void {
-    if (polygonId < 0 || polygonId >= this.numPolygons) {
-      console.warn(
-        "WbglPolygonPlot: Invalid polygonId for updatePolygonTransform."
-      );
-      return;
-    }
+    if (!this._validatePolygonId(polygonId, "updatePolygonTransform")) return;
+    
     this.polygonsConfig[polygonId].scale = scale;
     this.polygonsConfig[polygonId].offset = offset;
   }
@@ -380,21 +321,21 @@ export class WebglPolygonPlot {
       >
     >
   ): void {
-    if (polygonId < 0 || polygonId >= this.numPolygons) {
-      console.warn(
-        "WbglPolygonPlot: Invalid polygonId for updatePolygonStyle."
-      );
-      return;
-    }
-    // Use Object.assign to update only provided properties
+    if (!this._validatePolygonId(polygonId, "updatePolygonStyle")) return;
+    
+    const needsStrokeRegeneration = style.isStroked !== undefined || 
+                                   style.strokeWeight !== undefined;
+    
     Object.assign(this.polygonsConfig[polygonId], style);
+    
+    if (needsStrokeRegeneration && (this.polygonsConfig[polygonId].isStroked || style.isStroked)) {
+      this._regeneratePolygonStroke(polygonId);
+    }
   }
 
   public setPolygonEnabled(polygonId: number, enabled: boolean): void {
-    if (polygonId < 0 || polygonId >= this.numPolygons) {
-      console.warn("WbglPolygonPlot: Invalid polygonId for setPolygonEnabled.");
-      return;
-    }
+    if (!this._validatePolygonId(polygonId, "setPolygonEnabled")) return;
+    
     this.polygonsConfig[polygonId].enabled = enabled;
   }
 
@@ -402,17 +343,13 @@ export class WebglPolygonPlot {
     scale: [number, number],
     offset: [number, number]
   ): void {
-    this.globalScale = scale;
-    this.globalOffset = offset;
-    if (
-      this.prog &&
-      this.locations.u_global_scale &&
-      this.locations.u_global_offset
-    ) {
-      this.gl.useProgram(this.prog);
-      this.gl.uniform2fv(this.locations.u_global_scale, this.globalScale);
-      this.gl.uniform2fv(this.locations.u_global_offset, this.globalOffset);
-      this.gl.useProgram(null);
+    if (this.cachedState.globalScale[0] !== scale[0] || 
+        this.cachedState.globalScale[1] !== scale[1] ||
+        this.cachedState.globalOffset[0] !== offset[0] ||
+        this.cachedState.globalOffset[1] !== offset[1]) {
+      this.cachedState.globalScale = [...scale];
+      this.cachedState.globalOffset = [...offset];
+      this.cachedState.globalTransformDirty = true;
     }
   }
 
@@ -421,127 +358,80 @@ export class WebglPolygonPlot {
       !this.prog ||
       !this.vertexBuffer ||
       this.numPolygons === 0 ||
-      !this.locations
+      !this.fillVAO
     ) {
       return;
     }
 
     const gl = this.gl;
+    
+    // Update viewport if changed
+    this._updateViewportIfChanged();
 
     // Draw filled polygons first
     gl.useProgram(this.prog);
-    gl.uniform2fv(this.locations.u_global_scale, this.globalScale);
-    gl.uniform2fv(this.locations.u_global_offset, this.globalOffset);
+    
+    // Update global uniforms only if dirty
+    if (this.cachedState.globalTransformDirty) {
+      gl.uniform2fv(this.uniformLocations.u_global_scale, this.cachedState.globalScale);
+      gl.uniform2fv(this.uniformLocations.u_global_offset, this.cachedState.globalOffset);
+      this.cachedState.globalTransformDirty = false;
+    }
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.vertexAttribPointer(
-      this.locations.a_position,
-      2,
-      gl.FLOAT,
-      false,
-      0,
-      0
-    );
-    gl.enableVertexAttribArray(this.locations.a_position);
+    gl.bindVertexArray(this.fillVAO);
 
     for (let i = 0; i < this.numPolygons; i++) {
       const polygon = this.polygonsConfig[i];
-      if (!polygon.enabled) {
+      if (!polygon.enabled || !polygon.isFilled) {
         continue;
       }
 
-      const scale = polygon.scale || [1, 1];
-      const offset = polygon.offset || [0, 0];
-
-      gl.uniform2fv(this.locations.u_polygon_scale, scale);
-      gl.uniform2fv(this.locations.u_polygon_offset, offset);
+      gl.uniform2fv(this.uniformLocations.u_polygon_scale, polygon.scale!);
+      gl.uniform2fv(this.uniformLocations.u_polygon_offset, polygon.offset!);
 
       const startVertex = this.polygonStarts[i];
       const numVertices = this.polygonLengths[i];
 
       if (numVertices === 0) continue;
 
-      if (polygon.isFilled) {
-        gl.uniform4fv(
-          this.locations.u_color,
-          polygon.fillColor.slice(0, 3).concat(1.0)
-        );
-        gl.uniform1f(this.locations.u_opacity, polygon.fillColor[3]);
-        gl.drawArrays(gl.TRIANGLE_FAN, startVertex, numVertices);
-      }
+      // Use pre-allocated arrays to avoid garbage collection
+      this.tempArrays.colorArray.set([polygon.fillColor[0], polygon.fillColor[1], polygon.fillColor[2], 1.0]);
+      gl.uniform4fv(this.uniformLocations.u_color, this.tempArrays.colorArray);
+      gl.uniform1f(this.uniformLocations.u_opacity, polygon.fillColor[3]);
+      gl.drawArrays(gl.TRIANGLE_FAN, startVertex, numVertices);
     }
 
-    gl.disableVertexAttribArray(this.locations.a_position);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    gl.useProgram(null);
+    gl.bindVertexArray(null);
 
     // Draw strokes with thick lines using triangles
-    if (this.strokeProg && this.strokeVertexBuffer) {
+    if (this.strokeProg && this.strokeVertexBuffer && this.strokeVAO) {
       gl.useProgram(this.strokeProg);
       
-      // Get viewport size for pixel-to-NDC conversion
-      const viewport = gl.getParameter(gl.VIEWPORT);
-      const viewportWidth = viewport[2];
-      const viewportHeight = viewport[3];
+      // Use cached viewport size
+      const viewportWidth = this.cachedState.viewport[2];
+      const viewportHeight = this.cachedState.viewport[3];
       
-      gl.uniform2fv(this.strokeLocations.u_global_scale, this.globalScale);
-      gl.uniform2fv(this.strokeLocations.u_global_offset, this.globalOffset);
-      gl.uniform2f(this.strokeLocations.u_viewport_size, viewportWidth, viewportHeight);
+      // Update global uniforms for stroke shader
+      gl.uniform2fv(this.strokeUniformLocations.u_global_scale, this.cachedState.globalScale);
+      gl.uniform2fv(this.strokeUniformLocations.u_global_offset, this.cachedState.globalOffset);
+      gl.uniform2f(this.strokeUniformLocations.u_viewport_size, viewportWidth, viewportHeight);
 
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.strokeVertexBuffer);
-      
-      // Set up vertex attributes (position, normal, side)
-      const FLOAT_SIZE = 4;
-      const VERTEX_SIZE = 5 * FLOAT_SIZE; // 5 floats per vertex
-      
-      gl.vertexAttribPointer(
-        this.strokeLocations.a_position,
-        2,
-        gl.FLOAT,
-        false,
-        VERTEX_SIZE,
-        0
-      );
-      gl.enableVertexAttribArray(this.strokeLocations.a_position);
-      
-      gl.vertexAttribPointer(
-        this.strokeLocations.a_normal,
-        2,
-        gl.FLOAT,
-        false,
-        VERTEX_SIZE,
-        2 * FLOAT_SIZE
-      );
-      gl.enableVertexAttribArray(this.strokeLocations.a_normal);
-      
-      gl.vertexAttribPointer(
-        this.strokeLocations.a_side,
-        1,
-        gl.FLOAT,
-        false,
-        VERTEX_SIZE,
-        4 * FLOAT_SIZE
-      );
-      gl.enableVertexAttribArray(this.strokeLocations.a_side);
+      gl.bindVertexArray(this.strokeVAO);
 
       for (let i = 0; i < this.numPolygons; i++) {
         const polygon = this.polygonsConfig[i];
-        if (!polygon.enabled || !polygon.isStroked || polygon.strokeWeight <= 0) {
+        if (!polygon.enabled || !polygon.isStroked || polygon.strokeWeight! <= 0) {
           continue;
         }
 
-        const scale = polygon.scale || [1, 1];
-        const offset = polygon.offset || [0, 0];
+        gl.uniform2fv(this.strokeUniformLocations.u_polygon_scale, polygon.scale!);
+        gl.uniform2fv(this.strokeUniformLocations.u_polygon_offset, polygon.offset!);
+        gl.uniform1f(this.strokeUniformLocations.u_stroke_weight, polygon.strokeWeight!);
 
-        gl.uniform2fv(this.strokeLocations.u_polygon_scale, scale);
-        gl.uniform2fv(this.strokeLocations.u_polygon_offset, offset);
-        gl.uniform1f(this.strokeLocations.u_stroke_weight, polygon.strokeWeight);
-
-        gl.uniform4fv(
-          this.strokeLocations.u_color,
-          polygon.strokeColor.slice(0, 3).concat(1.0)
-        );
-        gl.uniform1f(this.strokeLocations.u_opacity, polygon.strokeColor[3]);
+        // Use pre-allocated arrays to avoid garbage collection
+        this.tempArrays.colorArray.set([polygon.strokeColor[0], polygon.strokeColor[1], polygon.strokeColor[2], 1.0]);
+        gl.uniform4fv(this.strokeUniformLocations.u_color, this.tempArrays.colorArray);
+        gl.uniform1f(this.strokeUniformLocations.u_opacity, polygon.strokeColor[3]);
 
         const startVertex = this.strokePolygonStarts[i];
         const numVertices = this.strokePolygonLengths[i];
@@ -551,12 +441,218 @@ export class WebglPolygonPlot {
         }
       }
 
-      gl.disableVertexAttribArray(this.strokeLocations.a_position);
-      gl.disableVertexAttribArray(this.strokeLocations.a_normal);
-      gl.disableVertexAttribArray(this.strokeLocations.a_side);
-      gl.bindBuffer(gl.ARRAY_BUFFER, null);
-      gl.useProgram(null);
+      gl.bindVertexArray(null);
     }
+    
+    gl.useProgram(null);
+  }
+
+  private _getUniformLocations(program: WebGLProgram): UniformLocations {
+    return {
+      u_polygon_scale: this.gl.getUniformLocation(program, "u_polygon_scale"),
+      u_polygon_offset: this.gl.getUniformLocation(program, "u_polygon_offset"),
+      u_global_scale: this.gl.getUniformLocation(program, "u_global_scale"),
+      u_global_offset: this.gl.getUniformLocation(program, "u_global_offset"),
+      u_color: this.gl.getUniformLocation(program, "u_color"),
+      u_opacity: this.gl.getUniformLocation(program, "u_opacity")
+    };
+  }
+
+  private _setupViewportTracking(): void {
+    // Cache initial viewport
+    const viewport = this.gl.getParameter(this.gl.VIEWPORT) as [number, number, number, number];
+    this.cachedState.viewport = viewport;
+    this.cachedState.viewportDirty = false;
+  }
+
+  private _updateViewportIfChanged(): boolean {
+    const currentViewport = this.gl.getParameter(this.gl.VIEWPORT) as [number, number, number, number];
+    if (currentViewport[2] !== this.cachedState.viewport[2] || 
+        currentViewport[3] !== this.cachedState.viewport[3]) {
+      this.cachedState.viewport = currentViewport;
+      this.cachedState.viewportDirty = true;
+      return true;
+    }
+    return false;
+  }
+
+  private _normalizePolygonConfig(config: PolygonConfig): PolygonConfig {
+    return {
+      ...config,
+      scale: config.scale || [1, 1],
+      offset: config.offset || [0, 0],
+      enabled: config.enabled === undefined ? true : config.enabled,
+      isFilled: config.isFilled === undefined ? true : config.isFilled,
+      isStroked: config.isStroked === undefined ? false : config.isStroked,
+      strokeWeight: config.strokeWeight === undefined ? 1 : config.strokeWeight,
+    };
+  }
+
+  private _validatePolygonId(polygonId: number, method: string): boolean {
+    if (polygonId < 0 || polygonId >= this.numPolygons) {
+      console.warn(`WebglPolygonPlot: Invalid polygonId for ${method}.`);
+      return false;
+    }
+    return true;
+  }
+
+  private _setupFillVAO(): void {
+    if (!this.fillVAO || !this.vertexBuffer) return;
+    
+    this.gl.bindVertexArray(this.fillVAO);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+    
+    // Position attribute (location 0)
+    this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(0);
+    
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    this.gl.bindVertexArray(null);
+  }
+
+  private _setupStrokeVAO(): void {
+    if (!this.strokeVAO || !this.strokeVertexBuffer) return;
+    
+    this.gl.bindVertexArray(this.strokeVAO);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.strokeVertexBuffer);
+    
+    const FLOAT_SIZE = 4;
+    const VERTEX_SIZE = 5 * FLOAT_SIZE; // 5 floats per vertex
+    
+    // Position attribute (location 0)
+    this.gl.vertexAttribPointer(0, 2, this.gl.FLOAT, false, VERTEX_SIZE, 0);
+    this.gl.enableVertexAttribArray(0);
+    
+    // Normal attribute (location 1)
+    this.gl.vertexAttribPointer(1, 2, this.gl.FLOAT, false, VERTEX_SIZE, 2 * FLOAT_SIZE);
+    this.gl.enableVertexAttribArray(1);
+    
+    // Side attribute (location 2)
+    this.gl.vertexAttribPointer(2, 1, this.gl.FLOAT, false, VERTEX_SIZE, 4 * FLOAT_SIZE);
+    this.gl.enableVertexAttribArray(2);
+    
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    this.gl.bindVertexArray(null);
+  }
+
+  private _regeneratePolygonStroke(polygonId: number): void {
+    if (polygonId < 0 || polygonId >= this.numPolygons) return;
+    
+    const polygon = this.polygonsConfig[polygonId];
+    if (!polygon.isStroked || polygon.strokeWeight! <= 0) {
+      // Clear this polygon's stroke data
+      this.strokePolygonLengths[polygonId] = 0;
+      return;
+    }
+    
+    const numVertices = polygon.points.length / 2;
+    if (numVertices < 3) {
+      this.strokePolygonLengths[polygonId] = 0;
+      return;
+    }
+    
+    // For now, fall back to full regeneration
+    // TODO: Implement partial buffer updates for single polygons
+    this._generateStrokeGeometry();
+  }
+
+  private _generateStrokeGeometry(): void {
+    if (this.numPolygons === 0) return;
+
+    let totalStrokeVertices = 0;
+    for (let i = 0; i < this.numPolygons; i++) {
+      const polygon = this.polygonsConfig[i];
+      if (!polygon.isStroked || polygon.strokeWeight! <= 0) {
+        this.strokePolygonStarts.push(0);
+        this.strokePolygonLengths.push(0);
+        continue;
+      }
+
+      const numVertices = polygon.points.length / 2;
+      if (numVertices < 3) {
+        this.strokePolygonStarts.push(0);
+        this.strokePolygonLengths.push(0);
+        continue;
+      }
+
+      this.strokePolygonStarts.push(totalStrokeVertices);
+      // Each edge needs 4 vertices (2 triangles) for thick stroke
+      const strokeVertices = numVertices * 4;
+      this.strokePolygonLengths.push(strokeVertices);
+      totalStrokeVertices += strokeVertices;
+    }
+
+    if (totalStrokeVertices === 0) return;
+
+    // Each vertex has: position (2) + normal (2) + side (1) = 5 floats
+    const strokeVertexData = new Float32Array(totalStrokeVertices * 5);
+    let dataOffset = 0;
+
+    for (let i = 0; i < this.numPolygons; i++) {
+      const polygon = this.polygonsConfig[i];
+      if (!polygon.isStroked || polygon.strokeWeight! <= 0) continue;
+
+      const numVertices = polygon.points.length / 2;
+      if (numVertices < 3) continue;
+
+      // Generate stroke geometry for this polygon
+      for (let j = 0; j < numVertices; j++) {
+        const currentIdx = j;
+        const nextIdx = (j + 1) % numVertices;
+
+        // Current and next vertices
+        const x1 = polygon.points[currentIdx * 2];
+        const y1 = polygon.points[currentIdx * 2 + 1];
+        const x2 = polygon.points[nextIdx * 2];
+        const y2 = polygon.points[nextIdx * 2 + 1];
+
+        // Calculate edge vector and normal
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const length = Math.sqrt(dx * dx + dy * dy);
+
+        if (length === 0) continue;
+
+        // Normalized normal (perpendicular to edge)
+        const nx = -dy / length;
+        const ny = dx / length;
+
+        // Create 4 vertices for this edge (triangle strip)
+        // Inner vertices (side = -1)
+        strokeVertexData[dataOffset++] = x1; // position x
+        strokeVertexData[dataOffset++] = y1; // position y
+        strokeVertexData[dataOffset++] = nx; // normal x
+        strokeVertexData[dataOffset++] = ny; // normal y
+        strokeVertexData[dataOffset++] = -1; // side
+
+        strokeVertexData[dataOffset++] = x2; // position x
+        strokeVertexData[dataOffset++] = y2; // position y
+        strokeVertexData[dataOffset++] = nx; // normal x
+        strokeVertexData[dataOffset++] = ny; // normal y
+        strokeVertexData[dataOffset++] = -1; // side
+
+        // Outer vertices (side = 1)
+        strokeVertexData[dataOffset++] = x1; // position x
+        strokeVertexData[dataOffset++] = y1; // position y
+        strokeVertexData[dataOffset++] = nx; // normal x
+        strokeVertexData[dataOffset++] = ny; // normal y
+        strokeVertexData[dataOffset++] = 1; // side
+
+        strokeVertexData[dataOffset++] = x2; // position x
+        strokeVertexData[dataOffset++] = y2; // position y
+        strokeVertexData[dataOffset++] = nx; // normal x
+        strokeVertexData[dataOffset++] = ny; // normal y
+        strokeVertexData[dataOffset++] = 1; // side
+      }
+    }
+
+    this.strokeVertexBuffer = this.gl.createBuffer();
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.strokeVertexBuffer);
+    this.gl.bufferData(this.gl.ARRAY_BUFFER, strokeVertexData, this.gl.STATIC_DRAW);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+    
+    // Set up stroke VAO
+    this._setupStrokeVAO();
   }
 
   private _createShaderProgram(
@@ -627,8 +723,8 @@ export class WebglPolygonPlot {
 
   public static createTriangle(config: {
     center: [number, number];
-    radius: number; // Distance from center to each vertex
-    rotation?: number; // In radians
+    radius: number;
+    rotation?: number;
     fillColor?: [number, number, number, number];
     strokeColor?: [number, number, number, number];
     strokeWeight?: number;
@@ -642,8 +738,8 @@ export class WebglPolygonPlot {
       center,
       radius,
       rotation = 0,
-      fillColor = [0.8, 0.8, 0.8, 0.5], // Default: semi-transparent grey
-      strokeColor = [0, 0, 0, 1], // Default: black
+      fillColor = [0.8, 0.8, 0.8, 0.5],
+      strokeColor = [0, 0, 0, 1],
       strokeWeight = 1,
       isFilled = true,
       isStroked = false,
@@ -652,10 +748,10 @@ export class WebglPolygonPlot {
       enabled = true,
     } = config;
 
-    const points = new Float32Array(3 * 2); // 3 vertices, 2 components each
+    const points = new Float32Array(3 * 2);
 
     for (let i = 0; i < 3; i++) {
-      const angle = rotation + (i * 2 * Math.PI) / 3; // Angle for each vertex
+      const angle = rotation + (i * 2 * Math.PI) / 3;
       points[i * 2] = center[0] + radius * Math.cos(angle);
       points[i * 2 + 1] = center[1] + radius * Math.sin(angle);
     }
@@ -675,8 +771,8 @@ export class WebglPolygonPlot {
 
   public static createSquare(config: {
     center: [number, number];
-    size: number; // Side length
-    rotation?: number; // In radians
+    size: number;
+    rotation?: number;
     fillColor?: [number, number, number, number];
     strokeColor?: [number, number, number, number];
     strokeWeight?: number;
@@ -708,7 +804,7 @@ export class WebglPolygonPlot {
       [-halfSize, halfSize],
     ];
 
-    const points = new Float32Array(4 * 2); // 4 vertices, 2 components each
+    const points = new Float32Array(4 * 2);
     const cosR = Math.cos(rotation);
     const sinR = Math.sin(rotation);
 
@@ -738,7 +834,7 @@ export class WebglPolygonPlot {
   public static createCircle(config: {
     center: [number, number];
     radius: number;
-    segments?: number; // Number of segments to approximate the circle
+    segments?: number;
     fillColor?: [number, number, number, number];
     strokeColor?: [number, number, number, number];
     strokeWeight?: number;
@@ -764,16 +860,15 @@ export class WebglPolygonPlot {
 
     if (segments < 3) {
       console.warn(
-        "WbglPolygonPlot.createCircle: segments must be 3 or more. Defaulting to 3."
+        "WebglPolygonPlot.createCircle: segments must be 3 or more. Defaulting to 3."
       );
-      // segments = 3; // Or throw error, depending on desired strictness
     }
 
     const points = new Float32Array(segments * 2);
     const angleStep = (2 * Math.PI) / segments;
 
     for (let i = 0; i < segments; i++) {
-      const angle = i * angleStep; // No rotation parameter for circle, it's symmetrical
+      const angle = i * angleStep;
       points[i * 2] = center[0] + radius * Math.cos(angle);
       points[i * 2 + 1] = center[1] + radius * Math.sin(angle);
     }
@@ -789,101 +884,5 @@ export class WebglPolygonPlot {
       offset,
       enabled,
     };
-  }
-
-  private _generateStrokeGeometry(): void {
-    if (this.numPolygons === 0) return;
-
-    let totalStrokeVertices = 0;
-    for (let i = 0; i < this.numPolygons; i++) {
-      const polygon = this.polygonsConfig[i];
-      if (!polygon.isStroked || polygon.strokeWeight <= 0) {
-        this.strokePolygonStarts.push(0);
-        this.strokePolygonLengths.push(0);
-        continue;
-      }
-
-      const numVertices = polygon.points.length / 2;
-      if (numVertices < 3) {
-        this.strokePolygonStarts.push(0);
-        this.strokePolygonLengths.push(0);
-        continue;
-      }
-
-      this.strokePolygonStarts.push(totalStrokeVertices);
-      // Each edge needs 4 vertices (2 triangles) for thick stroke
-      const strokeVertices = numVertices * 4;
-      this.strokePolygonLengths.push(strokeVertices);
-      totalStrokeVertices += strokeVertices;
-    }
-
-    if (totalStrokeVertices === 0) return;
-
-    // Each vertex has: position (2) + normal (2) + side (1) = 5 floats
-    const strokeVertexData = new Float32Array(totalStrokeVertices * 5);
-    let dataOffset = 0;
-
-    for (let i = 0; i < this.numPolygons; i++) {
-      const polygon = this.polygonsConfig[i];
-      if (!polygon.isStroked || polygon.strokeWeight <= 0) continue;
-
-      const numVertices = polygon.points.length / 2;
-      if (numVertices < 3) continue;
-
-      // Generate stroke geometry for this polygon
-      for (let j = 0; j < numVertices; j++) {
-        const currentIdx = j;
-        const nextIdx = (j + 1) % numVertices;
-
-        // Current and next vertices
-        const x1 = polygon.points[currentIdx * 2];
-        const y1 = polygon.points[currentIdx * 2 + 1];
-        const x2 = polygon.points[nextIdx * 2];
-        const y2 = polygon.points[nextIdx * 2 + 1];
-
-        // Calculate edge vector and normal
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const length = Math.sqrt(dx * dx + dy * dy);
-
-        if (length === 0) continue;
-
-        // Normalized normal (perpendicular to edge)
-        const nx = -dy / length;
-        const ny = dx / length;
-
-        // Create 4 vertices for this edge (triangle strip)
-        // Inner vertices (side = -1)
-        strokeVertexData[dataOffset++] = x1; // position x
-        strokeVertexData[dataOffset++] = y1; // position y
-        strokeVertexData[dataOffset++] = nx; // normal x
-        strokeVertexData[dataOffset++] = ny; // normal y
-        strokeVertexData[dataOffset++] = -1; // side
-
-        strokeVertexData[dataOffset++] = x2; // position x
-        strokeVertexData[dataOffset++] = y2; // position y
-        strokeVertexData[dataOffset++] = nx; // normal x
-        strokeVertexData[dataOffset++] = ny; // normal y
-        strokeVertexData[dataOffset++] = -1; // side
-
-        // Outer vertices (side = 1)
-        strokeVertexData[dataOffset++] = x1; // position x
-        strokeVertexData[dataOffset++] = y1; // position y
-        strokeVertexData[dataOffset++] = nx; // normal x
-        strokeVertexData[dataOffset++] = ny; // normal y
-        strokeVertexData[dataOffset++] = 1; // side
-
-        strokeVertexData[dataOffset++] = x2; // position x
-        strokeVertexData[dataOffset++] = y2; // position y
-        strokeVertexData[dataOffset++] = nx; // normal x
-        strokeVertexData[dataOffset++] = ny; // normal y
-        strokeVertexData[dataOffset++] = 1; // side
-      }
-    }
-
-    this.strokeVertexBuffer = this.gl.createBuffer();
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.strokeVertexBuffer);
-    this.gl.bufferData(this.gl.ARRAY_BUFFER, strokeVertexData, this.gl.STATIC_DRAW);
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
   }
 }
