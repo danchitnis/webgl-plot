@@ -35,6 +35,25 @@ export {
   // UnifiedLinePlot is exported above via `export { UnifiedLinePlot };`
 };
 
+/**
+ * Parse CSS color string (rgba format) to WebGL color array
+ * @param cssColor CSS color string in format "rgba(r, g, b, a)" where r,g,b are 0-255 and a is 0-1
+ * @returns Array of [r, g, b, a] where all values are normalized to 0-1 range
+ */
+function parseCSSColor(cssColor: string): [number, number, number, number] {
+  const rgbaMatch = cssColor.match(/rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*(?:,\s*([\d.]+))?\s*\)/);
+  if (!rgbaMatch) {
+    throw new Error(`Invalid CSS color format: ${cssColor}. Expected format: "rgba(r, g, b, a)" where r,g,b are 0-255 and a is 0-1`);
+  }
+
+  const r = Math.max(0, Math.min(255, parseFloat(rgbaMatch[1]))) / 255;
+  const g = Math.max(0, Math.min(255, parseFloat(rgbaMatch[2]))) / 255;
+  const b = Math.max(0, Math.min(255, parseFloat(rgbaMatch[3]))) / 255;
+  const a = rgbaMatch[4] ? Math.max(0, Math.min(1, parseFloat(rgbaMatch[4]))) : 1;
+
+  return [r, g, b, a];
+}
+
 export type WebglPlotConfig = {
   antialias?: boolean;
   transparent?: boolean;
@@ -42,6 +61,13 @@ export type WebglPlotConfig = {
   deSync?: boolean;
   preserveDrawing?: boolean;
   debug?: boolean;
+  /** 
+   * Background color as either:
+   * - Array of [r, g, b, a] where all values are 0-1
+   * - CSS color string in format "rgba(r, g, b, a)" where r,g,b are 0-255 and a is 0-1
+   * Example: [0.1, 0, 0.4, 1] or "rgba(25, 0, 100, 1)"
+   */
+  backgroundColor?: [number, number, number, number] | string;
 };
 
 /**
@@ -54,6 +80,12 @@ export class WebglPlot {
   public readonly gl: WebGL2RenderingContext;
   public width: number;
   public height: number;
+
+  /**
+   * Stored background color
+   * @private
+   */
+  private _backgroundColor: [number, number, number, number];
 
   /**
    * Creates a new WebglLineThick instance for rendering thick lines.
@@ -111,6 +143,21 @@ export class WebglPlot {
    */
   public debug = false;
 
+  /**
+   * Create a new WebglPlot instance
+   * @param canvas HTMLCanvasElement to render on
+   * @param options Configuration options including background color
+   * 
+   * For React applications: To prevent black background flash during initialization,
+   * set the canvas CSS background-color to match the WebGL background:
+   * ```css
+   * canvas { background-color: rgba(25, 0, 100, 1); }
+   * ```
+   * Or use inline styles:
+   * ```jsx
+   * <canvas style={{ backgroundColor: 'rgba(25, 0, 100, 1)' }} />
+   * ```
+   */
   constructor(canvas: HTMLCanvasElement, options?: WebglPlotConfig) {
     if (options == undefined) {
       this.gl = canvas.getContext("webgl2", {
@@ -120,7 +167,7 @@ export class WebglPlot {
     } else {
       this.gl = canvas.getContext("webgl2", {
         antialias: options.antialias,
-        transparent: options.transparent,
+        transparent: options.transparent ?? false, // Default to false if not specified
         desynchronized: options.deSync,
         powerPerformance: options.powerPerformance,
         preserveDrawing: options.preserveDrawing,
@@ -147,8 +194,19 @@ export class WebglPlot {
 
     //https://learnopengl.com/Advanced-OpenGL/Blending
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_DST_ALPHA);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    // Set background color from options or default to black
+    let bgColor: [number, number, number, number];
+    if (options?.backgroundColor) {
+      if (typeof options.backgroundColor === 'string') {
+        bgColor = parseCSSColor(options.backgroundColor);
+      } else {
+        bgColor = options.backgroundColor;
+      }
+    } else {
+      bgColor = [0, 0, 0, 1];
+    }
+    this._backgroundColor = bgColor;
   }
 
   /**
@@ -163,7 +221,44 @@ export class WebglPlot {
    * Clear the canvas
    */
   public clear(): void {
-    //this.webgl.clearColor(0.1, 0.1, 0.1, 1.0);
+    // Ensure background color is set before clearing
+    this.gl.clearColor(this._backgroundColor[0], this._backgroundColor[1], this._backgroundColor[2], this._backgroundColor[3]);
+    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  }
+
+  /**
+   * Set the background color of the canvas
+   * @param color Either:
+   *   - CSS color string in format "rgba(r, g, b, a)" where r,g,b are 0-255 and a is 0-1
+   *   - Array of [r, g, b, a] where all values are 0-1
+   * Example: "rgba(25, 0, 100, 1)" or [0.1, 0, 0.4, 1]
+   */
+  public setBackgroundColor(color: string | [number, number, number, number]): void;
+  /**
+   * Set the background color of the canvas (legacy method)
+   * @param r Red component (0-1)
+   * @param g Green component (0-1)
+   * @param b Blue component (0-1)
+   * @param a Alpha component (0-1)
+   */
+  public setBackgroundColor(r: number, g: number, b: number, a: number): void;
+  public setBackgroundColor(
+    colorOrR: string | [number, number, number, number] | number,
+    g?: number,
+    b?: number,
+    a?: number
+  ): void {
+    if (typeof colorOrR === 'string') {
+      this._backgroundColor = parseCSSColor(colorOrR);
+    } else if (Array.isArray(colorOrR)) {
+      this._backgroundColor = colorOrR;
+    } else if (typeof colorOrR === 'number' && g !== undefined && b !== undefined && a !== undefined) {
+      this._backgroundColor = [colorOrR, g, b, a];
+    } else {
+      throw new Error('Invalid arguments. Use either CSS color string, color array, or individual RGBA values.');
+    }
+    
+    this.gl.clearColor(this._backgroundColor[0], this._backgroundColor[1], this._backgroundColor[2], this._backgroundColor[3]);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
 
