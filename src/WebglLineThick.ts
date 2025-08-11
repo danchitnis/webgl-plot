@@ -6,7 +6,11 @@ const OFFSET_THICKNESS = 48;
 const BYTES_PER_FLOAT = 4;
 const BYTES_PER_INT = 4;
 const LINE_DATA_STRIDE = 64; // Stride for UBO LineData struct
+
+// Geometric thresholds
 const VERY_SHARP_TURN_DOT_THRESHOLD = 0.7; // For CPU-side sharp join detection
+const COINCIDENT_POINT_EPSILON = 1e-6; // Points closer than this are considered coincident
+const BOUNDS_CALCULATION_EPSILON = 1e-9; // For bounds calculation safety
 
 // --- Types ---
 type UniformLocationsMulti = {
@@ -19,6 +23,7 @@ type UniformLocationsMulti = {
 };
 
 import type { LineConfig } from "./LineConfig";
+import { FRAGMENT_SHADER_SOURCE, VERTEX_SHADER_SOURCE } from "./ShadersThick";
 
 // Type for returning bounds from autoScaleEnabledLines
 export type DataBounds = {
@@ -27,6 +32,8 @@ export type DataBounds = {
   minY: number;
   maxY: number;
 };
+
+
 
 // --- Helper Functions ---
 
@@ -115,6 +122,11 @@ export class WebglLineThick {
   private lineDataArrayBuffer: ArrayBuffer = new ArrayBuffer(0);
   private lineDataView: DataView = new DataView(this.lineDataArrayBuffer);
 
+  // Pre-allocated reusable buffers to avoid GC pressure
+  private reusableFloat32Array4: Float32Array = new Float32Array(4);
+  private reusableInt32Array1: Int32Array = new Int32Array(1);
+  private globalTransformDirty: boolean = true;
+
   // State
   private totalVertexCount: number = 0;
   private numLines: number = 0; // Number of lines *initialized*
@@ -127,6 +139,10 @@ export class WebglLineThick {
   private lineOriginalNumPointsCache: number[] = [];
   private lineStartIndexCache: number[] = [];
   private lineEnabledStatus: boolean[] = [];
+
+  // Sharp turn detection cache (maps lineId -> sharpness flags array)
+  private sharpTurnCache: Map<number, boolean[]> = new Map();
+  private pointsHashCache: Map<number, string> = new Map(); // To detect when points change
 
   // Global Transform (using simple arrays)
   private globalScale: [number, number] = [1.0, 1.0];
@@ -144,185 +160,9 @@ export class WebglLineThick {
 
     const gl = this.gl;
 
-    // --- Main Vertex Shader (Added Global Transform) ---
-    const vsSource = `#version 300 es
-precision highp float;
-precision highp int;
-#define MAX_LINES ${this.maxLines}
-
-// --- Uniforms ---
-uniform sampler2D uPointsTex;
-uniform int uTexWidth;
-uniform int uTexHeight;
-uniform vec2 uGlobalScale;  // Global Scale
-uniform vec2 uGlobalOffset; // Global Offset
-uniform vec2 uViewportSize;
-
-// --- UBO ---
-struct LineData {
-  vec4 transform; // scale.x, scale.y, offset.x, offset.y
-  vec4 color;     // r, g, b, a
-  ivec4 indices;  // start index, number of points (0=disabled), unused, unused
-  float thickness;
-};
-layout(std140) uniform LineDataBlock {
-  LineData uLines[MAX_LINES];
-};
-
-// --- Attributes ---
-in float aLineId;
-in float aIndex;
-in float aIsBevel;
-in vec2 aBevelNormal;
-in float aSide;
-
-// --- Outputs ---
-flat out vec4 vColor;
-
-// --- Helper: Get Point ---
-vec2 getPoint(int globalPointIndex) {
-  int texX = globalPointIndex % uTexWidth;
-  int texY = globalPointIndex / uTexWidth;
-  float u = (float(texX) + 0.5) / float(uTexWidth);
-  float v = (float(texY) + 0.5) / float(uTexHeight);
-  return texture(uPointsTex, vec2(u, v)).xy;
-}
-
-// --- Main ---
-void main() {
-  int lineId = int(aLineId);
-  int localIndex = int(aIndex); // This is the original point index passed from CPU
-
-  // Access UBO for line properties
-  int globalStartIndex = uLines[lineId].indices.x;
-  int numPoints = uLines[lineId].indices.y; // Total points in the current line segment
-
-  vColor = uLines[lineId].color; // Assign color to fragment shader
-
-  // Early exit for disabled lines or if pointIndex is out of bounds for this line segment
-  if (numPoints <= 0) { // localIndex check is implicitly handled by vertex generation on CPU
-     gl_Position = vec4(0.0, 0.0, 0.0, 0.0); // Collapse
-     //vColor = vec4(0.0); // Already set, or can be cleared if preferred
-     return;
-  }
-
-  // Common variables needed for both paths
-  vec2 lineScale = uLines[lineId].transform.xy;
-  vec2 lineOffset = uLines[lineId].transform.zw;
-  float desiredHalfPixelThickness = uLines[lineId].thickness * 0.5;
-
-  // Retrieve the current point's original coordinates from texture
-  // Note: aIndex (localIndex) directly maps to the point's position in the line's own array
-  vec2 p_original = getPoint(globalStartIndex + localIndex);
-  vec2 p_transformed = p_original * lineScale + lineOffset; // Apply per-line transform early
-
-  vec2 finalOffsetVector; // This will hold (normal * scale * side)
-
-  if (aIsBevel > 0.5) {
-      // --- Path for CPU-generated Bevels ---
-      // aBevelNormal is provided by CPU (N_in or N_out for the specific vertex of the bevel quad)
-      if (length(aBevelNormal) < 0.0001) {
-          finalOffsetVector = vec2(0.0, 0.0);
-      } else {
-          float bevelNormScreenSpaceLength = length(vec2(aBevelNormal.x * uViewportSize.x * 0.5, aBevelNormal.y * uViewportSize.y * 0.5));
-          bevelNormScreenSpaceLength = max(bevelNormScreenSpaceLength, 0.001); // Avoid division by zero
-          float bevelOffsetScaleNDC = desiredHalfPixelThickness / bevelNormScreenSpaceLength;
-          finalOffsetVector = aBevelNormal * bevelOffsetScaleNDC * aSide;
-      }
-  } else {
-      // --- Path for Shader-calculated Normals (Miters and Line Ends) ---
-      vec2 pPrev_original = (localIndex == 0) ? p_original : getPoint(globalStartIndex + max(0, localIndex - 1));
-      vec2 pNext_original = (localIndex == numPoints - 1) ? p_original : getPoint(globalStartIndex + min(numPoints - 1, localIndex + 1));
-
-      // Apply per-line transform to neighbors for normal calculation
-      vec2 pPrev_transformed = pPrev_original * lineScale + lineOffset;
-      vec2 pNext_transformed = pNext_original * lineScale + lineOffset;
-
-      vec2 offsetNormalDir; // To be calculated by miter/end logic
-      float dotDirs = 1.0;  // Initialize for GENTLE_TURN, actual value for interior points
-
-      // Define constants for miter logic
-      const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
-      const float VERY_SHARP_TURN_DOT_THRESHOLD = 0.7; // Used for miter blunting
-
-      bool isFirstPoint = (localIndex == 0);
-      bool isLastPoint = (localIndex == numPoints - 1);
-      bool prevCoincident = isFirstPoint || (length(p_transformed - pPrev_transformed) < 0.00001);
-      bool nextCoincident = isLastPoint || (length(p_transformed - pNext_transformed) < 0.00001);
-
-      if (prevCoincident && nextCoincident) {
-          offsetNormalDir = vec2(0.0, 1.0); // Isolated or all points coincident
-      } else if (prevCoincident) { // Start of a segment
-          vec2 dirToNext = normalize(pNext_transformed - p_transformed);
-          offsetNormalDir = vec2(-dirToNext.y, dirToNext.x);
-      } else if (nextCoincident) { // End of a segment
-          vec2 dirFromPrev = normalize(p_transformed - pPrev_transformed);
-          offsetNormalDir = vec2(-dirFromPrev.y, dirFromPrev.x);
-      } else { // Interior point (miter join)
-          vec2 dirFromPrev = normalize(p_transformed - pPrev_transformed);
-          vec2 dirToNext = normalize(pNext_transformed - p_transformed);
-
-          dotDirs = dot(dirFromPrev, dirToNext); // Actual dot product for interior points
-
-          vec2 n0 = vec2(-dirFromPrev.y, dirFromPrev.x);
-          vec2 n1 = vec2(-dirToNext.y, dirToNext.x);
-
-          if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
-              offsetNormalDir = n0;
-          } else {
-              vec2 miterSum = n0 + n1;
-
-              // Apply scaling factor to miterSum
-              // Assumes GENTLE_TURN_DOT_THRESHOLD and VERY_SHARP_TURN_DOT_THRESHOLD are accessible constants.
-              // This logic applies if VERY_SHARP_TURN_DOT_THRESHOLD <= dotDirs <= GENTLE_TURN_DOT_THRESHOLD
-              // (VERY_SHARP_TURN_DOT_THRESHOLD is -0.97, GENTLE_TURN_DOT_THRESHOLD is 0.990)
-              float normalizedRange = (dotDirs - VERY_SHARP_TURN_DOT_THRESHOLD) / (GENTLE_TURN_DOT_THRESHOLD - VERY_SHARP_TURN_DOT_THRESHOLD);
-              normalizedRange = clamp(normalizedRange, 0.0, 1.0);
-              float scaleFactor = 0.6 + normalizedRange * 0.4; // Ranges 0.6 to 1.0
-              miterSum *= scaleFactor;
-
-              if (length(miterSum) < 0.0001) {
-                  offsetNormalDir = n1;
-              } else {
-                  offsetNormalDir = normalize(miterSum);
-              }
-          }
-      }
-
-      // Calculate screen-space magnitude for the shader-calculated normal
-      if (length(offsetNormalDir) < 0.0001 || uViewportSize.x < 0.001 || uViewportSize.y < 0.001) {
-           finalOffsetVector = vec2(0.0,0.0);
-      } else {
-          float normScreenSpaceLength = length(vec2(offsetNormalDir.x * uViewportSize.x * 0.5, offsetNormalDir.y * uViewportSize.y * 0.5));
-          normScreenSpaceLength = max(normScreenSpaceLength, 0.001); // Avoid division by zero
-          float calculatedOffsetScaleNDC = desiredHalfPixelThickness / normScreenSpaceLength;
-          finalOffsetVector = offsetNormalDir * calculatedOffsetScaleNDC * aSide;
-      }
-  }
-
-  // Apply Global Transformation to the point first
-  vec2 p_globally_transformed = p_transformed * uGlobalScale + uGlobalOffset;
-
-  // Add the screen-space offset vector
-  vec2 finalPos = p_globally_transformed + finalOffsetVector;
-
-  gl_Position = vec4(finalPos, 0.0, 1.0);
-}
-`;
-
-    // --- Main Fragment Shader ---
-    const fsSource = `#version 300 es
-precision mediump float;
-flat in vec4 vColor; // Use 'flat' for no interpolation
-out vec4 fragColor;
-void main() {
-  // Optional: Discard fully transparent fragments early
-  if (vColor.a == 0.0) {
-    discard;
-  }
-  fragColor = vColor;
-}
-`;
+    // Use extracted shader source
+    const vsSource = VERTEX_SHADER_SOURCE(this.maxLines);
+    const fsSource = FRAGMENT_SHADER_SOURCE;
 
     // --- Create Main Program ---
     try {
@@ -392,41 +232,14 @@ void main() {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
     const stride = 6 * BYTES_PER_FLOAT; // New structure: lineId, pointIndex, isBevel, bevelNormalX, bevelNormalY, side
 
-    const aLineIdLoc = gl.getAttribLocation(this.prog, "aLineId");
-    const aIndexLoc = gl.getAttribLocation(this.prog, "aIndex");
-    const aIsBevelLoc = gl.getAttribLocation(this.prog, "aIsBevel");
-    const aBevelNormalLoc = gl.getAttribLocation(this.prog, "aBevelNormal");
-    const aSideLoc = gl.getAttribLocation(this.prog, "aSide");
-
-    if (aLineIdLoc === -1) console.warn("Attribute 'aLineId' not found in main program.");
-    else {
-      gl.enableVertexAttribArray(aLineIdLoc);
-      gl.vertexAttribPointer(aLineIdLoc, 1, gl.FLOAT, false, stride, 0 * BYTES_PER_FLOAT);
-    }
-
-    if (aIndexLoc === -1) console.warn("Attribute 'aIndex' not found in main program.");
-    else {
-      gl.enableVertexAttribArray(aIndexLoc);
-      gl.vertexAttribPointer(aIndexLoc, 1, gl.FLOAT, false, stride, 1 * BYTES_PER_FLOAT);
-    }
-
-    if (aIsBevelLoc === -1) console.warn("Attribute 'aIsBevel' not found in main program.");
-    else {
-      gl.enableVertexAttribArray(aIsBevelLoc);
-      gl.vertexAttribPointer(aIsBevelLoc, 1, gl.FLOAT, false, stride, 2 * BYTES_PER_FLOAT);
-    }
-
-    if (aBevelNormalLoc === -1) console.warn("Attribute 'aBevelNormal' not found in main program.");
-    else {
-      gl.enableVertexAttribArray(aBevelNormalLoc);
-      gl.vertexAttribPointer(aBevelNormalLoc, 2, gl.FLOAT, false, stride, 3 * BYTES_PER_FLOAT);
-    }
-
-    if (aSideLoc === -1) console.warn("Attribute 'aSide' not found in main program.");
-    else {
-      gl.enableVertexAttribArray(aSideLoc);
-      gl.vertexAttribPointer(aSideLoc, 1, gl.FLOAT, false, stride, 5 * BYTES_PER_FLOAT);
-    }
+    // Setup all attributes using helper function
+    this.setupVertexAttributes([
+      { name: 'aLineId', size: 1, offset: 0 * BYTES_PER_FLOAT },
+      { name: 'aIndex', size: 1, offset: 1 * BYTES_PER_FLOAT },
+      { name: 'aIsBevel', size: 1, offset: 2 * BYTES_PER_FLOAT },
+      { name: 'aBevelNormal', size: 2, offset: 3 * BYTES_PER_FLOAT },
+      { name: 'aSide', size: 1, offset: 5 * BYTES_PER_FLOAT }
+    ], stride);
 
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -620,7 +433,7 @@ void main() {
     const v2sub = (a: [number, number], b: [number, number]): [number, number] => [a[0] - b[0], a[1] - b[1]];
     const v2normalize = (a: [number, number]): [number, number] => {
       const len = Math.sqrt(a[0] * a[0] + a[1] * a[1]);
-      return len > 1e-6 ? [a[0] / len, a[1] / len] : [0, 0];
+      return len > COINCIDENT_POINT_EPSILON ? [a[0] / len, a[1] / len] : [0, 0];
     };
 
     // --- Sharp Join Detection & Vertex Count Calculation ---
@@ -631,39 +444,9 @@ void main() {
       const lineData = validLinesData[lineId];
       const pointsArray = lineData.lineObj.points;
       const numPts = lineData.numPoints;
-      const sharpnessForLine: boolean[] = new Array(numPts).fill(false);
 
-      if (numPts >= 3) { // Need at least 3 points for an interior point
-        for (let i = 1; i < numPts - 1; i++) {
-          const p0x = pointsArray[(i - 1) * 2];
-          const p0y = pointsArray[(i - 1) * 2 + 1];
-          const p1x = pointsArray[i * 2];
-          const p1y = pointsArray[i * 2 + 1];
-          const p2x = pointsArray[(i + 1) * 2];
-          const p2y = pointsArray[(i + 1) * 2 + 1];
-
-          let d0x = p1x - p0x;
-          let d0y = p1y - p0y;
-          const len_d0 = Math.sqrt(d0x * d0x + d0y * d0y);
-          if (len_d0 > 1e-6) {
-            d0x /= len_d0;
-            d0y /= len_d0;
-          }
-
-          let d1x = p2x - p1x;
-          let d1y = p2y - p1y;
-          const len_d1 = Math.sqrt(d1x * d1x + d1y * d1y);
-          if (len_d1 > 1e-6) {
-            d1x /= len_d1;
-            d1y /= len_d1;
-          }
-
-          const dotVal = d0x * d1x + d0y * d1y;
-          if (dotVal < VERY_SHARP_TURN_DOT_THRESHOLD) {
-            sharpnessForLine[i] = true;
-          }
-        }
-      }
+      // Use cached sharp turn detection
+      const sharpnessForLine = this.computeSharpTurns(lineId, pointsArray, numPts);
       pointSharpnessFlags.set(lineId, sharpnessForLine);
 
       // Calculate vertices for this line (re-enabling bevels)
@@ -813,23 +596,23 @@ void main() {
       const byteOffset = lineId * this.lineDataStride;
 
       // scale, offset, color, thickness are guaranteed by the logic above
-      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 0 * BYTES_PER_FLOAT, lineObj.scale![0], true );
-      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 1 * BYTES_PER_FLOAT, lineObj.scale![1], true );
-      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 2 * BYTES_PER_FLOAT, lineObj.offset![0], true );
-      this.lineDataView.setFloat32( byteOffset + OFFSET_TRANSFORM + 3 * BYTES_PER_FLOAT, lineObj.offset![1], true );
+      this.lineDataView.setFloat32(byteOffset + OFFSET_TRANSFORM + 0 * BYTES_PER_FLOAT, lineObj.scale![0], true);
+      this.lineDataView.setFloat32(byteOffset + OFFSET_TRANSFORM + 1 * BYTES_PER_FLOAT, lineObj.scale![1], true);
+      this.lineDataView.setFloat32(byteOffset + OFFSET_TRANSFORM + 2 * BYTES_PER_FLOAT, lineObj.offset![0], true);
+      this.lineDataView.setFloat32(byteOffset + OFFSET_TRANSFORM + 3 * BYTES_PER_FLOAT, lineObj.offset![1], true);
 
-      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 0 * BYTES_PER_FLOAT, lineObj.color[0], true );
-      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 1 * BYTES_PER_FLOAT, lineObj.color[1], true );
-      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 2 * BYTES_PER_FLOAT, lineObj.color[2], true );
-      this.lineDataView.setFloat32( byteOffset + OFFSET_COLOR + 3 * BYTES_PER_FLOAT, lineObj.color[3], true );
+      this.lineDataView.setFloat32(byteOffset + OFFSET_COLOR + 0 * BYTES_PER_FLOAT, lineObj.color[0], true);
+      this.lineDataView.setFloat32(byteOffset + OFFSET_COLOR + 1 * BYTES_PER_FLOAT, lineObj.color[1], true);
+      this.lineDataView.setFloat32(byteOffset + OFFSET_COLOR + 2 * BYTES_PER_FLOAT, lineObj.color[2], true);
+      this.lineDataView.setFloat32(byteOffset + OFFSET_COLOR + 3 * BYTES_PER_FLOAT, lineObj.color[3], true);
 
-      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 0 * BYTES_PER_INT, data.startIndex, true );
+      this.lineDataView.setInt32(byteOffset + OFFSET_INDICES + 0 * BYTES_PER_INT, data.startIndex, true);
       // Set numPoints in UBO to 0 if line.enabled is false
-      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 1 * BYTES_PER_INT, data.enabled ? data.numPoints : 0, true );
-      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 2 * BYTES_PER_INT, 0, true ); // Unused
-      this.lineDataView.setInt32( byteOffset + OFFSET_INDICES + 3 * BYTES_PER_INT, 0, true ); // Unused
+      this.lineDataView.setInt32(byteOffset + OFFSET_INDICES + 1 * BYTES_PER_INT, data.enabled ? data.numPoints : 0, true);
+      this.lineDataView.setInt32(byteOffset + OFFSET_INDICES + 2 * BYTES_PER_INT, 0, true); // Unused
+      this.lineDataView.setInt32(byteOffset + OFFSET_INDICES + 3 * BYTES_PER_INT, 0, true); // Unused
 
-      this.lineDataView.setFloat32( byteOffset + OFFSET_THICKNESS, lineObj.thickness!, true );
+      this.lineDataView.setFloat32(byteOffset + OFFSET_THICKNESS, lineObj.thickness!, true);
     }
     gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
     gl.bufferData(gl.UNIFORM_BUFFER, this.lineDataArrayBuffer, gl.DYNAMIC_DRAW);
@@ -857,32 +640,20 @@ void main() {
     scale: [number, number],
     offset: [number, number]
   ): void {
+    // Check if values actually changed to avoid redundant updates
+    const changed = this.globalScale[0] !== scale[0] ||
+      this.globalScale[1] !== scale[1] ||
+      this.globalOffset[0] !== offset[0] ||
+      this.globalOffset[1] !== offset[1];
+
+    if (!changed) return;
+
     // Store internally
     this.globalScale[0] = scale[0];
     this.globalScale[1] = scale[1];
     this.globalOffset[0] = offset[0];
     this.globalOffset[1] = offset[1];
-
-    // Update GL uniforms
-    const gl = this.gl;
-    if (
-      this.prog &&
-      this.locations.uGlobalScale &&
-      this.locations.uGlobalOffset
-    ) {
-      gl.useProgram(this.prog);
-      gl.uniform2f(
-        this.locations.uGlobalScale,
-        this.globalScale[0],
-        this.globalScale[1]
-      );
-      gl.uniform2f(
-        this.locations.uGlobalOffset,
-        this.globalOffset[0],
-        this.globalOffset[1]
-      );
-      gl.useProgram(null);
-    }
+    this.globalTransformDirty = true;
   }
 
   /**
@@ -974,7 +745,7 @@ void main() {
     const rangeY = maxY - minY;
     const ndcWidth = 2.0,
       ndcHeight = 2.0;
-    const epsilon = 1e-9;
+    const epsilon = BOUNDS_CALCULATION_EPSILON;
 
     // Calculate X scale and offset
     if (rangeX > epsilon) {
@@ -1012,6 +783,112 @@ void main() {
   }
 
   /**
+   * Computes sharp turn detection for a line with caching.
+   * @param lineId Line identifier
+   * @param pointsArray Points array for the line
+   * @param numPts Number of points in the line
+   * @returns Boolean array indicating sharp turns for each point
+   */
+  private computeSharpTurns(lineId: number, pointsArray: Float32Array, numPts: number): boolean[] {
+    // Create a simple hash of the points to detect changes
+    const pointsHash = Array.from(pointsArray.slice(0, numPts * 2)).join(',');
+
+    // Check if we have cached results for this line and points haven't changed
+    if (this.sharpTurnCache.has(lineId) && this.pointsHashCache.get(lineId) === pointsHash) {
+      return this.sharpTurnCache.get(lineId)!;
+    }
+
+    const sharpnessForLine: boolean[] = new Array(numPts).fill(false);
+
+    if (numPts >= 3) { // Need at least 3 points for an interior point
+      for (let i = 1; i < numPts - 1; i++) {
+        const p0x = pointsArray[(i - 1) * 2];
+        const p0y = pointsArray[(i - 1) * 2 + 1];
+        const p1x = pointsArray[i * 2];
+        const p1y = pointsArray[i * 2 + 1];
+        const p2x = pointsArray[(i + 1) * 2];
+        const p2y = pointsArray[(i + 1) * 2 + 1];
+
+        let d0x = p1x - p0x;
+        let d0y = p1y - p0y;
+        const len_d0 = Math.sqrt(d0x * d0x + d0y * d0y);
+        if (len_d0 > COINCIDENT_POINT_EPSILON) {
+          d0x /= len_d0;
+          d0y /= len_d0;
+        }
+
+        let d1x = p2x - p1x;
+        let d1y = p2y - p1y;
+        const len_d1 = Math.sqrt(d1x * d1x + d1y * d1y);
+        if (len_d1 > COINCIDENT_POINT_EPSILON) {
+          d1x /= len_d1;
+          d1y /= len_d1;
+        }
+
+        const dotVal = d0x * d1x + d0y * d1y;
+        if (dotVal < VERY_SHARP_TURN_DOT_THRESHOLD) {
+          sharpnessForLine[i] = true;
+        }
+      }
+    }
+
+    // Cache the results
+    this.sharpTurnCache.set(lineId, sharpnessForLine);
+    this.pointsHashCache.set(lineId, pointsHash);
+
+    return sharpnessForLine;
+  }
+
+  /**
+   * Helper to setup vertex attributes with error handling.
+   * @param attributes Array of attribute configurations
+   * @param stride Vertex stride in bytes
+   */
+  private setupVertexAttributes(
+    attributes: Array<{
+      name: string;
+      size: number;
+      offset: number;
+    }>,
+    stride: number
+  ): void {
+    const gl = this.gl;
+
+    for (const attr of attributes) {
+      const location = gl.getAttribLocation(this.prog!, attr.name);
+      if (location === -1) {
+        console.warn(`Attribute '${attr.name}' not found in main program.`);
+      } else {
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(
+          location,
+          attr.size,
+          gl.FLOAT,
+          false,
+          stride,
+          attr.offset
+        );
+      }
+    }
+  }
+
+  /**
+   * Generic helper to update UBO data and sync with GPU buffer.
+   * @param byteOffsets Array of byte offsets to update
+   * @param dataViews Array of typed array views containing the data
+   */
+  private updateUBOData(byteOffsets: number[], dataViews: ArrayBufferView[]): void {
+    const gl = this.gl;
+    if (!this.lineDataUBO || byteOffsets.length !== dataViews.length) return;
+
+    gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
+    for (let i = 0; i < byteOffsets.length; i++) {
+      gl.bufferSubData(gl.UNIFORM_BUFFER, byteOffsets[i], dataViews[i]);
+    }
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+  }
+
+  /**
    * Updates the per-line transform (scale and offset) for multiple lines using UBO updates.
    */
   public updateLinesTransform(
@@ -1019,51 +896,36 @@ void main() {
     scale: [number, number],
     offset: [number, number]
   ): void {
-    const gl = this.gl;
     if (!this.lineDataUBO) {
       console.warn("updateLinesTransform: UBO not available.");
       return;
     }
-    const updatedOffsets: number[] = [];
+
+    const byteOffsets: number[] = [];
+    const dataViews: Float32Array[] = [];
+
     for (const lineId of lineIds) {
       if (lineId < 0 || lineId >= this.numLines) {
         console.warn(`updateLinesTransform: Invalid lineId ${lineId}.`);
         continue;
       }
+
       const byteOffset = lineId * this.lineDataStride + OFFSET_TRANSFORM;
-      this.lineDataView.setFloat32(
-        byteOffset + 0 * BYTES_PER_FLOAT,
-        scale[0],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + 1 * BYTES_PER_FLOAT,
-        scale[1],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + 2 * BYTES_PER_FLOAT,
-        offset[0],
-        true
-      );
-      this.lineDataView.setFloat32(
-        byteOffset + 3 * BYTES_PER_FLOAT,
-        offset[1],
-        true
-      );
-      updatedOffsets.push(byteOffset);
+
+      // Update the local data view
+      this.lineDataView.setFloat32(byteOffset + 0 * BYTES_PER_FLOAT, scale[0], true);
+      this.lineDataView.setFloat32(byteOffset + 1 * BYTES_PER_FLOAT, scale[1], true);
+      this.lineDataView.setFloat32(byteOffset + 2 * BYTES_PER_FLOAT, offset[0], true);
+      this.lineDataView.setFloat32(byteOffset + 3 * BYTES_PER_FLOAT, offset[1], true);
+
+      // Create view for this transform data
+      const transformView = new Float32Array(this.lineDataArrayBuffer, byteOffset, 4);
+      byteOffsets.push(byteOffset);
+      dataViews.push(transformView);
     }
-    if (updatedOffsets.length > 0) {
-      gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
-      for (const byteOffset of updatedOffsets) {
-        const transformView = new Float32Array(
-          this.lineDataArrayBuffer,
-          byteOffset,
-          4
-        );
-        gl.bufferSubData(gl.UNIFORM_BUFFER, byteOffset, transformView);
-      }
-      gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+    if (byteOffsets.length > 0) {
+      this.updateUBOData(byteOffsets, dataViews);
     }
   }
 
@@ -1089,36 +951,22 @@ void main() {
       console.warn(`updateLineColor: Invalid lineId ${lineId}`);
       return;
     }
-    const gl = this.gl;
     if (!this.lineDataUBO) {
       console.warn("updateLineColor: UBO not available.");
       return;
     }
+
     const byteOffset = lineId * this.lineDataStride + OFFSET_COLOR;
-    this.lineDataView.setFloat32(
-      byteOffset + 0 * BYTES_PER_FLOAT,
-      color[0],
-      true
-    );
-    this.lineDataView.setFloat32(
-      byteOffset + 1 * BYTES_PER_FLOAT,
-      color[1],
-      true
-    );
-    this.lineDataView.setFloat32(
-      byteOffset + 2 * BYTES_PER_FLOAT,
-      color[2],
-      true
-    );
-    this.lineDataView.setFloat32(
-      byteOffset + 3 * BYTES_PER_FLOAT,
-      color[3],
-      true
-    );
-    gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
-    const colorView = new Float32Array(this.lineDataArrayBuffer, byteOffset, 4);
-    gl.bufferSubData(gl.UNIFORM_BUFFER, byteOffset, colorView);
-    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+    // Update the local data view
+    this.lineDataView.setFloat32(byteOffset + 0 * BYTES_PER_FLOAT, color[0], true);
+    this.lineDataView.setFloat32(byteOffset + 1 * BYTES_PER_FLOAT, color[1], true);
+    this.lineDataView.setFloat32(byteOffset + 2 * BYTES_PER_FLOAT, color[2], true);
+    this.lineDataView.setFloat32(byteOffset + 3 * BYTES_PER_FLOAT, color[3], true);
+
+    // Use pre-allocated buffer and helper
+    this.reusableFloat32Array4.set(color);
+    this.updateUBOData([byteOffset], [this.reusableFloat32Array4]);
   }
 
   /**
@@ -1129,28 +977,23 @@ void main() {
       console.warn(`updateLineThickness: Invalid lineId ${lineId}`);
       return;
     }
-    const gl = this.gl;
     if (!this.lineDataUBO) {
       console.warn("updateLineThickness: UBO not available.");
       return;
     }
+
     const byteOffset = lineId * this.lineDataStride + OFFSET_THICKNESS;
     this.lineDataView.setFloat32(byteOffset, newThickness, true);
-    gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
-    const thicknessView = new Float32Array(
-      this.lineDataArrayBuffer,
-      byteOffset,
-      1
-    );
-    gl.bufferSubData(gl.UNIFORM_BUFFER, byteOffset, thicknessView);
-    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+    // Use pre-allocated buffer and helper
+    this.reusableFloat32Array4[0] = newThickness;
+    this.updateUBOData([byteOffset], [this.reusableFloat32Array4.subarray(0, 1)]);
   }
 
   /**
    * Enables or disables rendering of specific lines.
    */
   public setLinesEnabled(lineIds: number[], enabled: boolean): void {
-    const gl = this.gl;
     if (!this.lineDataUBO) {
       console.warn("setLinesEnabled: UBO not available.");
       return;
@@ -1173,12 +1016,16 @@ void main() {
       }
     }
     if (updatedIndices.length > 0) {
-      gl.bindBuffer(gl.UNIFORM_BUFFER, this.lineDataUBO);
+      const byteOffsets: number[] = [];
+      const dataViews: Int32Array[] = [];
+
       for (const update of updatedIndices) {
-        const int32View = new Int32Array([update.numPoints]);
-        gl.bufferSubData(gl.UNIFORM_BUFFER, update.byteOffset, int32View);
+        this.reusableInt32Array1[0] = update.numPoints;
+        byteOffsets.push(update.byteOffset);
+        dataViews.push(this.reusableInt32Array1.slice()); // Create a copy for this update
       }
-      gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+      this.updateUBOData(byteOffsets, dataViews);
     }
   }
 
@@ -1222,46 +1069,66 @@ void main() {
         return;
       }
     }
-    // Update GPU texture
+    // Update GPU texture - optimized batching
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.pointsTexture);
+
+    // For small updates, use a single texSubImage2D call when possible
+    if (numPts <= this.texWidth) {
+      const startRow = Math.floor(startIdx / this.texWidth);
+      const startCol = startIdx % this.texWidth;
+
+      // Check if the line segment fits entirely in one row
+      if (startCol + numPts <= this.texWidth) {
+        const offsetFloats = startIdx * 2;
+        const lengthFloats = numPts * 2;
+        const subDataView = new Float32Array(
+          this.pointsData.buffer,
+          this.pointsData.byteOffset + offsetFloats * BYTES_PER_FLOAT,
+          lengthFloats
+        );
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, startCol, startRow, numPts, 1, gl.RG, gl.FLOAT, subDataView);
+      } else {
+        // Fallback to row-by-row updates for lines that span rows
+        this.updateTextureByRows(gl, startIdx, numPts);
+      }
+    } else {
+      // For very long lines, update row by row
+      this.updateTextureByRows(gl, startIdx, numPts);
+    }
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+
+  /**
+   * Helper method to update texture data row by row.
+   * @param gl WebGL context
+   * @param startIdx Starting global point index
+   * @param numPts Number of points to update
+   */
+  private updateTextureByRows(gl: WebGL2RenderingContext, startIdx: number, numPts: number): void {
     let currentGlobalIndex = startIdx;
     const endGlobalIndex = startIdx + numPts;
+
     while (currentGlobalIndex < endGlobalIndex) {
       const row = Math.floor(currentGlobalIndex / this.texWidth);
       const col = currentGlobalIndex % this.texWidth;
       const remainingInRow = this.texWidth - col;
       const remainingInLineSegment = endGlobalIndex - currentGlobalIndex;
       const numPointsInBlock = Math.min(remainingInRow, remainingInLineSegment);
+
       if (numPointsInBlock <= 0) break;
+
       const offsetFloats = currentGlobalIndex * 2;
       const lengthFloats = numPointsInBlock * 2;
-      const byteOffset =
-        this.pointsData.byteOffset + offsetFloats * BYTES_PER_FLOAT;
-      const byteLength = lengthFloats * BYTES_PER_FLOAT;
-      if (byteOffset + byteLength > this.pointsData.buffer.byteLength) {
-        console.error(`updateLineY: View OOB buffer.`);
-        break;
-      }
       const subDataView = new Float32Array(
         this.pointsData.buffer,
-        byteOffset,
+        this.pointsData.byteOffset + offsetFloats * BYTES_PER_FLOAT,
         lengthFloats
       );
-      gl.texSubImage2D(
-        gl.TEXTURE_2D,
-        0,
-        col,
-        row,
-        numPointsInBlock,
-        1,
-        gl.RG,
-        gl.FLOAT,
-        subDataView
-      );
+
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, col, row, numPointsInBlock, 1, gl.RG, gl.FLOAT, subDataView);
       currentGlobalIndex += numPointsInBlock;
     }
-    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 
   /**
@@ -1281,19 +1148,22 @@ void main() {
 
     gl.useProgram(this.prog);
 
-    // Ensure latest global transform is set in uniforms
-    if (this.locations.uGlobalScale)
-      gl.uniform2f(
-        this.locations.uGlobalScale,
-        this.globalScale[0],
-        this.globalScale[1]
-      );
-    if (this.locations.uGlobalOffset)
-      gl.uniform2f(
-        this.locations.uGlobalOffset,
-        this.globalOffset[0],
-        this.globalOffset[1]
-      );
+    // Update global transform uniforms only when dirty
+    if (this.globalTransformDirty) {
+      if (this.locations.uGlobalScale)
+        gl.uniform2f(
+          this.locations.uGlobalScale,
+          this.globalScale[0],
+          this.globalScale[1]
+        );
+      if (this.locations.uGlobalOffset)
+        gl.uniform2f(
+          this.locations.uGlobalOffset,
+          this.globalOffset[0],
+          this.globalOffset[1]
+        );
+      this.globalTransformDirty = false;
+    }
     if (this.locations.uViewportSize) {
       gl.uniform2f(this.locations.uViewportSize, gl.canvas.width, gl.canvas.height);
     }
@@ -1358,6 +1228,10 @@ void main() {
     this.lineOriginalNumPointsCache = [];
     this.lineStartIndexCache = [];
     this.lineEnabledStatus = [];
+
+    // Clear caches
+    this.sharpTurnCache.clear();
+    this.pointsHashCache.clear();
     // Reset location caches
     this.locations = {
       uPointsTex: null,
@@ -1396,8 +1270,8 @@ void main() {
 
     // Ensure the offset is within bounds
     if (byteOffset + OFFSET_THICKNESS + BYTES_PER_FLOAT > this.lineDataView.byteLength) {
-        console.warn(`getLineConfig: lineId ${lineId} results in offset out of bounds for lineDataView.`);
-        return undefined;
+      console.warn(`getLineConfig: lineId ${lineId} results in offset out of bounds for lineDataView.`);
+      return undefined;
     }
 
     const config: Partial<LineConfig> = {};
