@@ -783,24 +783,27 @@ export class WebglLineThick {
   }
 
   /**
-   * Computes sharp turn detection for a line with caching.
+   * Computes sharp turn detection for a line with caching and optimizations.
    * @param lineId Line identifier
    * @param pointsArray Points array for the line
    * @param numPts Number of points in the line
    * @returns Boolean array indicating sharp turns for each point
    */
   private computeSharpTurns(lineId: number, pointsArray: Float32Array, numPts: number): boolean[] {
-    // Create a simple hash of the points to detect changes
-    const pointsHash = Array.from(pointsArray.slice(0, numPts * 2)).join(',');
+    // Use a faster hash based on array length and first/last points for change detection
+    const quickHash = `${numPts}_${pointsArray[0]}_${pointsArray[1]}_${pointsArray[numPts*2-2]}_${pointsArray[numPts*2-1]}`;
 
     // Check if we have cached results for this line and points haven't changed
-    if (this.sharpTurnCache.has(lineId) && this.pointsHashCache.get(lineId) === pointsHash) {
+    if (this.sharpTurnCache.has(lineId) && this.pointsHashCache.get(lineId) === quickHash) {
       return this.sharpTurnCache.get(lineId)!;
     }
 
     const sharpnessForLine: boolean[] = new Array(numPts).fill(false);
 
     if (numPts >= 3) { // Need at least 3 points for an interior point
+      // Pre-calculate threshold for fewer comparisons
+      const sharpThreshold = VERY_SHARP_TURN_DOT_THRESHOLD;
+      
       for (let i = 1; i < numPts - 1; i++) {
         const p0x = pointsArray[(i - 1) * 2];
         const p0y = pointsArray[(i - 1) * 2 + 1];
@@ -809,32 +812,40 @@ export class WebglLineThick {
         const p2x = pointsArray[(i + 1) * 2];
         const p2y = pointsArray[(i + 1) * 2 + 1];
 
+        // Calculate direction vectors
         let d0x = p1x - p0x;
         let d0y = p1y - p0y;
-        const len_d0 = Math.sqrt(d0x * d0x + d0y * d0y);
-        if (len_d0 > COINCIDENT_POINT_EPSILON) {
-          d0x /= len_d0;
-          d0y /= len_d0;
-        }
-
         let d1x = p2x - p1x;
         let d1y = p2y - p1y;
-        const len_d1 = Math.sqrt(d1x * d1x + d1y * d1y);
-        if (len_d1 > COINCIDENT_POINT_EPSILON) {
-          d1x /= len_d1;
-          d1y /= len_d1;
+
+        // Calculate squared lengths to avoid sqrt when possible
+        const len_d0_sq = d0x * d0x + d0y * d0y;
+        const len_d1_sq = d1x * d1x + d1y * d1y;
+
+        // Skip normalization if either segment is too short
+        if (len_d0_sq < COINCIDENT_POINT_EPSILON * COINCIDENT_POINT_EPSILON || 
+            len_d1_sq < COINCIDENT_POINT_EPSILON * COINCIDENT_POINT_EPSILON) {
+          continue;
         }
 
+        // Normalize only when necessary
+        const len_d0 = Math.sqrt(len_d0_sq);
+        const len_d1 = Math.sqrt(len_d1_sq);
+        d0x /= len_d0;
+        d0y /= len_d0;
+        d1x /= len_d1;
+        d1y /= len_d1;
+
         const dotVal = d0x * d1x + d0y * d1y;
-        if (dotVal < VERY_SHARP_TURN_DOT_THRESHOLD) {
+        if (dotVal < sharpThreshold) {
           sharpnessForLine[i] = true;
         }
       }
     }
 
-    // Cache the results
+    // Cache the results with the quick hash
     this.sharpTurnCache.set(lineId, sharpnessForLine);
-    this.pointsHashCache.set(lineId, pointsHash);
+    this.pointsHashCache.set(lineId, quickHash);
 
     return sharpnessForLine;
   }

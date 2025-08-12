@@ -48,6 +48,20 @@ vec2 getPoint(int globalPointIndex) {
   return texture(uPointsTex, vec2(u, v)).xy;
 }
 
+// --- Helper: Calculate Consistent Thickness Offset ---
+vec2 calculateThicknessOffset(vec2 normalDir, float desiredHalfPixelThickness, float side) {
+  if (length(normalDir) < 0.0001 || uViewportSize.x < 0.001 || uViewportSize.y < 0.001) {
+    return vec2(0.0, 0.0);
+  }
+  
+  // Use consistent scaling to maintain uniform thickness across all orientations
+  float avgViewportScale = (uViewportSize.x + uViewportSize.y) * 0.25; // Average of half-viewport sizes
+  float normLength = length(normalDir);
+  normLength = max(normLength, 0.001); // Avoid division by zero
+  float offsetScaleNDC = desiredHalfPixelThickness / (normLength * avgViewportScale);
+  return normalDir * offsetScaleNDC * side;
+}
+
 // --- Main ---
 void main() {
   int lineId = int(aLineId);
@@ -59,10 +73,9 @@ void main() {
 
   vColor = uLines[lineId].color; // Assign color to fragment shader
 
-  // Early exit for disabled lines or if pointIndex is out of bounds for this line segment
-  if (numPoints <= 0) { // localIndex check is implicitly handled by vertex generation on CPU
-     gl_Position = vec4(0.0, 0.0, 0.0, 0.0); // Collapse
-     //vColor = vec4(0.0); // Already set, or can be cleared if preferred
+  // Early exit for disabled lines
+  if (numPoints <= 0) {
+     gl_Position = vec4(-2.0, -2.0, 0.0, 1.0); // Move off-screen
      return;
   }
 
@@ -81,14 +94,7 @@ void main() {
   if (aIsBevel > 0.5) {
       // --- Path for CPU-generated Bevels ---
       // aBevelNormal is provided by CPU (N_in or N_out for the specific vertex of the bevel quad)
-      if (length(aBevelNormal) < 0.0001) {
-          finalOffsetVector = vec2(0.0, 0.0);
-      } else {
-          float bevelNormScreenSpaceLength = length(vec2(aBevelNormal.x * uViewportSize.x * 0.5, aBevelNormal.y * uViewportSize.y * 0.5));
-          bevelNormScreenSpaceLength = max(bevelNormScreenSpaceLength, 0.001); // Avoid division by zero
-          float bevelOffsetScaleNDC = desiredHalfPixelThickness / bevelNormScreenSpaceLength;
-          finalOffsetVector = aBevelNormal * bevelOffsetScaleNDC * aSide;
-      }
+      finalOffsetVector = calculateThicknessOffset(aBevelNormal, desiredHalfPixelThickness, aSide);
   } else {
       // --- Path for Shader-calculated Normals (Miters and Line Ends) ---
       vec2 pPrev_original = (localIndex == 0) ? p_original : getPoint(globalStartIndex + max(0, localIndex - 1));
@@ -99,65 +105,60 @@ void main() {
       vec2 pNext_transformed = pNext_original * lineScale + lineOffset;
 
       vec2 offsetNormalDir; // To be calculated by miter/end logic
-      float dotDirs = 1.0;  // Initialize for GENTLE_TURN, actual value for interior points
-
-      // Define constants for miter logic
-      const float GENTLE_TURN_DOT_THRESHOLD = 0.990;
-      const float VERY_SHARP_TURN_DOT_THRESHOLD = 0.7; // Used for miter blunting
 
       bool isFirstPoint = (localIndex == 0);
       bool isLastPoint = (localIndex == numPoints - 1);
-      bool prevCoincident = isFirstPoint || (length(p_transformed - pPrev_transformed) < 0.00001);
-      bool nextCoincident = isLastPoint || (length(p_transformed - pNext_transformed) < 0.00001);
-
-      if (prevCoincident && nextCoincident) {
-          offsetNormalDir = vec2(0.0, 1.0); // Isolated or all points coincident
-      } else if (prevCoincident) { // Start of a segment
-          vec2 dirToNext = normalize(pNext_transformed - p_transformed);
-          offsetNormalDir = vec2(-dirToNext.y, dirToNext.x);
-      } else if (nextCoincident) { // End of a segment
-          vec2 dirFromPrev = normalize(p_transformed - pPrev_transformed);
-          offsetNormalDir = vec2(-dirFromPrev.y, dirFromPrev.x);
-      } else { // Interior point (miter join)
-          vec2 dirFromPrev = normalize(p_transformed - pPrev_transformed);
-          vec2 dirToNext = normalize(pNext_transformed - p_transformed);
-
-          dotDirs = dot(dirFromPrev, dirToNext); // Actual dot product for interior points
-
-          vec2 n0 = vec2(-dirFromPrev.y, dirFromPrev.x);
-          vec2 n1 = vec2(-dirToNext.y, dirToNext.x);
-
-          if (dotDirs > GENTLE_TURN_DOT_THRESHOLD) {
-              offsetNormalDir = n0;
+      
+      // Simplified logic with fewer branches
+      if (isFirstPoint && isLastPoint) {
+          // Single point case (should not happen with numPoints >= 2)
+          offsetNormalDir = vec2(0.0, 1.0);
+      } else if (isFirstPoint) {
+          // Start of line - use next point direction
+          vec2 dirToNext = pNext_transformed - p_transformed;
+          if (length(dirToNext) > 0.00001) {
+              dirToNext = normalize(dirToNext);
+              offsetNormalDir = vec2(-dirToNext.y, dirToNext.x);
           } else {
+              offsetNormalDir = vec2(0.0, 1.0);
+          }
+      } else if (isLastPoint) {
+          // End of line - use previous point direction  
+          vec2 dirFromPrev = p_transformed - pPrev_transformed;
+          if (length(dirFromPrev) > 0.00001) {
+              dirFromPrev = normalize(dirFromPrev);
+              offsetNormalDir = vec2(-dirFromPrev.y, dirFromPrev.x);
+          } else {
+              offsetNormalDir = vec2(0.0, 1.0);
+          }
+      } else {
+          // Interior point - use simplified miter
+          vec2 dirFromPrev = p_transformed - pPrev_transformed;
+          vec2 dirToNext = pNext_transformed - p_transformed;
+          
+          float lenPrev = length(dirFromPrev);
+          float lenNext = length(dirToNext);
+          
+          if (lenPrev > 0.00001 && lenNext > 0.00001) {
+              dirFromPrev /= lenPrev;
+              dirToNext /= lenNext;
+              
+              vec2 n0 = vec2(-dirFromPrev.y, dirFromPrev.x);
+              vec2 n1 = vec2(-dirToNext.y, dirToNext.x);
               vec2 miterSum = n0 + n1;
-
-              // Apply scaling factor to miterSum
-              // Assumes GENTLE_TURN_DOT_THRESHOLD and VERY_SHARP_TURN_DOT_THRESHOLD are accessible constants.
-              // This logic applies if VERY_SHARP_TURN_DOT_THRESHOLD <= dotDirs <= GENTLE_TURN_DOT_THRESHOLD
-              // (VERY_SHARP_TURN_DOT_THRESHOLD is -0.97, GENTLE_TURN_DOT_THRESHOLD is 0.990)
-              float normalizedRange = (dotDirs - VERY_SHARP_TURN_DOT_THRESHOLD) / (GENTLE_TURN_DOT_THRESHOLD - VERY_SHARP_TURN_DOT_THRESHOLD);
-              normalizedRange = clamp(normalizedRange, 0.0, 1.0);
-              float scaleFactor = 0.6 + normalizedRange * 0.4; // Ranges 0.6 to 1.0
-              miterSum *= scaleFactor;
-
-              if (length(miterSum) < 0.0001) {
-                  offsetNormalDir = n1;
-              } else {
+              
+              if (length(miterSum) > 0.00001) {
                   offsetNormalDir = normalize(miterSum);
+              } else {
+                  offsetNormalDir = n0; // Fallback to first normal
               }
+          } else {
+              offsetNormalDir = vec2(0.0, 1.0); // Fallback
           }
       }
 
-      // Calculate screen-space magnitude for the shader-calculated normal
-      if (length(offsetNormalDir) < 0.0001 || uViewportSize.x < 0.001 || uViewportSize.y < 0.001) {
-           finalOffsetVector = vec2(0.0,0.0);
-      } else {
-          float normScreenSpaceLength = length(vec2(offsetNormalDir.x * uViewportSize.x * 0.5, offsetNormalDir.y * uViewportSize.y * 0.5));
-          normScreenSpaceLength = max(normScreenSpaceLength, 0.001); // Avoid division by zero
-          float calculatedOffsetScaleNDC = desiredHalfPixelThickness / normScreenSpaceLength;
-          finalOffsetVector = offsetNormalDir * calculatedOffsetScaleNDC * aSide;
-      }
+      // Calculate final offset using unified thickness calculation
+      finalOffsetVector = calculateThicknessOffset(offsetNormalDir, desiredHalfPixelThickness, aSide);
   }
 
   // Apply Global Transformation to the point first
