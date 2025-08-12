@@ -153,14 +153,63 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
+// Zoom controls
+let currentZoomX = 1.0;
+let currentZoomY = 1.0;
+let currentOffsetX = 0.0;
+let currentOffsetY = 0.0;
+
+function applyZoom() {
+  plotLine.setGlobalTransform([currentZoomX, currentZoomY], [currentOffsetX, currentOffsetY]);
+  if (statusElem) statusElem.innerHTML = `Status: Zoom X:${currentZoomX.toFixed(1)} Y:${currentZoomY.toFixed(1)} Offset X:${currentOffsetX.toFixed(2)} Y:${currentOffsetY.toFixed(2)}`;
+}
+
+function zoomInX() {
+  currentZoomX *= 1.5;
+  applyZoom();
+}
+
+function zoomOutX() {
+  currentZoomX /= 1.5;
+  applyZoom();
+}
+
+function zoomInY() {
+  currentZoomY *= 1.5;
+  applyZoom();
+}
+
+function zoomOutY() {
+  currentZoomY /= 1.5;
+  applyZoom();
+}
+
+function resetZoom() {
+  currentZoomX = 1.0;
+  currentZoomY = 1.0;
+  currentOffsetX = 0.0;
+  currentOffsetY = 0.0;
+  applyZoom();
+}
+
 // Add controls to the page
 const controlsContainer = document.createElement('div');
 controlsContainer.innerHTML = `
   <div style="margin: 10px 0; color: white;">
-    <button onclick="testHighDensitySine()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">High-Density Sine Waves</button>
-    <button onclick="testSharpAngles()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">Sharp Angles Test</button>
-    <button onclick="testStraightLines()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">Straight Lines Test</button>
-    <button onclick="testVaryingThickness()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">Varying Thickness</button>
+    <div style="margin-bottom: 10px;">
+      <button onclick="testHighDensitySine()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">High-Density Sine Waves</button>
+      <button onclick="testSharpAngles()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">Sharp Angles Test</button>
+      <button onclick="testStraightLines()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">Straight Lines Test</button>
+      <button onclick="testVaryingThickness()" style="margin: 5px; padding: 8px 12px; background: #555; color: white; border: none; cursor: pointer;">Varying Thickness</button>
+    </div>
+    <div style="margin-bottom: 10px; border-top: 1px solid #666; padding-top: 10px;">
+      <strong>Zoom Controls:</strong><br>
+      <button onclick="zoomInX()" style="margin: 2px; padding: 6px 10px; background: #333; color: white; border: none; cursor: pointer;">Zoom In X</button>
+      <button onclick="zoomOutX()" style="margin: 2px; padding: 6px 10px; background: #333; color: white; border: none; cursor: pointer;">Zoom Out X</button>
+      <button onclick="zoomInY()" style="margin: 2px; padding: 6px 10px; background: #333; color: white; border: none; cursor: pointer;">Zoom In Y</button>
+      <button onclick="zoomOutY()" style="margin: 2px; padding: 6px 10px; background: #333; color: white; border: none; cursor: pointer;">Zoom Out Y</button>
+      <button onclick="resetZoom()" style="margin: 2px; padding: 6px 10px; background: #666; color: white; border: none; cursor: pointer;">Reset Zoom</button>
+    </div>
   </div>
 `;
 
@@ -168,10 +217,24 @@ controlsContainer.innerHTML = `
 canvas.parentNode?.insertBefore(controlsContainer, canvas);
 
 // Make functions available globally
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).testHighDensitySine = testHighDensitySine;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).testSharpAngles = testSharpAngles;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).testStraightLines = testStraightLines;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).testVaryingThickness = testVaryingThickness;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).zoomInX = zoomInX;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).zoomOutX = zoomOutX;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).zoomInY = zoomInY;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).zoomOutY = zoomOutY;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).resetZoom = resetZoom;
 
 // Start with high-density sine wave test
 testHighDensitySine();

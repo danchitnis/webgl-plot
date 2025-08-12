@@ -2,6 +2,19 @@
 /*****************
  * The shaders in the file are WebglLneThick.ts
  * They are used for rendering thick lines in WebGL.
+ * 
+ * ZOOM THICKNESS ISSUE NOTES:
+ * - Problem: Line thickness changes during zoom operations (X-only zoom especially problematic)
+ * - Root cause: Thickness offset calculations need to be independent of global scale transforms
+ * - Current approach: Calculate thickness in screen space after considering global scale impact on normals
+ * - Key insight: Transform normals by global scale, then apply constant screen-space thickness
+ * - Apply thickness offset AFTER global transform to maintain constant pixel thickness
+ * 
+ * Changes made:
+ * 1. calculateThicknessOffset() now takes globalScale parameter
+ * 2. Normal vectors are transformed by globalScale before thickness calculation
+ * 3. Thickness offset applied after global transform (not before)
+ * 4. This ensures visual thickness remains constant regardless of zoom level
  ******************/
 
 // --- Shader Source Code ---
@@ -48,18 +61,28 @@ vec2 getPoint(int globalPointIndex) {
   return texture(uPointsTex, vec2(u, v)).xy;
 }
 
-// --- Helper: Calculate Consistent Thickness Offset ---
-vec2 calculateThicknessOffset(vec2 normalDir, float desiredHalfPixelThickness, float side) {
+// --- Helper: Calculate Screen-Space Thickness Offset ---
+vec2 calculateThicknessOffset(vec2 normalDir, float desiredHalfPixelThickness, float side, vec2 globalScale) {
   if (length(normalDir) < 0.0001 || uViewportSize.x < 0.001 || uViewportSize.y < 0.001) {
     return vec2(0.0, 0.0);
   }
   
-  // Use consistent scaling to maintain uniform thickness across all orientations
-  float avgViewportScale = (uViewportSize.x + uViewportSize.y) * 0.25; // Average of half-viewport sizes
-  float normLength = length(normalDir);
-  normLength = max(normLength, 0.001); // Avoid division by zero
-  float offsetScaleNDC = desiredHalfPixelThickness / (normLength * avgViewportScale);
-  return normalDir * offsetScaleNDC * side;
+  // Key insight: Calculate thickness in final screen space, independent of zoom
+  // The normal direction needs to be transformed by the global scale to get the 
+  // correct screen-space direction after global transform is applied
+  
+  vec2 transformedNormal = normalDir * globalScale;
+  float transformedNormalLength = length(transformedNormal);
+  transformedNormalLength = max(transformedNormalLength, 0.001);
+  
+  // Normalize the transformed normal
+  vec2 screenSpaceNormal = transformedNormal / transformedNormalLength;
+  
+  // Convert thickness to NDC space
+  float avgViewportScale = (uViewportSize.x + uViewportSize.y) * 0.25;
+  float offsetScaleNDC = desiredHalfPixelThickness / avgViewportScale;
+  
+  return screenSpaceNormal * offsetScaleNDC * side;
 }
 
 // --- Main ---
@@ -94,7 +117,7 @@ void main() {
   if (aIsBevel > 0.5) {
       // --- Path for CPU-generated Bevels ---
       // aBevelNormal is provided by CPU (N_in or N_out for the specific vertex of the bevel quad)
-      finalOffsetVector = calculateThicknessOffset(aBevelNormal, desiredHalfPixelThickness, aSide);
+      finalOffsetVector = calculateThicknessOffset(aBevelNormal, desiredHalfPixelThickness, aSide, uGlobalScale);
   } else {
       // --- Path for Shader-calculated Normals (Miters and Line Ends) ---
       vec2 pPrev_original = (localIndex == 0) ? p_original : getPoint(globalStartIndex + max(0, localIndex - 1));
@@ -158,13 +181,13 @@ void main() {
       }
 
       // Calculate final offset using unified thickness calculation
-      finalOffsetVector = calculateThicknessOffset(offsetNormalDir, desiredHalfPixelThickness, aSide);
+      finalOffsetVector = calculateThicknessOffset(offsetNormalDir, desiredHalfPixelThickness, aSide, uGlobalScale);
   }
 
-  // Apply Global Transformation to the point first
+  // Apply global transformation to the point first
   vec2 p_globally_transformed = p_transformed * uGlobalScale + uGlobalOffset;
 
-  // Add the screen-space offset vector
+  // Then apply screen-space thickness offset (calculated to be independent of zoom)
   vec2 finalPos = p_globally_transformed + finalOffsetVector;
 
   gl_Position = vec4(finalPos, 0.0, 1.0);
