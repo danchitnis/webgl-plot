@@ -96,7 +96,7 @@ export class WebglPlot {
    * You would call `initLines()` on the returned instance to provide the data.
    */
   public newThickLinePlotter(maxLines: number): WebglLineThick {
-    return new WebglLineThick({ gl: this.gl }, maxLines);
+    return new WebglLineThick(this, maxLines);
   }
 
   /**
@@ -137,6 +137,18 @@ export class WebglPlot {
    * @default = 0
    */
   public gOffsetY: number;
+
+  /**
+   * X-axis logarithmic scale flag
+   * @default = false
+   */
+  public logX: boolean;
+
+  /**
+   * Y-axis logarithmic scale flag
+   * @default = false
+   */
+  public logY: boolean;
 
   /**
    * log debug output
@@ -185,6 +197,8 @@ export class WebglPlot {
     this.gXYratio = 1;
     this.gOffsetX = 0;
     this.gOffsetY = 0;
+    this.logX = false;
+    this.logY = false;
 
     this.width = canvas.width;
     this.height = canvas.height;
@@ -260,6 +274,62 @@ export class WebglPlot {
     
     this.gl.clearColor(this._backgroundColor[0], this._backgroundColor[1], this._backgroundColor[2], this._backgroundColor[3]);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+  }
+
+  /**
+   * Set logarithmic scaling for X and/or Y axes
+   * @param x Enable logarithmic scale for X-axis
+   * @param y Enable logarithmic scale for Y-axis
+   */
+  public setLogAxis(x: boolean, y: boolean): void {
+    this.logX = x;
+    this.logY = y;
+  }
+
+  /**
+   * Apply logarithmic transformation to a coordinate array
+   * @param points Array of x,y coordinates [x1,y1,x2,y2,...]
+   * @returns Transformed points array with negative values filtered out
+   */
+  public applyLogTransform(points: Float32Array): Float32Array {
+    if (!this.logX && !this.logY) {
+      return points;
+    }
+
+    const transformedPoints: number[] = [];
+    let filteredCount = 0;
+    
+    for (let i = 0; i < points.length; i += 2) {
+      const x = points[i];
+      const y = points[i + 1];
+      
+      // Filter out negative values for log axes
+      if ((this.logX && x <= 0) || (this.logY && y <= 0)) {
+        filteredCount++;
+        continue; // Skip this point
+      }
+      
+      const transformedX = this.logX ? Math.log10(x) : x;
+      const transformedY = this.logY ? Math.log10(y) : y;
+      
+      transformedPoints.push(transformedX, transformedY);
+    }
+    
+    if (this.debug) {
+      console.log(`Log transform: ${this.logX ? 'X' : ''}${this.logY ? 'Y' : ''} enabled, ` +
+                  `original: ${points.length/2} points, ` +
+                  `filtered: ${filteredCount} points, ` +
+                  `result: ${transformedPoints.length/2} points`);
+      if (transformedPoints.length > 0) {
+        const minX = Math.min(...transformedPoints.filter((_, i) => i % 2 === 0));
+        const maxX = Math.max(...transformedPoints.filter((_, i) => i % 2 === 0));
+        const minY = Math.min(...transformedPoints.filter((_, i) => i % 2 === 1));
+        const maxY = Math.max(...transformedPoints.filter((_, i) => i % 2 === 1));
+        console.log(`Transformed bounds: X[${minX.toFixed(3)}, ${maxX.toFixed(3)}], Y[${minY.toFixed(3)}, ${maxY.toFixed(3)}]`);
+      }
+    }
+    
+    return new Float32Array(transformedPoints);
   }
 
   /**

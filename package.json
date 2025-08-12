@@ -36,7 +36,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit && eslint",
-    "test:html": "vite -c benchmark/vite.config.mts",
+    "test:html": "vite --force -c benchmark/vite.config.mts",
     "build:test": "vite build -c benchmark/vite.config.mts",
     "doc": "typedoc"
   },

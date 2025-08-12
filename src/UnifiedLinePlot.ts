@@ -59,9 +59,9 @@ export class UnifiedLinePlot {
         if (this.internalPlotter) {
           this.internalPlotter.cleanup();
         }
-        // WebglLineThick constructor expects { gl: WebGL2RenderingContext }
+        // WebglLineThick constructor now expects WebglPlot instance
         this.internalPlotter = new WebglLineThick(
-          { gl: this.gl },
+          this.wglp,
           this.maxLines
         );
       }

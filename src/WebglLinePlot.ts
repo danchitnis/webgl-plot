@@ -220,14 +220,24 @@ export class WebglLinePlot {
     let colorOffset = 0;
     for (let i = 0; i < this.numLines; i++) {
       const line = this.linesConfig[i];
-      allVertexData.set(line.points, vertexOffset);
+      
+      // Apply log transformation if enabled
+      const transformedPoints = this.wglp.applyLogTransform(line.points);
+      allVertexData.set(transformedPoints, vertexOffset);
+      
+      // Update line configuration with transformed points
+      line.points = transformedPoints;
+      
+      // Update line length if points were filtered out due to negative values
+      const newNumPoints = transformedPoints.length / 2;
+      this.lineLengths[i] = newNumPoints;
 
       for (let j = 0; j < this.lineLengths[i]; j++) {
         allColorData[colorOffset++] = line.color[0]; // R
         allColorData[colorOffset++] = line.color[1]; // G
         allColorData[colorOffset++] = line.color[2]; // B
       }
-      vertexOffset += line.points.length;
+      vertexOffset += transformedPoints.length;
     }
 
     // 4. Create and Populate WebGL Buffers
@@ -292,26 +302,28 @@ export class WebglLinePlot {
       return;
     }
 
+    // Apply log transformation if enabled
+    const transformedPoints = this.wglp.applyLogTransform(points);
     const currentLineConfig = this.linesConfig[lineId];
     const numPointsInLine = this.lineLengths[lineId];
 
-    if (points.length / 2 !== numPointsInLine) {
+    if (transformedPoints.length / 2 !== numPointsInLine) {
       console.warn(
-        `Number of points in provided data (${points.length / 2}) ` +
+        `Number of points in provided data (${transformedPoints.length / 2}) ` +
           `does not match existing points in line ${lineId} (${numPointsInLine}). ` +
           `Cannot change number of points with this method.`
       );
       return;
     }
 
-    currentLineConfig.points = points;
+    currentLineConfig.points = transformedPoints;
 
     const startVertexIndex = this.lineStarts[lineId];
     const byteOffset = startVertexIndex * 2 * Float32Array.BYTES_PER_ELEMENT; // 2 floats (x,y) per vertex
 
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, points);
+    gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, transformedPoints);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
@@ -336,8 +348,17 @@ export class WebglLinePlot {
       return;
     }
 
+    // Update Y coordinates in the current points array
     for (let i = 0; i < numPointsInLine; i++) {
-      currentLineConfig.points[i * 2 + 1] = newY[i];
+      let yValue = newY[i];
+      // Apply log transformation to Y if enabled and value is positive
+      if (this.wglp.logY && yValue > 0) {
+        yValue = Math.log10(yValue);
+      } else if (this.wglp.logY && yValue <= 0) {
+        // Skip negative values for log Y axis
+        continue;
+      }
+      currentLineConfig.points[i * 2 + 1] = yValue;
     }
 
     const startVertexIndex = this.lineStarts[lineId];

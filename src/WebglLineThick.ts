@@ -108,6 +108,7 @@ function createProgram(
 // --- Main Class ---
 export class WebglLineThick {
   private gl: WebGL2RenderingContext;
+  private wglp: { gl: WebGL2RenderingContext; applyLogTransform?: (points: Float32Array) => Float32Array }; // WebglPlot instance
   public prog: WebGLProgram | null;
   private maxLines: number;
   private pointsTexture: WebGLTexture | null;
@@ -150,11 +151,12 @@ export class WebglLineThick {
 
   /**
    * Creates an instance of WebglLineThick.
-   * @param wglp Context wrapper object.
+   * @param wglp Context wrapper object or WebglPlot instance.
    * @param maxLines Maximum number of lines this instance can handle.
    * @param useGpuReduction Optional: Set to true to attempt GPU-based min/max calculation. Defaults to true.
    */
-  constructor(wglp: { gl: WebGL2RenderingContext }, maxLines: number) {
+  constructor(wglp: { gl: WebGL2RenderingContext; applyLogTransform?: (points: Float32Array) => Float32Array }, maxLines: number) {
+    this.wglp = wglp;
     this.gl = wglp.gl;
     this.maxLines = Math.max(1, maxLines);
 
@@ -388,8 +390,15 @@ export class WebglLineThick {
     const allPoints = new Float32Array(this.totalValidPoints * 2);
     let currentPointOffset = 0;
     for (const data of validLinesData) {
-      allPoints.set(data.lineObj.points, currentPointOffset);
-      currentPointOffset += data.lineObj.points.length;
+      // Apply log transformation if enabled
+      let transformedPoints = data.lineObj.points;
+      if (this.wglp.applyLogTransform) {
+        transformedPoints = this.wglp.applyLogTransform(data.lineObj.points);
+        // Update the stored points with transformed values
+        data.lineObj.points = transformedPoints;
+      }
+      allPoints.set(transformedPoints, currentPointOffset);
+      currentPointOffset += transformedPoints.length;
     }
 
     const maxTexSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
