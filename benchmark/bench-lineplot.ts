@@ -1,6 +1,5 @@
 import {
   WebglPlot,
-  WebglLine,
   ColorRGBA,
   WebglLinePlot,
   LineConfig,

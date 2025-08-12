@@ -24,6 +24,7 @@ export class WebglLinePlot {
     u_global_scale?: WebGLUniformLocation | null;
     u_global_offset?: WebGLUniformLocation | null;
     u_opacity?: WebGLUniformLocation | null;
+    u_log_axis?: WebGLUniformLocation | null;
   } = {};
 
   constructor(wglp: WebglPlot, maxLines: number) {
@@ -57,6 +58,7 @@ export class WebglLinePlot {
       u_global_scale: gl.getUniformLocation(this.prog, "u_global_scale"),
       u_global_offset: gl.getUniformLocation(this.prog, "u_global_offset"),
       u_opacity: gl.getUniformLocation(this.prog, "u_opacity"),
+      u_log_axis: gl.getUniformLocation(this.prog, "u_log_axis"),
     };
 
     // Basic GL setup
@@ -80,11 +82,30 @@ export class WebglLinePlot {
       uniform vec2 u_line_offset;
       uniform vec2 u_global_scale;
       uniform vec2 u_global_offset;
+      uniform vec2 u_log_axis; // x: logX enabled (1.0/0.0), y: logY enabled (1.0/0.0)
 
       out vec3 v_color;
 
       void main() {
-        gl_Position = vec4((a_position * u_line_scale + u_line_offset) * u_global_scale + u_global_offset, 0.0, 1.0);
+        vec2 pos = a_position;
+        
+        // Apply logarithmic transformation if enabled
+        if (u_log_axis.x > 0.5) {
+          if (pos.x > 0.0) {
+            pos.x = log(pos.x) / log(10.0); // log10
+          } else {
+            pos.x = -1000.0; // Move negative/zero values far off-screen
+          }
+        }
+        if (u_log_axis.y > 0.5) {
+          if (pos.y > 0.0) {
+            pos.y = log(pos.y) / log(10.0); // log10
+          } else {
+            pos.y = -1000.0; // Move negative/zero values far off-screen
+          }
+        }
+        
+        gl_Position = vec4((pos * u_line_scale + u_line_offset) * u_global_scale + u_global_offset, 0.0, 1.0);
         v_color = a_color;
       }
     `;
@@ -221,23 +242,15 @@ export class WebglLinePlot {
     for (let i = 0; i < this.numLines; i++) {
       const line = this.linesConfig[i];
       
-      // Apply log transformation if enabled
-      const transformedPoints = this.wglp.applyLogTransform(line.points);
-      allVertexData.set(transformedPoints, vertexOffset);
-      
-      // Update line configuration with transformed points
-      line.points = transformedPoints;
-      
-      // Update line length if points were filtered out due to negative values
-      const newNumPoints = transformedPoints.length / 2;
-      this.lineLengths[i] = newNumPoints;
+      // Use original points - log transformation now happens on GPU
+      allVertexData.set(line.points, vertexOffset);
 
       for (let j = 0; j < this.lineLengths[i]; j++) {
         allColorData[colorOffset++] = line.color[0]; // R
         allColorData[colorOffset++] = line.color[1]; // G
         allColorData[colorOffset++] = line.color[2]; // B
       }
-      vertexOffset += transformedPoints.length;
+      vertexOffset += line.points.length;
     }
 
     // 4. Create and Populate WebGL Buffers
@@ -302,28 +315,26 @@ export class WebglLinePlot {
       return;
     }
 
-    // Apply log transformation if enabled
-    const transformedPoints = this.wglp.applyLogTransform(points);
     const currentLineConfig = this.linesConfig[lineId];
     const numPointsInLine = this.lineLengths[lineId];
 
-    if (transformedPoints.length / 2 !== numPointsInLine) {
+    if (points.length / 2 !== numPointsInLine) {
       console.warn(
-        `Number of points in provided data (${transformedPoints.length / 2}) ` +
+        `Number of points in provided data (${points.length / 2}) ` +
           `does not match existing points in line ${lineId} (${numPointsInLine}). ` +
           `Cannot change number of points with this method.`
       );
       return;
     }
 
-    currentLineConfig.points = transformedPoints;
+    currentLineConfig.points = points;
 
     const startVertexIndex = this.lineStarts[lineId];
     const byteOffset = startVertexIndex * 2 * Float32Array.BYTES_PER_ELEMENT; // 2 floats (x,y) per vertex
 
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, transformedPoints);
+    gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, points);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
   }
 
@@ -348,17 +359,9 @@ export class WebglLinePlot {
       return;
     }
 
-    // Update Y coordinates in the current points array
+    // Update Y coordinates in the current points array (no log transformation - handled on GPU)
     for (let i = 0; i < numPointsInLine; i++) {
-      let yValue = newY[i];
-      // Apply log transformation to Y if enabled and value is positive
-      if (this.wglp.logY && yValue > 0) {
-        yValue = Math.log10(yValue);
-      } else if (this.wglp.logY && yValue <= 0) {
-        // Skip negative values for log Y axis
-        continue;
-      }
-      currentLineConfig.points[i * 2 + 1] = yValue;
+      currentLineConfig.points[i * 2 + 1] = newY[i];
     }
 
     const startVertexIndex = this.lineStarts[lineId];
@@ -485,8 +488,29 @@ export class WebglLinePlot {
       const points = line.points;
 
       for (let j = 0; j < points.length; j += 2) {
-        const x = points[j] * scale[0] + offset[0];
-        const y = points[j + 1] * scale[1] + offset[1];
+        let x = points[j];
+        let y = points[j + 1];
+        
+        // Apply log transformation if enabled (same as GPU)
+        if (this.wglp.logX) {
+          if (x > 0) {
+            x = Math.log10(x);
+          } else {
+            continue; // Skip negative/zero values for log X axis
+          }
+        }
+        if (this.wglp.logY) {
+          if (y > 0) {
+            y = Math.log10(y);
+          } else {
+            continue; // Skip negative/zero values for log Y axis
+          }
+        }
+        
+        // Apply line transforms
+        x = x * scale[0] + offset[0];
+        y = y * scale[1] + offset[1];
+        
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
@@ -558,7 +582,8 @@ export class WebglLinePlot {
       !this.locations.u_global_offset ||
       !this.locations.u_line_scale ||
       !this.locations.u_line_offset ||
-      !this.locations.u_opacity
+      !this.locations.u_opacity ||
+      !this.locations.u_log_axis
     ) {
       return;
     }
@@ -576,6 +601,13 @@ export class WebglLinePlot {
       this.locations.u_global_offset,
       this.globalOffset[0],
       this.globalOffset[1]
+    );
+    
+    // Set log axis uniforms
+    gl.uniform2f(
+      this.locations.u_log_axis,
+      this.wglp.logX ? 1.0 : 0.0,
+      this.wglp.logY ? 1.0 : 0.0
     );
 
     // Bind Vertex Buffer and Set Attributes

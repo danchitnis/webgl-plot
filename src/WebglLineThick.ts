@@ -20,6 +20,7 @@ type UniformLocationsMulti = {
   uGlobalScale: WebGLUniformLocation | null;
   uGlobalOffset: WebGLUniformLocation | null;
   uViewportSize: WebGLUniformLocation | null;
+  uLogAxis: WebGLUniformLocation | null;
 };
 
 import type { LineConfig } from "./LineConfig";
@@ -184,6 +185,7 @@ export class WebglLineThick {
       uGlobalScale: gl.getUniformLocation(this.prog, "uGlobalScale"),
       uGlobalOffset: gl.getUniformLocation(this.prog, "uGlobalOffset"),
       uViewportSize: gl.getUniformLocation(this.prog, "uViewportSize"),
+      uLogAxis: gl.getUniformLocation(this.prog, "uLogAxis"),
     };
     if (!this.locations.uPointsTex)
       console.warn("Main uniform 'uPointsTex' not found.");
@@ -390,13 +392,8 @@ export class WebglLineThick {
     const allPoints = new Float32Array(this.totalValidPoints * 2);
     let currentPointOffset = 0;
     for (const data of validLinesData) {
-      // Apply log transformation if enabled
-      let transformedPoints = data.lineObj.points;
-      if (this.wglp.applyLogTransform) {
-        transformedPoints = this.wglp.applyLogTransform(data.lineObj.points);
-        // Update the stored points with transformed values
-        data.lineObj.points = transformedPoints;
-      }
+      // Use original points - log transformation now happens on GPU
+      const transformedPoints = data.lineObj.points;
       allPoints.set(transformedPoints, currentPointOffset);
       currentPointOffset += transformedPoints.length;
     }
@@ -687,8 +684,25 @@ export class WebglLineThick {
           for (let ptIdx = startIndex; ptIdx < endPointIndex; ptIdx++) {
             const dataIdx = ptIdx * 2;
             if (dataIdx + 1 < this.pointsData.length) {
-              const x = this.pointsData[dataIdx];
-              const y = this.pointsData[dataIdx + 1];
+              let x = this.pointsData[dataIdx];
+              let y = this.pointsData[dataIdx + 1];
+              
+              // Apply log transformation if enabled (same as GPU)
+              if ('logX' in this.wglp && this.wglp.logX) {
+                if (x > 0) {
+                  x = Math.log10(x);
+                } else {
+                  continue; // Skip negative/zero values for log X axis
+                }
+              }
+              if ('logY' in this.wglp && this.wglp.logY) {
+                if (y > 0) {
+                  y = Math.log10(y);
+                } else {
+                  continue; // Skip negative/zero values for log Y axis
+                }
+              }
+              
               if (x < minX) minX = x;
               if (x > maxX) maxX = x;
               if (y < minY) minY = y;
@@ -1187,6 +1201,15 @@ export class WebglLineThick {
     if (this.locations.uViewportSize) {
       gl.uniform2f(this.locations.uViewportSize, gl.canvas.width, gl.canvas.height);
     }
+    
+    // Set log axis uniforms - access parent WebglPlot instance through wglp
+    if (this.locations.uLogAxis && 'logX' in this.wglp && 'logY' in this.wglp) {
+      gl.uniform2f(
+        this.locations.uLogAxis,
+        this.wglp.logX ? 1.0 : 0.0,
+        this.wglp.logY ? 1.0 : 0.0
+      );
+    }
 
     // Bind resources
     gl.activeTexture(gl.TEXTURE0);
@@ -1260,6 +1283,7 @@ export class WebglLineThick {
       uGlobalScale: null,
       uGlobalOffset: null,
       uViewportSize: null,
+      uLogAxis: null,
     };
     // Reset global transform state
     this.globalScale = [1.0, 1.0];

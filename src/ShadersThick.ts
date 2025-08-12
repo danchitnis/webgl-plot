@@ -30,6 +30,7 @@ uniform int uTexHeight;
 uniform vec2 uGlobalScale;  // Global Scale
 uniform vec2 uGlobalOffset; // Global Offset
 uniform vec2 uViewportSize;
+uniform vec2 uLogAxis;      // x: logX enabled (1.0/0.0), y: logY enabled (1.0/0.0)
 
 // --- UBO ---
 struct LineData {
@@ -110,7 +111,25 @@ void main() {
   // Retrieve the current point's original coordinates from texture
   // Note: aIndex (localIndex) directly maps to the point's position in the line's own array
   vec2 p_original = getPoint(globalStartIndex + localIndex);
-  vec2 p_transformed = p_original * lineScale + lineOffset; // Apply per-line transform early
+  
+  // Apply logarithmic transformation if enabled
+  vec2 p_log = p_original;
+  if (uLogAxis.x > 0.5) {
+    if (p_log.x > 0.0) {
+      p_log.x = log(p_log.x) / log(10.0); // log10
+    } else {
+      p_log.x = -1000.0; // Move negative/zero values far off-screen
+    }
+  }
+  if (uLogAxis.y > 0.5) {
+    if (p_log.y > 0.0) {
+      p_log.y = log(p_log.y) / log(10.0); // log10
+    } else {
+      p_log.y = -1000.0; // Move negative/zero values far off-screen
+    }
+  }
+  
+  vec2 p_transformed = p_log * lineScale + lineOffset; // Apply per-line transform after log
 
   vec2 finalOffsetVector; // This will hold (normal * scale * side)
 
@@ -123,9 +142,42 @@ void main() {
       vec2 pPrev_original = (localIndex == 0) ? p_original : getPoint(globalStartIndex + max(0, localIndex - 1));
       vec2 pNext_original = (localIndex == numPoints - 1) ? p_original : getPoint(globalStartIndex + min(numPoints - 1, localIndex + 1));
 
+      // Apply log transformation to neighbors
+      vec2 pPrev_log = pPrev_original;
+      if (uLogAxis.x > 0.5) {
+        if (pPrev_log.x > 0.0) {
+          pPrev_log.x = log(pPrev_log.x) / log(10.0);
+        } else {
+          pPrev_log.x = -1000.0;
+        }
+      }
+      if (uLogAxis.y > 0.5) {
+        if (pPrev_log.y > 0.0) {
+          pPrev_log.y = log(pPrev_log.y) / log(10.0);
+        } else {
+          pPrev_log.y = -1000.0;
+        }
+      }
+      
+      vec2 pNext_log = pNext_original;
+      if (uLogAxis.x > 0.5) {
+        if (pNext_log.x > 0.0) {
+          pNext_log.x = log(pNext_log.x) / log(10.0);
+        } else {
+          pNext_log.x = -1000.0;
+        }
+      }
+      if (uLogAxis.y > 0.5) {
+        if (pNext_log.y > 0.0) {
+          pNext_log.y = log(pNext_log.y) / log(10.0);
+        } else {
+          pNext_log.y = -1000.0;
+        }
+      }
+
       // Apply per-line transform to neighbors for normal calculation
-      vec2 pPrev_transformed = pPrev_original * lineScale + lineOffset;
-      vec2 pNext_transformed = pNext_original * lineScale + lineOffset;
+      vec2 pPrev_transformed = pPrev_log * lineScale + lineOffset;
+      vec2 pNext_transformed = pNext_log * lineScale + lineOffset;
 
       vec2 offsetNormalDir; // To be calculated by miter/end logic
 

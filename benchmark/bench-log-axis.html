@@ -93,6 +93,15 @@
         <button onclick="toggleLogX()">Toggle Log X-axis</button>
         <button onclick="toggleLogY()">Toggle Log Y-axis</button>
         <button onclick="autoScale()">Auto Scale</button>
+        <button onclick="smartAutoScale()">Smart Auto Scale to Log Space</button>
+        <br><br>
+        <strong>Line Type:</strong>
+        <button onclick="setLineType('thin')">Thin Lines (thickness = 1)</button>
+        <button onclick="setLineType('thick')">Thick Lines (thickness = 3)</button>
+        <button onclick="setLineType('unified')">Unified Lines (auto-choose)</button>
+        <span id="currentLineType" style="margin-left: 10px; color: #ffcc00;">Current: Unified (thick)</span>
+        <br><br>
+        <button onclick="measurePerformance()">Measure Performance</button>
       </div>
 
       <div class="canvas-container">

@@ -1,8 +1,8 @@
-import { WebglPlot } from "../src/webglplot";
+import { WebglPlot, type LineConfig } from "../src/webglplot";
 
 // Add type for the line plotters
 type LinePlotter = {
-  initLines: (lines: any[]) => void;
+  initLines: (lines: LineConfig[]) => void;
   autoScaleEnabledLines: () => void;
   draw: () => void;
 };
@@ -13,6 +13,11 @@ let currentData: Float32Array = new Float32Array(0);
 let logXEnabled = false;
 let logYEnabled = false;
 let isRenderingActive = false;
+
+// Line type configuration
+type LineType = 'thin' | 'thick' | 'unified';
+let currentLineType: LineType = 'unified';
+let currentThickness = 2;
 
 // Initialize both plots
 function initPlots() {
@@ -125,23 +130,36 @@ function updatePlots() {
     const linearData = new Float32Array(currentData);
     const logData = new Float32Array(currentData);
 
+    // Create line plotters based on current line type
+    const createLinePlotter = (plot: WebglPlot) => {
+      switch (currentLineType) {
+        case 'thin':
+          return plot.newThinLinePlotter(1);
+        case 'thick':
+          return plot.newThickLinePlotter(1);
+        case 'unified':
+        default:
+          return plot.newUnifiedLinePlotter(1);
+      }
+    };
+
     // Linear plot (always linear axes)
     linearPlot.setLogAxis(false, false);
-    linearLinePlotter = linearPlot.newUnifiedLinePlotter(1);
+    linearLinePlotter = createLinePlotter(linearPlot);
     linearLinePlotter.initLines([{
       points: linearData,
       color: [1, 0.5, 0, 1], // Orange
-      thickness: 2,
+      thickness: currentThickness,
       enabled: true
     }]);
 
     // Log plot (with current log settings)
     logPlot.setLogAxis(logXEnabled, logYEnabled);
-    logLinePlotter = logPlot.newUnifiedLinePlotter(1);
+    logLinePlotter = createLinePlotter(logPlot);
     logLinePlotter.initLines([{
       points: logData,
       color: [0, 0.8, 1, 1], // Cyan
-      thickness: 2,
+      thickness: currentThickness,
       enabled: true
     }]);
 
@@ -185,11 +203,18 @@ function toggleLogX() {
   logXEnabled = !logXEnabled;
   console.log(`Log X axis ${logXEnabled ? 'enabled' : 'disabled'}`);
   
-  // Stop current rendering loop
-  isRenderingActive = false;
-  
-  // Reinitialize plots with new log settings
-  updatePlots();
+  // Update log settings in real-time without reinitializing
+  if (logPlot) {
+    logPlot.setLogAxis(logXEnabled, logYEnabled);
+    
+    // Re-auto-scale with the new log settings (the auto-scaling logic now handles log transformation)
+    if (logLinePlotter) {
+      logLinePlotter.autoScaleEnabledLines();
+      if (logPlot.debug) {
+        console.log('Re-auto-scaled for new log axis settings');
+      }
+    }
+  }
   updateLogStatus();
 }
 
@@ -198,17 +223,93 @@ function toggleLogY() {
   logYEnabled = !logYEnabled;
   console.log(`Log Y axis ${logYEnabled ? 'enabled' : 'disabled'}`);
   
-  // Stop current rendering loop
-  isRenderingActive = false;
-  
-  // Reinitialize plots with new log settings
-  updatePlots();
+  // Update log settings in real-time without reinitializing
+  if (logPlot) {
+    logPlot.setLogAxis(logXEnabled, logYEnabled);
+    
+    // Re-auto-scale with the new log settings (the auto-scaling logic now handles log transformation)
+    if (logLinePlotter) {
+      logLinePlotter.autoScaleEnabledLines();
+      if (logPlot.debug) {
+        console.log('Re-auto-scaled for new log axis settings');
+      }
+    }
+  }
   updateLogStatus();
 }
 
 // Auto scale both plots
 function autoScale() {
   updatePlots(); // This calls autoScaleEnabledLines internally
+}
+
+// Test smart auto-scaling to log space
+function smartAutoScale() {
+  console.log('=== Testing Smart Auto Scale ===');
+  
+  if (linearLinePlotter) {
+    if (linearPlot.debug) {
+      console.log('Linear plot: calling regular autoScaleEnabledLines()');
+    }
+    linearLinePlotter.autoScaleEnabledLines();
+  }
+  
+  if (logPlot && logLinePlotter) {
+    if (logPlot.debug) {
+      console.log('Log plot: First ensuring proper scaling, then testing smart log space scaling');
+    }
+    
+    // First ensure the plot is properly scaled with current settings
+    logLinePlotter.autoScaleEnabledLines();
+    if (logPlot.debug) {
+      console.log('Initial auto-scaling complete');
+    }
+    
+    // Now test the smart scaling to log space function
+    console.log(`Testing autoScaleToLogSpace() with logX=${logXEnabled}, logY=${logYEnabled}`);
+    const success = logPlot.autoScaleToLogSpace();
+    console.log(`Smart auto-scaling ${success ? 'succeeded' : 'failed'}`);
+    
+    if (!success) {
+      console.log('Smart scaling failed, falling back to regular auto-scaling');
+      logLinePlotter.autoScaleEnabledLines();
+    }
+  }
+  
+  console.log('=== Smart Auto Scale Complete ===');
+}
+
+// Set line type and update plots
+function setLineType(lineType: LineType) {
+  currentLineType = lineType;
+  
+  // Update thickness based on line type
+  switch (lineType) {
+    case 'thin':
+      currentThickness = 1;
+      break;
+    case 'thick':
+      currentThickness = 3;
+      break;
+    case 'unified':
+      currentThickness = 2; // Will auto-choose thick plotter
+      break;
+  }
+  
+  // Update status display
+  const statusElement = document.getElementById('currentLineType');
+  if (statusElement) {
+    const plotterType = lineType === 'unified' ? 
+      `Unified (${currentThickness > 1 ? 'thick' : 'thin'})` : 
+      lineType;
+    statusElement.textContent = `Current: ${plotterType} (thickness = ${currentThickness})`;
+  }
+  
+  console.log(`Switched to ${lineType} lines (thickness = ${currentThickness})`);
+  
+  // Stop current rendering and reinitialize with new line type
+  isRenderingActive = false;
+  updatePlots();
 }
 
 // Update status display
@@ -242,15 +343,28 @@ function measurePerformance() {
 
   const iterations = 100;
   
+  // Create plotter function for current line type
+  const createTestPlotter = (plot: WebglPlot) => {
+    switch (currentLineType) {
+      case 'thin':
+        return plot.newThinLinePlotter(1);
+      case 'thick':
+        return plot.newThickLinePlotter(1);
+      case 'unified':
+      default:
+        return plot.newUnifiedLinePlotter(1);
+    }
+  };
+
   // Measure linear plot performance
   const linearStart = performance.now();
   for (let i = 0; i < iterations; i++) {
     linearPlot.setLogAxis(false, false);
-    const linePlotter = linearPlot.newUnifiedLinePlotter(1);
+    const linePlotter = createTestPlotter(linearPlot);
     linePlotter.initLines([{
       points: currentData,
       color: [1, 0.5, 0, 1],
-      thickness: 2,
+      thickness: currentThickness,
       enabled: true
     }]);
   }
@@ -260,17 +374,17 @@ function measurePerformance() {
   const logStart = performance.now();
   for (let i = 0; i < iterations; i++) {
     logPlot.setLogAxis(logXEnabled, logYEnabled);
-    const linePlotter = logPlot.newUnifiedLinePlotter(1);
+    const linePlotter = createTestPlotter(logPlot);
     linePlotter.initLines([{
       points: currentData,
       color: [0, 0.8, 1, 1],
-      thickness: 2,
+      thickness: currentThickness,
       enabled: true
     }]);
   }
   const logTime = performance.now() - logStart;
 
-  console.log(`Performance (${iterations} iterations):`);
+  console.log(`Performance (${iterations} iterations) - ${currentLineType} lines (thickness = ${currentThickness}):`);
   console.log(`Linear plot: ${linearTime.toFixed(2)}ms`);
   console.log(`Log plot: ${logTime.toFixed(2)}ms`);
   console.log(`Overhead: ${((logTime - linearTime) / linearTime * 100).toFixed(1)}%`);
@@ -286,6 +400,8 @@ declare global {
     toggleLogY: () => void;
     autoScale: () => void;
     measurePerformance: () => void;
+    setLineType: (lineType: LineType) => void;
+    smartAutoScale: () => void;
   }
 }
 
@@ -297,6 +413,8 @@ window.toggleLogX = toggleLogX;
 window.toggleLogY = toggleLogY;
 window.autoScale = autoScale;
 window.measurePerformance = measurePerformance;
+window.setLineType = setLineType;
+window.smartAutoScale = smartAutoScale;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

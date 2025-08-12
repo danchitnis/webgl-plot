@@ -88,21 +88,64 @@ export class WebglPlot {
   private _backgroundColor: [number, number, number, number];
 
   /**
-   * Creates a new WebglLineThick instance for rendering thick lines.
-   * @param maxLines The maximum number of thick lines this instance can handle.
-   * @returns A new WebglLineThick instance.
-   *
-   * Note: The `lineData` parameter was removed from the factory method itself.
-   * You would call `initLines()` on the returned instance to provide the data.
+   * Creates a new WebglLineThick instance for rendering thick lines (thickness > 1.0).
+   * 
+   * **Features:**
+   * - Supports variable line thickness with proper joins and end caps
+   * - Handles sharp angles with automatic bevel detection
+   * - More computationally expensive than thin lines (~6x slower)
+   * - Automatically supports log axis transformations on GPU
+   * 
+   * **Performance Notes:**
+   * - Use for lines requiring thickness > 1.0 pixel
+   * - Consider `newUnifiedLinePlotter()` for automatic thin/thick selection
+   * - Thickness is maintained in screen space regardless of zoom level
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * const thickPlotter = plot.newThickLinePlotter(10);
+   * thickPlotter.initLines([{
+   *   points: myData,
+   *   color: [1, 0, 0, 1],
+   *   thickness: 3.0,
+   *   enabled: true
+   * }]);
+   * ```
+   * 
+   * @param maxLines The maximum number of thick lines this instance can handle
+   * @returns A new WebglLineThick instance ready for use
    */
   public newThickLinePlotter(maxLines: number): WebglLineThick {
     return new WebglLineThick(this, maxLines);
   }
 
   /**
-   * Creates a new WebglLinePlot instance for rendering thin lines.
-   * @param maxLines The maximum number of thin lines this instance can handle.
-   * @returns A new WebglLinePlot instance.
+   * Creates a new WebglLinePlot instance for rendering thin lines (thickness = 1.0).
+   * 
+   * **Features:**
+   * - Highest performance line rendering using native WebGL lines
+   * - Fixed thickness of 1.0 pixel in screen space
+   * - Automatically supports log axis transformations on GPU
+   * - Ideal for high-density data visualization
+   * 
+   * **Performance Notes:**
+   * - Fastest line rendering option available
+   * - Use for real-time data visualization with many points
+   * - Thickness cannot be varied (always 1.0 pixel)
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * const thinPlotter = plot.newThinLinePlotter(50);
+   * thinPlotter.initLines([{
+   *   points: realTimeData,
+   *   color: [0, 1, 0, 1],
+   *   thickness: 1.0, // Will be enforced
+   *   enabled: true
+   * }]);
+   * ```
+   * 
+   * @param maxLines The maximum number of thin lines this instance can handle
+   * @returns A new WebglLinePlot instance ready for use
    */
   public newThinLinePlotter(maxLines: number): WebglLinePlot {
     return new WebglLinePlot(this, maxLines);
@@ -277,9 +320,31 @@ export class WebglPlot {
   }
 
   /**
-   * Set logarithmic scaling for X and/or Y axes
-   * @param x Enable logarithmic scale for X-axis
-   * @param y Enable logarithmic scale for Y-axis
+   * Enable or disable logarithmic scaling for X and/or Y axes.
+   * 
+   * When enabled, coordinates are transformed using log₁₀ on the GPU in real-time.
+   * Negative and zero values are automatically filtered out (moved off-screen).
+   * 
+   * **Important Notes:**
+   * - Transformation happens on GPU for optimal performance
+   * - No graph reinitialization required - changes apply immediately
+   * - Auto-scaling will automatically account for log transformation
+   * - Use `autoScaleToLogSpace()` for smooth transitions from linear to log space
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * // Enable log Y-axis for exponential data
+   * plot.setLogAxis(false, true);
+   * 
+   * // Enable both axes for power-law data
+   * plot.setLogAxis(true, true);
+   * 
+   * // Disable all log scaling
+   * plot.setLogAxis(false, false);
+   * ```
+   * 
+   * @param x Enable logarithmic base-10 scaling for X-axis
+   * @param y Enable logarithmic base-10 scaling for Y-axis
    */
   public setLogAxis(x: boolean, y: boolean): void {
     this.logX = x;
@@ -287,50 +352,141 @@ export class WebglPlot {
   }
 
   /**
-   * Apply logarithmic transformation to a coordinate array
-   * @param points Array of x,y coordinates [x1,y1,x2,y2,...]
-   * @returns Transformed points array with negative values filtered out
+   * Auto-scale the plot to fit log-transformed data, converting existing linear 
+   * scaling to appropriate log space scaling.
+   * 
+   * This function intelligently handles the transition from linear to log space by
+   * transforming the current viewport bounds from linear to log space while maintaining
+   * the same visible data range.
+   * 
+   * **Important:** This function works with the current global transform state.
+   * For best results, ensure the plot is already properly scaled before switching to log axes.
+   * 
+   * **Use Cases:**
+   * - After toggling log axes to maintain current view
+   * - For smooth transitions between linear and log representations
+   * - When you want to preserve user's current zoom/pan state
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * // User has zoomed into a specific region in linear space
+   * plot.setLogAxis(false, true);  // Enable log Y
+   * plot.autoScaleToLogSpace();    // Maintain zoom but in log space
+   * ```
+   * 
+   * @returns True if smart scaling was applied, false if transformation not feasible
    */
-  public applyLogTransform(points: Float32Array): Float32Array {
+  public autoScaleToLogSpace(): boolean {
+    // If no log axes are enabled, nothing to do
     if (!this.logX && !this.logY) {
-      return points;
-    }
-
-    const transformedPoints: number[] = [];
-    let filteredCount = 0;
-    
-    for (let i = 0; i < points.length; i += 2) {
-      const x = points[i];
-      const y = points[i + 1];
-      
-      // Filter out negative values for log axes
-      if ((this.logX && x <= 0) || (this.logY && y <= 0)) {
-        filteredCount++;
-        continue; // Skip this point
+      if (this.debug) {
+        console.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
       }
-      
-      const transformedX = this.logX ? Math.log10(x) : x;
-      const transformedY = this.logY ? Math.log10(y) : y;
-      
-      transformedPoints.push(transformedX, transformedY);
+      return true;
     }
+    
+    // Get current global transform to understand current view
+    const currentScaleX = this.gScaleX;
+    const currentScaleY = this.gScaleY;
+    const currentOffsetX = this.gOffsetX;
+    const currentOffsetY = this.gOffsetY;
+    
+    // Calculate what the view bounds would be in the original data space
+    // This reverses the current global transform to find what data range is visible
+    const viewLeft = (-1 - currentOffsetX) / currentScaleX;
+    const viewRight = (1 - currentOffsetX) / currentScaleX;
+    const viewBottom = (-1 - currentOffsetY) / currentScaleY;
+    const viewTop = (1 - currentOffsetY) / currentScaleY;
     
     if (this.debug) {
-      console.log(`Log transform: ${this.logX ? 'X' : ''}${this.logY ? 'Y' : ''} enabled, ` +
-                  `original: ${points.length/2} points, ` +
-                  `filtered: ${filteredCount} points, ` +
-                  `result: ${transformedPoints.length/2} points`);
-      if (transformedPoints.length > 0) {
-        const minX = Math.min(...transformedPoints.filter((_, i) => i % 2 === 0));
-        const maxX = Math.max(...transformedPoints.filter((_, i) => i % 2 === 0));
-        const minY = Math.min(...transformedPoints.filter((_, i) => i % 2 === 1));
-        const maxY = Math.max(...transformedPoints.filter((_, i) => i % 2 === 1));
-        console.log(`Transformed bounds: X[${minX.toFixed(3)}, ${maxX.toFixed(3)}], Y[${minY.toFixed(3)}, ${maxY.toFixed(3)}]`);
+      console.log(`autoScaleToLogSpace: Current view bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+    }
+    
+    // Try to preserve the current view in log space
+    let newMinX = viewLeft;
+    let newMaxX = viewRight;
+    let newMinY = viewBottom;
+    let newMaxY = viewTop;
+    let transformationApplied = false;
+    
+    // For log X: if current view has positive bounds, transform them
+    if (this.logX) {
+      if (viewLeft > 0 && viewRight > 0) {
+        newMinX = Math.log10(viewLeft);
+        newMaxX = Math.log10(viewRight);
+        transformationApplied = true;
+        if (this.debug) {
+          console.log(`autoScaleToLogSpace: Transformed X bounds to log space - [${newMinX.toFixed(3)}, ${newMaxX.toFixed(3)}]`);
+        }
+      } else {
+        // Current view includes negative/zero X, can't preserve view
+        if (this.debug) {
+          console.log("autoScaleToLogSpace: Current X view includes non-positive values, cannot preserve view");
+        }
+        return false;
       }
     }
     
-    return new Float32Array(transformedPoints);
+    // For log Y: if current view has positive bounds, transform them
+    if (this.logY) {
+      if (viewBottom > 0 && viewTop > 0) {
+        newMinY = Math.log10(viewBottom);
+        newMaxY = Math.log10(viewTop);
+        transformationApplied = true;
+        if (this.debug) {
+          console.log(`autoScaleToLogSpace: Transformed Y bounds to log space - [${newMinY.toFixed(3)}, ${newMaxY.toFixed(3)}]`);
+        }
+      } else {
+        // Current view includes negative/zero Y, can't preserve view
+        if (this.debug) {
+          console.log("autoScaleToLogSpace: Current Y view includes non-positive values, cannot preserve view");
+        }
+        return false;
+      }
+    }
+    
+    // If no transformation was needed, we're done
+    if (!transformationApplied) {
+      return true;
+    }
+    
+    // Calculate new global transform for the preserved view in log space
+    const rangeX = newMaxX - newMinX;
+    const rangeY = newMaxY - newMinY;
+    const ndcWidth = 2.0;
+    const ndcHeight = 2.0;
+    const epsilon = 1e-9;
+    
+    let newGlobalScaleX = 1.0;
+    let newGlobalScaleY = 1.0;
+    let newGlobalOffsetX = 0.0;
+    let newGlobalOffsetY = 0.0;
+    
+    if (rangeX > epsilon) {
+      newGlobalScaleX = ndcWidth / rangeX;
+      const centerX = newMinX + rangeX / 2.0;
+      newGlobalOffsetX = 0.0 - centerX * newGlobalScaleX;
+    }
+    
+    if (rangeY > epsilon) {
+      newGlobalScaleY = ndcHeight / rangeY;
+      const centerY = newMinY + rangeY / 2.0;
+      newGlobalOffsetY = 0.0 - centerY * newGlobalScaleY;
+    }
+    
+    // Apply the new transform
+    this.gScaleX = newGlobalScaleX;
+    this.gScaleY = newGlobalScaleY;
+    this.gOffsetX = newGlobalOffsetX;
+    this.gOffsetY = newGlobalOffsetY;
+    
+    if (this.debug) {
+      console.log(`autoScaleToLogSpace: Applied new transform - Scale[${newGlobalScaleX.toFixed(4)}, ${newGlobalScaleY.toFixed(4)}], Offset[${newGlobalOffsetX.toFixed(4)}, ${newGlobalOffsetY.toFixed(4)}]`);
+    }
+    
+    return true;
   }
+
 
   /**
    * remove all data lines
@@ -354,9 +510,38 @@ export class WebglPlot {
   }
 
   /**
-   * Creates a new UnifiedLinePlot instance which internally manages WebglLinePlot or WebglLineThick.
-   * @param maxLines The maximum number of lines this instance can handle.
-   * @returns A new UnifiedLinePlot instance.
+   * Creates a new UnifiedLinePlot instance that automatically chooses between thin and thick line rendering.
+   * 
+   * **Smart Selection Logic:**
+   * - Lines with thickness ≤ 1.0 → Uses WebglLinePlot (thin, high performance)
+   * - Lines with thickness > 1.0 → Uses WebglLineThick (thick, full-featured)
+   * - Decision made based on the first line's thickness in `initLines()`
+   * 
+   * **Features:**
+   * - Automatic optimization based on line requirements
+   * - Unified API regardless of internal plotter type
+   * - Automatically supports log axis transformations on GPU
+   * - Seamless switching between rendering backends
+   * 
+   * **Use Cases:**
+   * - When you want optimal performance without manual plotter selection
+   * - For applications with mixed line thickness requirements
+   * - When you need a simple, unified interface for all line types
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * const plotter = plot.newUnifiedLinePlotter(20);
+   * plotter.initLines([
+   *   { points: data1, thickness: 1.0, color: [1,0,0,1] }, // → thin plotter
+   *   { points: data2, thickness: 3.0, color: [0,1,0,1] }, // → thick plotter (all lines)
+   * ]);
+   * ```
+   * 
+   * **Note:** All lines in a single UnifiedLinePlot instance use the same internal plotter,
+   * determined by the thickness of the first line.
+   * 
+   * @param maxLines The maximum number of lines this instance can handle
+   * @returns A new UnifiedLinePlot instance ready for intelligent line rendering
    */
   public newUnifiedLinePlotter(maxLines: number): UnifiedLinePlot {
     return new UnifiedLinePlot(this, maxLines);
