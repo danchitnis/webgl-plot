@@ -113,6 +113,135 @@ function generateMixedData() {
   updateStats("Mixed scale data: wide range spanning several orders of magnitude");
 }
 
+// Generate multi-line test data to test the issue with disabled lines containing negative values
+function generateMultiLineTestData() {
+  console.log("=== Generating Multi-Line Test Data ===");
+  
+  // This function creates multiple lines where some contain negative values
+  // and tests that auto-scaling only considers enabled lines when using log axes
+  
+  // We'll update the plots to show multiple lines instead of single line
+  if (!linearPlot || !logPlot) {
+    console.error("Plots not initialized");
+    return;
+  }
+
+  try {
+    console.log("Creating multi-line test data");
+    
+    // Line 1: Positive exponential data (good for log scale)
+    const points1 = new Float32Array(200);
+    for (let i = 0; i < 100; i++) {
+      const x = 0.1 + (i / 99) * 10;
+      const y = Math.exp(x * 0.3); // Always positive, exponential
+      points1[i * 2] = x;
+      points1[i * 2 + 1] = y;
+    }
+    
+    // Line 2: Mixed positive/negative data (problematic for log Y)
+    const points2 = new Float32Array(200);
+    for (let i = 0; i < 100; i++) {
+      const x = 0.1 + (i / 99) * 10;
+      const y = Math.sin(x) * 50; // Oscillates between positive and negative
+      points2[i * 2] = x;
+      points2[i * 2 + 1] = y;
+    }
+    
+    // Line 3: Mostly negative values (problematic for log Y)
+    const points3 = new Float32Array(200);
+    for (let i = 0; i < 100; i++) {
+      const x = 0.1 + (i / 99) * 10;
+      const y = -10 - i * 0.1; // Negative values
+      points3[i * 2] = x;
+      points3[i * 2 + 1] = y;
+    }
+
+    // Create line plotters
+    const createLinePlotter = (plot: WebglPlot) => {
+      switch (currentLineType) {
+        case 'thin':
+          return plot.newThinLinePlotter(3);
+        case 'thick':
+          return plot.newThickLinePlotter(3);
+        case 'unified':
+        default:
+          return plot.newUnifiedLinePlotter(3);
+      }
+    };
+
+    // Linear plot setup
+    linearPlot.setLogAxis(false, false);
+    linearLinePlotter = createLinePlotter(linearPlot);
+    linearLinePlotter.initLines([
+      {
+        points: points1,
+        color: [1, 0, 0, 1], // Red - positive exponential
+        thickness: currentThickness,
+        enabled: true
+      },
+      {
+        points: points2,
+        color: [0, 1, 0, 1], // Green - mixed pos/neg  
+        thickness: currentThickness,
+        enabled: true // Initially enabled, but user can disable
+      },
+      {
+        points: points3,
+        color: [0, 0, 1, 1], // Blue - negative values
+        thickness: currentThickness,
+        enabled: true // Initially enabled, but user can disable
+      }
+    ]);
+
+    // Log plot setup (this is where the issue should be tested)
+    logPlot.setLogAxis(logXEnabled, logYEnabled);
+    logLinePlotter = createLinePlotter(logPlot);
+    logLinePlotter.initLines([
+      {
+        points: points1,
+        color: [1, 0, 0, 1], // Red - positive exponential
+        thickness: currentThickness,
+        enabled: true
+      },
+      {
+        points: points2,
+        color: [0, 1, 0, 1], // Green - mixed pos/neg
+        thickness: currentThickness,
+        enabled: true // ENABLED - but will be skipped by auto-scaling for log Y due to negative values
+      },
+      {
+        points: points3,
+        color: [0, 0, 1, 1], // Blue - negative values
+        thickness: currentThickness,
+        enabled: true // ENABLED - but will be skipped by auto-scaling for log Y due to negative values
+      }
+    ]);
+
+    // Auto-scale both plots
+    console.log("Auto-scaling linear plot (all lines enabled)");
+    linearLinePlotter.autoScaleEnabledLines();
+    
+    console.log("Auto-scaling log plot (only positive line enabled)");
+    logLinePlotter.autoScaleEnabledLines();
+
+    // Start the render loop if not already running
+    if (!isRenderingActive) {
+      isRenderingActive = true;
+      renderLoop();
+    }
+
+    updateStats("Multi-line test: Red=positive exp (always considered), Green=mixed +/- (skipped for log Y), Blue=negative (skipped for log Y)");
+    console.log("=== Multi-Line Test Data Created ===");
+    console.log("Linear plot: All 3 lines enabled and considered for auto-scaling");
+    console.log("Log plot: All 3 lines enabled, but auto-scaling will skip green/blue lines for log Y");
+    console.log("This tests the improved auto-scaling that skips lines with insufficient positive values for log axes");
+    console.log("Expected: Linear plot shows all data ranges, Log plot only scales to fit red line");
+
+  } catch (error) {
+    console.error("Error creating multi-line test data:", error);
+  }
+}
+
 // Store line plotters globally so they persist
 let linearLinePlotter: LinePlotter | null = null;
 let logLinePlotter: LinePlotter | null = null;
@@ -396,6 +525,7 @@ declare global {
     generateExponentialData: () => void;
     generatePowerLawData: () => void;
     generateMixedData: () => void;
+    generateMultiLineTestData: () => void;
     toggleLogX: () => void;
     toggleLogY: () => void;
     autoScale: () => void;
@@ -409,6 +539,7 @@ declare global {
 window.generateExponentialData = generateExponentialData;
 window.generatePowerLawData = generatePowerLawData;
 window.generateMixedData = generateMixedData;
+window.generateMultiLineTestData = generateMultiLineTestData;
 window.toggleLogX = toggleLogX;
 window.toggleLogY = toggleLogY;
 window.autoScale = autoScale;
