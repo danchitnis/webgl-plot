@@ -1,5 +1,6 @@
 import { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
+import { DebugLogger } from "./DebugLogger";
 
 /**
  * The standard Line class
@@ -59,7 +60,7 @@ export class WebglScatterAcc {
 
     if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
       // there was an error
-      console.error(gl.getShaderInfoLog(vertexShader));
+      DebugLogger.error(gl.getShaderInfoLog(vertexShader) || "Vertex shader compilation failed");
     }
 
     // Create fragment shader
@@ -85,7 +86,7 @@ export class WebglScatterAcc {
 
     if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
       // there was an error
-      console.error(gl.getShaderInfoLog(fragmentShader));
+      DebugLogger.error(gl.getShaderInfoLog(fragmentShader) || "Fragment shader compilation failed");
     }
 
     // Create program
