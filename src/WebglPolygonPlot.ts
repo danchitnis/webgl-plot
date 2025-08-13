@@ -1,4 +1,5 @@
 import { WebglPlot } from "./webglplot";
+import { DebugLogger } from "./DebugLogger";
 
 export interface PolygonConfig {
   fillColor: [number, number, number, number];
@@ -189,7 +190,7 @@ export class WebglPolygonPlot {
     let totalVertices = 0;
     for (const polygon of this.polygonsConfig) {
       if (polygon.points.length % 2 !== 0) {
-        console.warn(
+        DebugLogger.warn(
           "WebglPolygonPlot: Polygon points array length should be even (x,y pairs). Skipping polygon."
         );
         continue;
@@ -201,7 +202,7 @@ export class WebglPolygonPlot {
     }
 
     if (totalVertices === 0 && this.numPolygons > 0) {
-      console.warn(
+      DebugLogger.warn(
         "WebglPolygonPlot: No valid vertices found in polygon configurations."
       );
       this.numPolygons = 0;
@@ -276,7 +277,7 @@ export class WebglPolygonPlot {
     }
     const polygon = this.polygonsConfig[polygonId];
     if (points.length !== polygon.points.length) {
-      console.error(
+      DebugLogger.error(
         "WebglPolygonPlot: New points array length must match the original for updatePolygonPoints. For resizing, re-initialize polygons."
       );
       return;
@@ -490,7 +491,7 @@ export class WebglPolygonPlot {
 
   private _validatePolygonId(polygonId: number, method: string): boolean {
     if (polygonId < 0 || polygonId >= this.numPolygons) {
-      console.warn(`WebglPolygonPlot: Invalid polygonId for ${method}.`);
+      DebugLogger.warn(`WebglPolygonPlot: Invalid polygonId for ${method}.`);
       return false;
     }
     return true;
@@ -670,7 +671,7 @@ export class WebglPolygonPlot {
 
     const program = gl.createProgram();
     if (!program) {
-      console.error("Failed to create shader program.");
+      DebugLogger.error("Failed to create shader program.");
       return null;
     }
 
@@ -679,9 +680,8 @@ export class WebglPolygonPlot {
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error(
-        "Shader program linking error:",
-        gl.getProgramInfoLog(program)
+      DebugLogger.error(
+        `Shader program linking error: ${gl.getProgramInfoLog(program) || "Unknown error"}`
       );
       gl.deleteProgram(program);
       gl.deleteShader(vertexShader);
@@ -700,7 +700,7 @@ export class WebglPolygonPlot {
     const gl = this.gl;
     const shader = gl.createShader(type);
     if (!shader) {
-      console.error("Failed to create shader.");
+      DebugLogger.error("Failed to create shader.");
       return null;
     }
 
@@ -709,9 +709,8 @@ export class WebglPolygonPlot {
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       const shaderType = type === gl.VERTEX_SHADER ? "Vertex" : "Fragment";
-      console.error(
-        `${shaderType} shader compilation error:`,
-        gl.getShaderInfoLog(shader)
+      DebugLogger.error(
+        `${shaderType} shader compilation error: ${gl.getShaderInfoLog(shader) || "Unknown error"}`
       );
       gl.deleteShader(shader);
       return null;
@@ -859,7 +858,7 @@ export class WebglPolygonPlot {
     } = config;
 
     if (segments < 3) {
-      console.warn(
+      DebugLogger.warn(
         "WebglPolygonPlot.createCircle: segments must be 3 or more. Defaulting to 3."
       );
     }

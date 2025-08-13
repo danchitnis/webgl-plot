@@ -16,6 +16,7 @@ import { WebglLineThick } from "./WebglLineThick";
 import { WebglPolygonPlot, type PolygonConfig } from "./WebglPolygonPlot";
 import { UnifiedLinePlot } from "./UnifiedLinePlot"; // Added import
 import type { LineConfig } from "./LineConfig";
+import { DebugLogger } from "./DebugLogger";
 
 export type { LineConfig, PolygonConfig }; // Export LineConfig and PolygonConfig
 export { UnifiedLinePlot }; // Added export
@@ -32,6 +33,7 @@ export {
   // Keeping them exported for now for backward compatibility or direct use.
   WebglLinePlot,
   WebglLineThick,
+  DebugLogger,
   // UnifiedLinePlot is exported above via `export { UnifiedLinePlot };`
 };
 
@@ -228,6 +230,7 @@ export class WebglPlot {
         preserveDrawing: options.preserveDrawing,
       }) as WebGL2RenderingContext;
       this.debug = options.debug == undefined ? false : options.debug;
+      DebugLogger.setDebugMode(this.debug);
     }
 
     this.log("canvas type is: " + canvas.constructor.name);
@@ -380,7 +383,7 @@ export class WebglPlot {
     // If no log axes are enabled, nothing to do
     if (!this.logX && !this.logY) {
       if (this.debug) {
-        console.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
+        DebugLogger.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
       }
       return true;
     }
@@ -399,7 +402,7 @@ export class WebglPlot {
     const viewTop = (1 - currentOffsetY) / currentScaleY;
     
     if (this.debug) {
-      console.log(`autoScaleToLogSpace: Current view bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+      DebugLogger.log(`autoScaleToLogSpace: Current view bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
     }
     
     // Try to preserve the current view in log space
@@ -416,12 +419,12 @@ export class WebglPlot {
         newMaxX = Math.log10(viewRight);
         transformationApplied = true;
         if (this.debug) {
-          console.log(`autoScaleToLogSpace: Transformed X bounds to log space - [${newMinX.toFixed(3)}, ${newMaxX.toFixed(3)}]`);
+          DebugLogger.log(`autoScaleToLogSpace: Transformed X bounds to log space - [${newMinX.toFixed(3)}, ${newMaxX.toFixed(3)}]`);
         }
       } else {
         // Current view includes negative/zero X, can't preserve view
         if (this.debug) {
-          console.log("autoScaleToLogSpace: Current X view includes non-positive values, cannot preserve view");
+          DebugLogger.log("autoScaleToLogSpace: Current X view includes non-positive values, cannot preserve view");
         }
         return false;
       }
@@ -434,12 +437,12 @@ export class WebglPlot {
         newMaxY = Math.log10(viewTop);
         transformationApplied = true;
         if (this.debug) {
-          console.log(`autoScaleToLogSpace: Transformed Y bounds to log space - [${newMinY.toFixed(3)}, ${newMaxY.toFixed(3)}]`);
+          DebugLogger.log(`autoScaleToLogSpace: Transformed Y bounds to log space - [${newMinY.toFixed(3)}, ${newMaxY.toFixed(3)}]`);
         }
       } else {
         // Current view includes negative/zero Y, can't preserve view
         if (this.debug) {
-          console.log("autoScaleToLogSpace: Current Y view includes non-positive values, cannot preserve view");
+          DebugLogger.log("autoScaleToLogSpace: Current Y view includes non-positive values, cannot preserve view");
         }
         return false;
       }
@@ -481,7 +484,7 @@ export class WebglPlot {
     this.gOffsetY = newGlobalOffsetY;
     
     if (this.debug) {
-      console.log(`autoScaleToLogSpace: Applied new transform - Scale[${newGlobalScaleX.toFixed(4)}, ${newGlobalScaleY.toFixed(4)}], Offset[${newGlobalOffsetX.toFixed(4)}, ${newGlobalOffsetY.toFixed(4)}]`);
+      DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${newGlobalScaleX.toFixed(4)}, ${newGlobalScaleY.toFixed(4)}], Offset[${newGlobalOffsetX.toFixed(4)}, ${newGlobalOffsetY.toFixed(4)}]`);
     }
     
     return true;
@@ -504,9 +507,7 @@ export class WebglPlot {
   }
 
   private log(str: string): void {
-    if (this.debug) {
-      console.log("[webgl-plot]:" + str);
-    }
+    DebugLogger.log(str);
   }
 
   /**

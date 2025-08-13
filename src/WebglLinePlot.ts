@@ -1,6 +1,7 @@
 //import { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
 import type { LineConfig } from "./LineConfig";
+import { DebugLogger } from "./DebugLogger";
 export type { LineConfig }; // Re-export LineConfig
 
 export class WebglLinePlot {
@@ -44,7 +45,7 @@ export class WebglLinePlot {
     this.prog = this._createShaderProgram();
 
     if (!this.prog) {
-      console.error("Failed to create shader program.");
+      DebugLogger.error("Failed to create shader program.");
       // Depending on desired error handling, you might throw an error here
       // throw new Error("Failed to create shader program");
       return;
@@ -123,15 +124,14 @@ export class WebglLinePlot {
 
     const vertexShader = gl.createShader(gl.VERTEX_SHADER);
     if (!vertexShader) {
-      console.error("Unable to create vertex shader");
+      DebugLogger.error("Unable to create vertex shader");
       return null;
     }
     gl.shaderSource(vertexShader, vsSource);
     gl.compileShader(vertexShader);
     if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-      console.error(
-        "Error compiling vertex shader:",
-        gl.getShaderInfoLog(vertexShader)
+      DebugLogger.error(
+        `Error compiling vertex shader: ${gl.getShaderInfoLog(vertexShader) || "Unknown error"}`
       );
       gl.deleteShader(vertexShader);
       return null;
@@ -139,16 +139,15 @@ export class WebglLinePlot {
 
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     if (!fragmentShader) {
-      console.error("Unable to create fragment shader");
+      DebugLogger.error("Unable to create fragment shader");
       gl.deleteShader(vertexShader); // Clean up vertex shader
       return null;
     }
     gl.shaderSource(fragmentShader, fsSource);
     gl.compileShader(fragmentShader);
     if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-      console.error(
-        "Error compiling fragment shader:",
-        gl.getShaderInfoLog(fragmentShader)
+      DebugLogger.error(
+        `Error compiling fragment shader: ${gl.getShaderInfoLog(fragmentShader) || "Unknown error"}`
       );
       gl.deleteShader(vertexShader);
       gl.deleteShader(fragmentShader);
@@ -157,7 +156,7 @@ export class WebglLinePlot {
 
     const program = gl.createProgram();
     if (!program) {
-      console.error("Unable to create shader program");
+      DebugLogger.error("Unable to create shader program");
       gl.deleteShader(vertexShader);
       gl.deleteShader(fragmentShader);
       return null;
@@ -167,9 +166,8 @@ export class WebglLinePlot {
     gl.linkProgram(program);
 
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error(
-        "Error linking shader program:",
-        gl.getProgramInfoLog(program)
+      DebugLogger.error(
+        `Error linking shader program: ${gl.getProgramInfoLog(program) || "Unknown error"}`
       );
       gl.deleteProgram(program);
       gl.deleteShader(vertexShader);
@@ -191,7 +189,7 @@ export class WebglLinePlot {
 
     // 1. Store Configurations & Reset State
     if (linesConfig.length > this.maxLines) {
-      console.warn(
+      DebugLogger.warn(
         `Number of lines (${linesConfig.length}) exceeds maxLines (${this.maxLines}). Slicing.`
       );
       this.linesConfig = linesConfig
@@ -307,11 +305,11 @@ export class WebglLinePlot {
 
   public updateLinePoints(lineId: number, points: Float32Array): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for updateLinePoints`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for updateLinePoints`);
       return;
     }
     if (!this.vertexBuffer) {
-      console.warn("Vertex buffer not initialized for updateLinePoints");
+      DebugLogger.warn("Vertex buffer not initialized for updateLinePoints");
       return;
     }
 
@@ -319,7 +317,7 @@ export class WebglLinePlot {
     const numPointsInLine = this.lineLengths[lineId];
 
     if (points.length / 2 !== numPointsInLine) {
-      console.warn(
+      DebugLogger.warn(
         `Number of points in provided data (${points.length / 2}) ` +
           `does not match existing points in line ${lineId} (${numPointsInLine}). ` +
           `Cannot change number of points with this method.`
@@ -340,11 +338,11 @@ export class WebglLinePlot {
 
   public updateLineY(lineId: number, newY: Float32Array): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for updateLineY`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for updateLineY`);
       return;
     }
     if (!this.vertexBuffer) {
-      console.warn("Vertex buffer not initialized for updateLineY");
+      DebugLogger.warn("Vertex buffer not initialized for updateLineY");
       return;
     }
 
@@ -352,7 +350,7 @@ export class WebglLinePlot {
     const numPointsInLine = this.lineLengths[lineId];
 
     if (newY.length !== numPointsInLine) {
-      console.warn(
+      DebugLogger.warn(
         `Length of newY array (${newY.length}) does not match ` +
           `number of points in line ${lineId} (${numPointsInLine}).`
       );
@@ -378,11 +376,11 @@ export class WebglLinePlot {
     color: [number, number, number, number]
   ): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for updateLineColor`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for updateLineColor`);
       return;
     }
     if (!this.colorBuffer) {
-      console.warn("Color buffer not initialized for updateLineColor");
+      DebugLogger.warn("Color buffer not initialized for updateLineColor");
       return;
     }
 
@@ -414,7 +412,7 @@ export class WebglLinePlot {
     offset: [number, number]
   ): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for updateLineTransform`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for updateLineTransform`);
       return;
     }
     this.linesConfig[lineId].scale = scale;
@@ -423,7 +421,7 @@ export class WebglLinePlot {
 
   public updateLineThickness(lineId: number, thickness: number): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for updateLineThickness`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for updateLineThickness`);
       return;
     }
     this.linesConfig[lineId].thickness = thickness;
@@ -431,7 +429,7 @@ export class WebglLinePlot {
 
   public setLineEnabled(lineId: number, enabled: boolean): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for setLineEnabled`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for setLineEnabled`);
       return;
     }
     this.linesConfig[lineId].enabled = enabled;
@@ -466,7 +464,7 @@ export class WebglLinePlot {
 
   public autoScaleEnabledLines(): void {
     if (this.numLines === 0) {
-      console.warn("No lines to auto-scale.");
+      DebugLogger.warn("No lines to auto-scale.");
       return;
     }
 
@@ -484,8 +482,38 @@ export class WebglLinePlot {
       if (!line.enabled || line.points.length === 0) {
         continue;
       }
-      foundEnabledData = true;
+      
       const points = line.points;
+      
+      // Pre-check: if log axes are enabled, verify this line has enough positive values
+      // to be meaningful for auto-scaling
+      if (this.wglp.logX || this.wglp.logY) {
+        let validPointCount = 0;
+        const totalPoints = points.length / 2;
+        
+        for (let j = 0; j < points.length; j += 2) {
+          const x = points[j];
+          const y = points[j + 1];
+          
+          // Check if this point would be visible on log axes
+          const xValid = !this.wglp.logX || x > 0;
+          const yValid = !this.wglp.logY || y > 0;
+          
+          if (xValid && yValid) {
+            validPointCount++;
+          }
+        }
+        
+        // Skip lines that have less than 10% positive values or fewer than 2 valid points
+        // This prevents lines with mostly negative data from affecting auto-scaling
+        const validRatio = validPointCount / totalPoints;
+        if (validPointCount < 2 || validRatio < 0.1) {
+          DebugLogger.log(`autoScaleEnabledLines: Skipping line ${i} - only ${validPointCount}/${totalPoints} (${(validRatio*100).toFixed(1)}%) points valid for log axes`);
+          continue;
+        }
+      }
+      
+      foundEnabledData = true;
 
       for (let j = 0; j < points.length; j += 2) {
         let x = points[j];
@@ -525,7 +553,7 @@ export class WebglLinePlot {
       !isFinite(minY) ||
       !isFinite(maxY)
     ) {
-      console.warn(
+      DebugLogger.warn(
         "No data available for scaling or bounds are invalid. Resetting global transform."
       );
       this.setGlobalTransform([1, 1], [0, 0]);
@@ -657,7 +685,7 @@ export class WebglLinePlot {
    */
   public getLineConfig(lineId: number): LineConfig | undefined {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for getLineConfig`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for getLineConfig`);
       return undefined;
     }
     return this.linesConfig[lineId];

@@ -25,6 +25,7 @@ type UniformLocationsMulti = {
 
 import type { LineConfig } from "./LineConfig";
 import { FRAGMENT_SHADER_SOURCE, VERTEX_SHADER_SOURCE } from "./ShadersThick";
+import { DebugLogger } from "./DebugLogger";
 
 // Type for returning bounds from autoScaleEnabledLines
 export type DataBounds = {
@@ -171,7 +172,7 @@ export class WebglLineThick {
     try {
       this.prog = createProgram(gl, vsSource, fsSource);
     } catch (error) {
-      console.error("Error creating main GL program:", error);
+      DebugLogger.error(`Error creating main GL program: ${error}`);
       this.prog = null;
       throw error; // Re-throw after logging
     }
@@ -188,22 +189,22 @@ export class WebglLineThick {
       uLogAxis: gl.getUniformLocation(this.prog, "uLogAxis"),
     };
     if (!this.locations.uPointsTex)
-      console.warn("Main uniform 'uPointsTex' not found.");
+      DebugLogger.warn("Main uniform 'uPointsTex' not found.");
     if (!this.locations.uTexWidth)
-      console.warn("Main uniform 'uTexWidth' not found.");
+      DebugLogger.warn("Main uniform 'uTexWidth' not found.");
     if (!this.locations.uTexHeight)
-      console.warn("Main uniform 'uTexHeight' not found.");
+      DebugLogger.warn("Main uniform 'uTexHeight' not found.");
     if (!this.locations.uGlobalScale)
-      console.warn("Main uniform 'uGlobalScale' not found.");
+      DebugLogger.warn("Main uniform 'uGlobalScale' not found.");
     if (!this.locations.uGlobalOffset)
-      console.warn("Main uniform 'uGlobalOffset' not found.");
-    if (!this.locations.uViewportSize) console.warn("Main uniform 'uViewportSize' not found.");
+      DebugLogger.warn("Main uniform 'uGlobalOffset' not found.");
+    if (!this.locations.uViewportSize) DebugLogger.warn("Main uniform 'uViewportSize' not found.");
 
     // --- Bind Main UBO Block ---
     const blockName = "LineDataBlock";
     const blockIndex = gl.getUniformBlockIndex(this.prog, blockName);
     if (blockIndex === gl.INVALID_INDEX) {
-      console.warn(
+      DebugLogger.warn(
         `Main program: Uniform block '${blockName}' not found or not active.`
       );
     } else {
@@ -270,13 +271,13 @@ export class WebglLineThick {
   public initLines(lines: LineConfig[]): void {
     const gl = this.gl;
     if (!this.prog) {
-      console.error("Cannot initLines, main program not initialized.");
+      DebugLogger.error("Cannot initLines, main program not initialized.");
       return;
     }
 
     // --- Input Validation & Filtering ---
     if (lines.length > this.maxLines) {
-      console.warn(
+      DebugLogger.warn(
         `initLines: Attempted to initialize with ${lines.length} lines, but maxLines is ${this.maxLines}. Truncating.`
       );
       lines = lines.slice(0, this.maxLines);
@@ -317,7 +318,7 @@ export class WebglLineThick {
         currentStartIndex += numPts;
         this.totalValidPoints += numPts;
       } else {
-        console.warn(
+        DebugLogger.warn(
           `initLines: Skipping line index ${i} with ${numPts} points.`
         );
       }
@@ -382,7 +383,7 @@ export class WebglLineThick {
       if (this.locations.uTexHeight)
         gl.uniform1i(this.locations.uTexHeight, this.texHeight);
 
-      console.warn(
+      DebugLogger.warn(
         "initLines called with no valid lines. Renderer resources cleared/reset."
       );
       return;
@@ -402,7 +403,7 @@ export class WebglLineThick {
     this.texWidth = Math.min(Math.max(1, this.totalValidPoints), maxTexSize);
     this.texHeight = Math.ceil(this.totalValidPoints / this.texWidth);
     if (this.texHeight > maxTexSize) {
-      console.error("Required texture height exceeds MAX_TEXTURE_SIZE!");
+      DebugLogger.error("Required texture height exceeds MAX_TEXTURE_SIZE!");
       this.texHeight = maxTexSize;
     }
     const totalTexels = this.texWidth * this.texHeight;
@@ -679,6 +680,38 @@ export class WebglLineThick {
         const startIndex = this.lineStartIndexCache[lineId];
         const numPoints = this.lineOriginalNumPointsCache[lineId];
         if (numPoints > 0) {
+          
+          // Pre-check: if log axes are enabled, verify this line has enough positive values
+          // to be meaningful for auto-scaling
+          if (('logX' in this.wglp && this.wglp.logX) || ('logY' in this.wglp && this.wglp.logY)) {
+            let validPointCount = 0;
+            const endPointIndex = startIndex + numPoints;
+            
+            for (let ptIdx = startIndex; ptIdx < endPointIndex; ptIdx++) {
+              const dataIdx = ptIdx * 2;
+              if (dataIdx + 1 < this.pointsData.length) {
+                const x = this.pointsData[dataIdx];
+                const y = this.pointsData[dataIdx + 1];
+                
+                // Check if this point would be visible on log axes
+                const xValid = !('logX' in this.wglp && this.wglp.logX) || x > 0;
+                const yValid = !('logY' in this.wglp && this.wglp.logY) || y > 0;
+                
+                if (xValid && yValid) {
+                  validPointCount++;
+                }
+              }
+            }
+            
+            // Skip lines that have less than 10% positive values or fewer than 2 valid points
+            // This prevents lines with mostly negative data from affecting auto-scaling
+            const validRatio = validPointCount / numPoints;
+            if (validPointCount < 2 || validRatio < 0.1) {
+              DebugLogger.log(`_computeBoundsCPU: Skipping line ${lineId} - only ${validPointCount}/${numPoints} (${(validRatio*100).toFixed(1)}%) points valid for log axes`);
+              continue;
+            }
+          }
+          
           foundEnabledData = true;
           const endPointIndex = startIndex + numPoints;
           for (let ptIdx = startIndex; ptIdx < endPointIndex; ptIdx++) {
@@ -708,7 +741,7 @@ export class WebglLineThick {
               if (y < minY) minY = y;
               if (y > maxY) maxY = y;
             } else {
-              console.error(
+              DebugLogger.error(
                 `_computeBoundsCPU: Point index ${ptIdx} OOB length ${this.pointsData.length}.`
               );
               break;
@@ -727,7 +760,7 @@ export class WebglLineThick {
       !isFinite(minY) ||
       !isFinite(maxY)
     ) {
-      console.warn("_computeBoundsCPU: Resulting bounds NaN/Infinity.");
+      DebugLogger.warn("_computeBoundsCPU: Resulting bounds NaN/Infinity.");
       return null;
     }
     return { minX, maxX, minY, maxY };
@@ -741,7 +774,7 @@ export class WebglLineThick {
    */
   public autoScaleEnabledLines(): DataBounds | null {
     if (this.numLines === 0) {
-      console.warn("autoScaleEnabledLines: No lines initialized.");
+      DebugLogger.warn("autoScaleEnabledLines: No lines initialized.");
       return null;
     }
 
@@ -752,7 +785,7 @@ export class WebglLineThick {
     console.timeEnd("CPU Bounds Calculation");
 
     if (!bounds) {
-      console.warn(
+      DebugLogger.warn(
         "autoScaleEnabledLines: No valid data bounds found. Setting global transform to default."
       );
       this.setGlobalTransform([1.0, 1.0], [0.0, 0.0]);
@@ -790,7 +823,7 @@ export class WebglLineThick {
       offsetY = 0.0 - minY * scaleY;
     }
 
-    console.log(
+    DebugLogger.log(
       `AutoScale Results: Bounds [${minX.toFixed(3)}, ${maxX.toFixed(
         3
       )}], [${minY.toFixed(3)}, ${maxY.toFixed(
@@ -891,7 +924,7 @@ export class WebglLineThick {
     for (const attr of attributes) {
       const location = gl.getAttribLocation(this.prog!, attr.name);
       if (location === -1) {
-        console.warn(`Attribute '${attr.name}' not found in main program.`);
+        DebugLogger.warn(`Attribute '${attr.name}' not found in main program.`);
       } else {
         gl.enableVertexAttribArray(location);
         gl.vertexAttribPointer(
@@ -931,7 +964,7 @@ export class WebglLineThick {
     offset: [number, number]
   ): void {
     if (!this.lineDataUBO) {
-      console.warn("updateLinesTransform: UBO not available.");
+      DebugLogger.warn("updateLinesTransform: UBO not available.");
       return;
     }
 
@@ -940,7 +973,7 @@ export class WebglLineThick {
 
     for (const lineId of lineIds) {
       if (lineId < 0 || lineId >= this.numLines) {
-        console.warn(`updateLinesTransform: Invalid lineId ${lineId}.`);
+        DebugLogger.warn(`updateLinesTransform: Invalid lineId ${lineId}.`);
         continue;
       }
 
@@ -982,11 +1015,11 @@ export class WebglLineThick {
     color: [number, number, number, number]
   ): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`updateLineColor: Invalid lineId ${lineId}`);
+      DebugLogger.warn(`updateLineColor: Invalid lineId ${lineId}`);
       return;
     }
     if (!this.lineDataUBO) {
-      console.warn("updateLineColor: UBO not available.");
+      DebugLogger.warn("updateLineColor: UBO not available.");
       return;
     }
 
@@ -1008,11 +1041,11 @@ export class WebglLineThick {
    */
   public updateLineThickness(lineId: number, newThickness: number): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`updateLineThickness: Invalid lineId ${lineId}`);
+      DebugLogger.warn(`updateLineThickness: Invalid lineId ${lineId}`);
       return;
     }
     if (!this.lineDataUBO) {
-      console.warn("updateLineThickness: UBO not available.");
+      DebugLogger.warn("updateLineThickness: UBO not available.");
       return;
     }
 
@@ -1029,13 +1062,13 @@ export class WebglLineThick {
    */
   public setLinesEnabled(lineIds: number[], enabled: boolean): void {
     if (!this.lineDataUBO) {
-      console.warn("setLinesEnabled: UBO not available.");
+      DebugLogger.warn("setLinesEnabled: UBO not available.");
       return;
     }
     const updatedIndices: { byteOffset: number; numPoints: number }[] = [];
     for (const lineId of lineIds) {
       if (lineId < 0 || lineId >= this.numLines) {
-        console.warn(`setLinesEnabled: Invalid lineId ${lineId}.`);
+        DebugLogger.warn(`setLinesEnabled: Invalid lineId ${lineId}.`);
         continue;
       }
       if (this.lineEnabledStatus[lineId] !== enabled) {
@@ -1075,11 +1108,11 @@ export class WebglLineThick {
    */
   public updateLineY(lineId: number, newY: Float32Array): void {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`updateLineY: Invalid lineId ${lineId}`);
+      DebugLogger.warn(`updateLineY: Invalid lineId ${lineId}`);
       return;
     }
     if (!this.pointsTexture) {
-      console.warn("updateLineY: pointsTexture is null.");
+      DebugLogger.warn("updateLineY: pointsTexture is null.");
       return;
     }
     const numPts = this.lineOriginalNumPointsCache[lineId];
@@ -1097,7 +1130,7 @@ export class WebglLineThick {
       if (yDataIndex < this.pointsData.length)
         this.pointsData[yDataIndex] = newY[i];
       else {
-        console.error(
+        DebugLogger.error(
           `updateLineY: Index ${yDataIndex} OOB length ${this.pointsData.length}.`
         );
         return;
@@ -1237,7 +1270,7 @@ export class WebglLineThick {
    */
   public cleanup(): void {
     const gl = this.gl;
-    console.log("Cleaning up WebglLineThick resources...");
+    DebugLogger.log("Cleaning up WebglLineThick resources...");
 
     // Main rendering resources
     if (this.prog) {
@@ -1289,7 +1322,7 @@ export class WebglLineThick {
     this.globalScale = [1.0, 1.0];
     this.globalOffset = [0.0, 0.0];
 
-    console.log("WebglLineThick resources cleaned up.");
+    DebugLogger.log("WebglLineThick resources cleaned up.");
   }
 
   /**
@@ -1301,12 +1334,12 @@ export class WebglLineThick {
    */
   public getLineConfig(lineId: number): Partial<LineConfig> | undefined {
     if (lineId < 0 || lineId >= this.numLines) {
-      console.warn(`Invalid lineId ${lineId} for getLineConfig`);
+      DebugLogger.warn(`Invalid lineId ${lineId} for getLineConfig`);
       return undefined;
     }
 
     if (!this.lineDataView || this.lineDataArrayBuffer.byteLength === 0) {
-      console.warn("getLineConfig: Line data view or UBO not initialized.");
+      DebugLogger.warn("getLineConfig: Line data view or UBO not initialized.");
       return undefined;
     }
 
@@ -1314,7 +1347,7 @@ export class WebglLineThick {
 
     // Ensure the offset is within bounds
     if (byteOffset + OFFSET_THICKNESS + BYTES_PER_FLOAT > this.lineDataView.byteLength) {
-      console.warn(`getLineConfig: lineId ${lineId} results in offset out of bounds for lineDataView.`);
+      DebugLogger.warn(`getLineConfig: lineId ${lineId} results in offset out of bounds for lineDataView.`);
       return undefined;
     }
 

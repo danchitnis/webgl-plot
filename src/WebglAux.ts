@@ -1,5 +1,6 @@
 import type { WebglPlot } from "./webglplot";
 import type { WebglLine } from "./WebglLine";
+import { DebugLogger } from "./DebugLogger";
 
 /*type Line = {
   xy: number[];
@@ -44,7 +45,7 @@ export class WebglAux {
 
     if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
       // there was an error
-      console.error(gl.getShaderInfoLog(vertShader));
+      DebugLogger.error(gl.getShaderInfoLog(vertShader) || "Vertex shader compilation failed");
     }
 
     // Fragment shader source code
@@ -67,7 +68,7 @@ export class WebglAux {
 
     if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
       // there was an error
-      console.error(gl.getShaderInfoLog(fragShader));
+      DebugLogger.error(gl.getShaderInfoLog(fragShader) || "Fragment shader compilation failed");
     }
 
     this.prog = this.gl.createProgram() as WebGLProgram;

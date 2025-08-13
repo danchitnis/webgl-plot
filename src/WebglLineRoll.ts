@@ -1,5 +1,6 @@
 import type { ColorRGBA } from "./ColorRGBA";
 import type { WebglPlot } from "./webglplot";
+import { DebugLogger } from "./DebugLogger";
 
 export class WebglLineRoll {
   private gl: WebGL2RenderingContext;
@@ -57,7 +58,7 @@ export class WebglLineRoll {
 
     if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
       // there was an error
-      console.error(gl.getShaderInfoLog(vertShader));
+      DebugLogger.error(gl.getShaderInfoLog(vertShader) || "Vertex shader compilation failed");
     }
 
     // Fragment shader source code
@@ -79,7 +80,7 @@ export class WebglLineRoll {
 
     if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
       // there was an error
-      console.error(gl.getShaderInfoLog(fragShader));
+      DebugLogger.error(gl.getShaderInfoLog(fragShader) || "Fragment shader compilation failed");
     }
 
     // Create the shader program
@@ -90,7 +91,7 @@ export class WebglLineRoll {
 
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       // there was an error
-      console.error(gl.getProgramInfoLog(this.program));
+      DebugLogger.error(gl.getProgramInfoLog(this.program) || "Program linking failed");
     }
 
     // Create a buffer for the vertex coordinates

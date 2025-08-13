@@ -2,6 +2,7 @@ import type { WebglPlot } from "./webglplot"; // This will be the main class, ok
 import { WebglLinePlot } from "./WebglLinePlot"; // Corrected import
 import { WebglLineThick, DataBounds } from "./WebglLineThick"; // Corrected import
 import type { LineConfig } from "./LineConfig";
+import { DebugLogger } from "./DebugLogger";
 
 export class UnifiedLinePlot {
   private wglp: WebglPlot;
@@ -96,13 +97,13 @@ export class UnifiedLinePlot {
       // WebglLineThick does not have a direct updateLinePoints method for XY pairs.
       // initLines is the primary way to update all points.
       // updateLineY can update Y values if X values are presumed constant or managed elsewhere.
-      console.warn(
+      DebugLogger.warn(
         "updateLinePoints(xy) is not directly supported when WebglLineThick is active. " +
           "Consider re-initializing the line with initLines() for full XY updates, " +
           "or use updateLineY() if only Y values need changing and X values are stable."
       );
     } else {
-      console.warn("updateLinePoints: plotter not initialized.");
+      DebugLogger.warn("updateLinePoints: plotter not initialized.");
     }
   }
 
@@ -131,7 +132,7 @@ export class UnifiedLinePlot {
       // Both WebglLinePlot and WebglLineThick have updateLineTransform
       this.internalPlotter.updateLineTransform(lineId, scale, offset);
     } else {
-      console.warn("updateLineTransform: plotter not initialized.");
+      DebugLogger.warn("updateLineTransform: plotter not initialized.");
     }
   }
 
@@ -147,7 +148,7 @@ export class UnifiedLinePlot {
       // WebglLinePlot uses thickness 1.0. We could warn or update its config if needed.
       // For now, let's assume its `updateLineThickness` handles it (it does store the config).
       (this.internalPlotter as WebglLinePlot).updateLineThickness(lineId, 1.0); // Force 1.0
-      console.warn(
+      DebugLogger.warn(
         "UnifiedLinePlot: WebglLinePlot is active, thickness forced to 1.0."
       );
     }
