@@ -5,6 +5,7 @@ type LinePlotter = {
   initLines: (lines: LineConfig[]) => void;
   autoScaleEnabledLines: () => void;
   draw: () => void;
+  getDataBounds: () => { minX: number; maxX: number; minY: number; maxY: number } | null;
 };
 
 let linearPlot: WebglPlot;
@@ -372,6 +373,51 @@ function autoScale() {
   updatePlots(); // This calls autoScaleEnabledLines internally
 }
 
+// Test viewbounds calculation fix
+function testViewboundsFix() {
+  console.log('=== Testing Viewbounds Fix ===');
+  
+  if (!logPlot || !logLinePlotter) {
+    console.error('Log plot not initialized');
+    return;
+  }
+  
+  // Generate some test data
+  generateExponentialData();
+  
+  // Set log axes
+  logPlot.setLogAxis(true, true);
+  
+  // Get data bounds from plotter (actual data)
+  const dataBounds = logLinePlotter.getDataBounds();
+  if (dataBounds) {
+    console.log(`Actual data bounds: X[${dataBounds.minX.toFixed(3)}, ${dataBounds.maxX.toFixed(3)}], Y[${dataBounds.minY.toFixed(3)}, ${dataBounds.maxY.toFixed(3)}]`);
+    
+    // Test old approach (transform-based bounds)
+    console.log('Testing legacy transform-based approach...');
+    const legacySuccess = logPlot.autoScaleToLogSpace();
+    console.log(`Legacy approach: ${legacySuccess ? 'succeeded' : 'failed'}`);
+    
+    // Test new approach (data-based bounds)
+    console.log('Testing new data-based approach...');
+    const dataSuccess = logPlot.autoScaleToLogSpace(dataBounds);
+    console.log(`Data-based approach: ${dataSuccess ? 'succeeded' : 'failed'}`);
+    
+    // Compare the results
+    if (dataSuccess && legacySuccess) {
+      console.log('Both approaches succeeded - data bounds approach is now more accurate');
+    } else if (dataSuccess && !legacySuccess) {
+      console.log('Data bounds approach succeeded where legacy failed - fix working!');
+    } else if (!dataSuccess) {
+      console.log('Data bounds approach failed - needs investigation');
+    }
+  } else {
+    console.log('No data bounds available - plotter may not have valid data');
+  }
+  
+  console.log('=== Viewbounds Fix Test Complete ===');
+}
+
 // Test smart auto-scaling to log space
 function smartAutoScale() {
   console.log('=== Testing Smart Auto Scale ===');
@@ -394,14 +440,29 @@ function smartAutoScale() {
       console.log('Initial auto-scaling complete');
     }
     
-    // Now test the smart scaling to log space function
-    console.log(`Testing autoScaleToLogSpace() with logX=${logXEnabled}, logY=${logYEnabled}`);
-    const success = logPlot.autoScaleToLogSpace();
-    console.log(`Smart auto-scaling ${success ? 'succeeded' : 'failed'}`);
-    
-    if (!success) {
-      console.log('Smart scaling failed, falling back to regular auto-scaling');
-      logLinePlotter.autoScaleEnabledLines();
+    // Get actual data bounds from the plotter (this is the fix!)
+    const dataBounds = logLinePlotter.getDataBounds();
+    if (dataBounds) {
+      console.log(`Data bounds from plotter: X[${dataBounds.minX.toFixed(3)}, ${dataBounds.maxX.toFixed(3)}], Y[${dataBounds.minY.toFixed(3)}, ${dataBounds.maxY.toFixed(3)}]`);
+      
+      // Test the new method using actual data bounds
+      console.log(`Testing autoScaleToLogSpace() with actual data bounds (logX=${logXEnabled}, logY=${logYEnabled})`);
+      const success = logPlot.autoScaleToLogSpace(dataBounds);
+      console.log(`Smart auto-scaling with data bounds ${success ? 'succeeded' : 'failed'}`);
+      
+      if (!success) {
+        console.log('Smart scaling with data bounds failed, falling back to regular auto-scaling');
+        logLinePlotter.autoScaleEnabledLines();
+      }
+    } else {
+      console.log('No data bounds available from plotter, testing legacy transform-based approach');
+      const success = logPlot.autoScaleToLogSpace();
+      console.log(`Legacy smart auto-scaling ${success ? 'succeeded' : 'failed'}`);
+      
+      if (!success) {
+        console.log('Legacy smart scaling failed, falling back to regular auto-scaling');
+        logLinePlotter.autoScaleEnabledLines();
+      }
     }
   }
   
@@ -532,6 +593,7 @@ declare global {
     measurePerformance: () => void;
     setLineType: (lineType: LineType) => void;
     smartAutoScale: () => void;
+    testViewboundsFix: () => void;
   }
 }
 
@@ -546,6 +608,7 @@ window.autoScale = autoScale;
 window.measurePerformance = measurePerformance;
 window.setLineType = setLineType;
 window.smartAutoScale = smartAutoScale;
+window.testViewboundsFix = testViewboundsFix;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {

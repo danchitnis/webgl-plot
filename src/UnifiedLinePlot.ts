@@ -187,6 +187,17 @@ export class UnifiedLinePlot {
   }
 
   /**
+   * Get the data bounds of all enabled lines.
+   * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
+   */
+  public getDataBounds(): { minX: number; maxX: number; minY: number; maxY: number } | null {
+    if (!this.internalPlotter) {
+      return null;
+    }
+    return this.internalPlotter.getDataBounds();
+  }
+
+  /**
    * Gets the type of the currently active internal plotter.
    * @returns A string indicating the type of the internal plotter:
    * 'WebglLinePlot', 'WebglLineThick', or 'null'.

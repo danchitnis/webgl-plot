@@ -462,6 +462,83 @@ export class WebglLinePlot {
     }
   }
 
+  /**
+   * Get the data bounds of all enabled lines.
+   * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
+   */
+  public getDataBounds(): { minX: number; maxX: number; minY: number; maxY: number } | null {
+    if (this.numLines === 0) {
+      return null;
+    }
+
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    let foundEnabledData = false;
+
+    for (let i = 0; i < this.numLines; i++) {
+      const line = this.linesConfig[i];
+
+      if (!line.enabled || line.points.length === 0) {
+        continue;
+      }
+      
+      const points = line.points;
+      
+      // Pre-check: if log axes are enabled, verify this line has enough positive values
+      if (this.wglp.logX || this.wglp.logY) {
+        let validPointCount = 0;
+        const totalPoints = points.length / 2;
+        
+        for (let j = 0; j < points.length; j += 2) {
+          const x = points[j];
+          const y = points[j + 1];
+          
+          const xValid = !this.wglp.logX || x > 0;
+          const yValid = !this.wglp.logY || y > 0;
+          
+          if (xValid && yValid) {
+            validPointCount++;
+          }
+        }
+        
+        const validRatio = validPointCount / totalPoints;
+        if (validPointCount < 2 || validRatio < 0.1) {
+          continue;
+        }
+      }
+      
+      foundEnabledData = true;
+
+      for (let j = 0; j < points.length; j += 2) {
+        const x = points[j];
+        const y = points[j + 1];
+        
+        // Skip invalid values for log axes
+        if (this.wglp.logX && x <= 0) continue;
+        if (this.wglp.logY && y <= 0) continue;
+        
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+
+    if (
+      !foundEnabledData ||
+      !isFinite(minX) ||
+      !isFinite(maxX) ||
+      !isFinite(minY) ||
+      !isFinite(maxY)
+    ) {
+      return null;
+    }
+
+    return { minX, maxX, minY, maxY };
+  }
+
   public autoScaleEnabledLines(): void {
     if (this.numLines === 0) {
       DebugLogger.warn("No lines to auto-scale.");

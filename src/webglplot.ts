@@ -355,31 +355,34 @@ export class WebglPlot {
   }
 
   /**
-   * Auto-scale the plot to fit log-transformed data, converting existing linear 
-   * scaling to appropriate log space scaling.
+   * Auto-scale the plot to fit log-transformed data, using either actual data bounds
+   * or converting existing transform-based viewport bounds to log space.
    * 
    * This function intelligently handles the transition from linear to log space by
-   * transforming the current viewport bounds from linear to log space while maintaining
-   * the same visible data range.
-   * 
-   * **Important:** This function works with the current global transform state.
-   * For best results, ensure the plot is already properly scaled before switching to log axes.
+   * using actual data bounds when provided, or falling back to transforming the 
+   * current viewport bounds from linear to log space.
    * 
    * **Use Cases:**
    * - After toggling log axes to maintain current view
-   * - For smooth transitions between linear and log representations
+   * - For smooth transitions between linear and log representations  
    * - When you want to preserve user's current zoom/pan state
+   * - For accurate scaling based on actual data bounds
    * 
    * **Example Usage:**
    * ```typescript
-   * // User has zoomed into a specific region in linear space
-   * plot.setLogAxis(false, true);  // Enable log Y
-   * plot.autoScaleToLogSpace();    // Maintain zoom but in log space
+   * // Using actual data bounds (recommended)
+   * const bounds = plotter.getDataBounds();
+   * plot.autoScaleToLogSpace(bounds);
+   * 
+   * // Using current viewport bounds (legacy)
+   * plot.autoScaleToLogSpace();
    * ```
    * 
+   * @param dataBounds Optional actual data bounds {minX, maxX, minY, maxY}. 
+   *                   If provided, uses actual data bounds instead of transform-based bounds.
    * @returns True if smart scaling was applied, false if transformation not feasible
    */
-  public autoScaleToLogSpace(): boolean {
+  public autoScaleToLogSpace(dataBounds?: { minX: number; maxX: number; minY: number; maxY: number } | null): boolean {
     // If no log axes are enabled, nothing to do
     if (!this.logX && !this.logY) {
       if (this.debug) {
@@ -388,21 +391,34 @@ export class WebglPlot {
       return true;
     }
     
-    // Get current global transform to understand current view
-    const currentScaleX = this.gScaleX;
-    const currentScaleY = this.gScaleY;
-    const currentOffsetX = this.gOffsetX;
-    const currentOffsetY = this.gOffsetY;
+    let viewLeft: number, viewRight: number, viewBottom: number, viewTop: number;
     
-    // Calculate what the view bounds would be in the original data space
-    // This reverses the current global transform to find what data range is visible
-    const viewLeft = (-1 - currentOffsetX) / currentScaleX;
-    const viewRight = (1 - currentOffsetX) / currentScaleX;
-    const viewBottom = (-1 - currentOffsetY) / currentScaleY;
-    const viewTop = (1 - currentOffsetY) / currentScaleY;
-    
-    if (this.debug) {
-      DebugLogger.log(`autoScaleToLogSpace: Current view bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+    if (dataBounds) {
+      // Use actual data bounds (recommended approach)
+      viewLeft = dataBounds.minX;
+      viewRight = dataBounds.maxX;
+      viewBottom = dataBounds.minY;
+      viewTop = dataBounds.maxY;
+      
+      if (this.debug) {
+        DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+      }
+    } else {
+      // Fallback: Calculate bounds from current transform (legacy approach)
+      const currentScaleX = this.gScaleX;
+      const currentScaleY = this.gScaleY;
+      const currentOffsetX = this.gOffsetX;
+      const currentOffsetY = this.gOffsetY;
+      
+      // This reverses the current global transform to find what data range is visible
+      viewLeft = (-1 - currentOffsetX) / currentScaleX;
+      viewRight = (1 - currentOffsetX) / currentScaleX;
+      viewBottom = (-1 - currentOffsetY) / currentScaleY;
+      viewTop = (1 - currentOffsetY) / currentScaleY;
+      
+      if (this.debug) {
+        DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+      }
     }
     
     // Try to preserve the current view in log space

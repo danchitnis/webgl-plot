@@ -664,6 +664,14 @@ export class WebglLineThick {
   }
 
   /**
+   * Get the data bounds of all enabled lines.
+   * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
+   */
+  public getDataBounds(): DataBounds | null {
+    return this._computeBoundsCPU();
+  }
+
+  /**
    * Computes the min/max bounds of enabled lines using CPU iteration.
    * Internal method.
    * @returns DataBounds object or null if no enabled lines with points found.
