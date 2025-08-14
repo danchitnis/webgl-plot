@@ -1,11 +1,14 @@
 import { WebglPlot, type LineConfig } from "../src/webglplot";
+import type { DataBounds } from "../src/LogAxisUtils";
 
 // Add type for the line plotters
 type LinePlotter = {
   initLines: (lines: LineConfig[]) => void;
-  autoScaleEnabledLines: () => void;
+  autoScaleEnabledLines: () => unknown;
   draw: () => void;
   getDataBounds: () => { minX: number; maxX: number; minY: number; maxY: number } | null;
+  setLogAxis: (x: boolean, y: boolean) => void;
+  autoScaleToLogSpace: (dataBounds?: DataBounds | null) => boolean;
 };
 
 let linearPlot: WebglPlot;
@@ -171,8 +174,8 @@ function generateMultiLineTestData() {
     };
 
     // Linear plot setup
-    linearPlot.setLogAxis(false, false);
     linearLinePlotter = createLinePlotter(linearPlot);
+    linearLinePlotter.setLogAxis(false, false);
     linearLinePlotter.initLines([
       {
         points: points1,
@@ -195,8 +198,8 @@ function generateMultiLineTestData() {
     ]);
 
     // Log plot setup (this is where the issue should be tested)
-    logPlot.setLogAxis(logXEnabled, logYEnabled);
     logLinePlotter = createLinePlotter(logPlot);
+    logLinePlotter.setLogAxis(logXEnabled, logYEnabled);
     logLinePlotter.initLines([
       {
         points: points1,
@@ -274,8 +277,8 @@ function updatePlots() {
     };
 
     // Linear plot (always linear axes)
-    linearPlot.setLogAxis(false, false);
     linearLinePlotter = createLinePlotter(linearPlot);
+    linearLinePlotter.setLogAxis(false, false);
     linearLinePlotter.initLines([{
       points: linearData,
       color: [1, 0.5, 0, 1], // Orange
@@ -284,8 +287,8 @@ function updatePlots() {
     }]);
 
     // Log plot (with current log settings)
-    logPlot.setLogAxis(logXEnabled, logYEnabled);
     logLinePlotter = createLinePlotter(logPlot);
+    logLinePlotter.setLogAxis(logXEnabled, logYEnabled);
     logLinePlotter.initLines([{
       points: logData,
       color: [0, 0.8, 1, 1], // Cyan
@@ -334,8 +337,8 @@ function toggleLogX() {
   console.log(`Log X axis ${logXEnabled ? 'enabled' : 'disabled'}`);
   
   // Update log settings in real-time without reinitializing
-  if (logPlot) {
-    logPlot.setLogAxis(logXEnabled, logYEnabled);
+  if (logLinePlotter) {
+    logLinePlotter.setLogAxis(logXEnabled, logYEnabled);
     
     // Re-auto-scale with the new log settings (the auto-scaling logic now handles log transformation)
     if (logLinePlotter) {
@@ -354,8 +357,8 @@ function toggleLogY() {
   console.log(`Log Y axis ${logYEnabled ? 'enabled' : 'disabled'}`);
   
   // Update log settings in real-time without reinitializing
-  if (logPlot) {
-    logPlot.setLogAxis(logXEnabled, logYEnabled);
+  if (logLinePlotter) {
+    logLinePlotter.setLogAxis(logXEnabled, logYEnabled);
     
     // Re-auto-scale with the new log settings (the auto-scaling logic now handles log transformation)
     if (logLinePlotter) {
@@ -386,7 +389,7 @@ function testViewboundsFix() {
   generateExponentialData();
   
   // Set log axes
-  logPlot.setLogAxis(true, true);
+  logLinePlotter?.setLogAxis(true, true);
   
   // Get data bounds from plotter (actual data)
   const dataBounds = logLinePlotter.getDataBounds();
@@ -395,12 +398,12 @@ function testViewboundsFix() {
     
     // Test old approach (transform-based bounds)
     console.log('Testing legacy transform-based approach...');
-    const legacySuccess = logPlot.autoScaleToLogSpace();
+    const legacySuccess = logLinePlotter?.autoScaleToLogSpace();
     console.log(`Legacy approach: ${legacySuccess ? 'succeeded' : 'failed'}`);
     
     // Test new approach (data-based bounds)
     console.log('Testing new data-based approach...');
-    const dataSuccess = logPlot.autoScaleToLogSpace(dataBounds);
+    const dataSuccess = logLinePlotter?.autoScaleToLogSpace(dataBounds);
     console.log(`Data-based approach: ${dataSuccess ? 'succeeded' : 'failed'}`);
     
     // Compare the results
@@ -447,7 +450,7 @@ function smartAutoScale() {
       
       // Test the new method using actual data bounds
       console.log(`Testing autoScaleToLogSpace() with actual data bounds (logX=${logXEnabled}, logY=${logYEnabled})`);
-      const success = logPlot.autoScaleToLogSpace(dataBounds);
+      const success = logLinePlotter?.autoScaleToLogSpace(dataBounds);
       console.log(`Smart auto-scaling with data bounds ${success ? 'succeeded' : 'failed'}`);
       
       if (!success) {
@@ -456,7 +459,7 @@ function smartAutoScale() {
       }
     } else {
       console.log('No data bounds available from plotter, testing legacy transform-based approach');
-      const success = logPlot.autoScaleToLogSpace();
+      const success = logLinePlotter?.autoScaleToLogSpace();
       console.log(`Legacy smart auto-scaling ${success ? 'succeeded' : 'failed'}`);
       
       if (!success) {
@@ -549,8 +552,8 @@ function measurePerformance() {
   // Measure linear plot performance
   const linearStart = performance.now();
   for (let i = 0; i < iterations; i++) {
-    linearPlot.setLogAxis(false, false);
     const linePlotter = createTestPlotter(linearPlot);
+    linePlotter.setLogAxis(false, false);
     linePlotter.initLines([{
       points: currentData,
       color: [1, 0.5, 0, 1],
@@ -563,8 +566,8 @@ function measurePerformance() {
   // Measure log plot performance
   const logStart = performance.now();
   for (let i = 0; i < iterations; i++) {
-    logPlot.setLogAxis(logXEnabled, logYEnabled);
     const linePlotter = createTestPlotter(logPlot);
+    linePlotter.setLogAxis(logXEnabled, logYEnabled);
     linePlotter.initLines([{
       points: currentData,
       color: [0, 0.8, 1, 1],

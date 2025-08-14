@@ -10,7 +10,6 @@ const LINE_DATA_STRIDE = 64; // Stride for UBO LineData struct
 // Geometric thresholds
 const VERY_SHARP_TURN_DOT_THRESHOLD = 0.7; // For CPU-side sharp join detection
 const COINCIDENT_POINT_EPSILON = 1e-6; // Points closer than this are considered coincident
-const BOUNDS_CALCULATION_EPSILON = 1e-9; // For bounds calculation safety
 
 // --- Types ---
 type UniformLocationsMulti = {
@@ -26,14 +25,17 @@ type UniformLocationsMulti = {
 import type { LineConfig } from "./LineConfig";
 import { FRAGMENT_SHADER_SOURCE, VERTEX_SHADER_SOURCE } from "./ShadersThick";
 import { DebugLogger } from "./DebugLogger";
+import { 
+  validateLineForLogAxes, 
+  calculateLogAwareBounds, 
+  calculateAutoScaleTransform,
+  transformBoundsToLogSpace,
+  reverseGlobalTransform,
+  type DataBounds 
+} from "./LogAxisUtils";
 
-// Type for returning bounds from autoScaleEnabledLines
-export type DataBounds = {
-  minX: number;
-  maxX: number;
-  minY: number;
-  maxY: number;
-};
+// Re-export DataBounds from shared utilities
+export type { DataBounds } from "./LogAxisUtils";
 
 
 
@@ -693,63 +695,23 @@ export class WebglLineThick {
         const numPoints = this.lineOriginalNumPointsCache[lineId];
         if (numPoints > 0) {
 
-          // Pre-check: if log axes are enabled, verify this line has enough positive values
-          // to be meaningful for auto-scaling
-          if (this.logX || this.logY) {
-            let validPointCount = 0;
-            const endPointIndex = startIndex + numPoints;
-
-            for (let ptIdx = startIndex; ptIdx < endPointIndex; ptIdx++) {
-              const dataIdx = ptIdx * 2;
-              if (dataIdx + 1 < this.pointsData.length) {
-                const x = this.pointsData[dataIdx];
-                const y = this.pointsData[dataIdx + 1];
-
-                // Check if this point would be visible on log axes
-                const xValid = !this.logX || x > 0;
-                const yValid = !this.logY || y > 0;
-
-                if (xValid && yValid) {
-                  validPointCount++;
-                }
-              }
-            }
-
-            // Skip lines that have less than 10% positive values or fewer than 2 valid points
-            // This prevents lines with mostly negative data from affecting auto-scaling
-            const validRatio = validPointCount / numPoints;
-            if (validPointCount < 2 || validRatio < 0.1) {
-              DebugLogger.log(`_computeBoundsCPU: Skipping line ${lineId} - only ${validPointCount}/${numPoints} (${(validRatio * 100).toFixed(1)}%) points valid for log axes`);
-              continue;
-            }
+          // Use shared utility for validation
+          const linePointsForValidation = new Float32Array(this.pointsData.buffer, startIndex * 8, numPoints * 2);
+          const validation = validateLineForLogAxes(linePointsForValidation, this.logX, this.logY);
+          if (!validation.isValid) {
+            DebugLogger.log(`_computeBoundsCPU: Skipping line ${lineId} - only ${validation.validPointCount}/${validation.totalPoints} (${(validation.validRatio * 100).toFixed(1)}%) points valid for log axes`);
+            continue;
           }
 
           foundEnabledData = true;
-          const endPointIndex = startIndex + numPoints;
-          for (let ptIdx = startIndex; ptIdx < endPointIndex; ptIdx++) {
-            const dataIdx = ptIdx * 2;
-            if (dataIdx + 1 < this.pointsData.length) {
-              const x = this.pointsData[dataIdx];
-              const y = this.pointsData[dataIdx + 1];
-
-              // Skip invalid values for log axes (GPU will handle the actual log transformation)
-              if (this.logX && x <= 0) {
-                continue; // Skip negative/zero values for log X axis
-              }
-              if (this.logY && y <= 0) {
-                continue; // Skip negative/zero values for log Y axis
-              }
-
-              if (x < minX) minX = x;
-              if (x > maxX) maxX = x;
-              if (y < minY) minY = y;
-              if (y > maxY) maxY = y;
-            } else {
-              DebugLogger.error(
-                `_computeBoundsCPU: Point index ${ptIdx} OOB length ${this.pointsData.length}.`
-              );
-              break;
-            }
+          
+          // Use shared utility for bounds calculation
+          const lineBounds = calculateLogAwareBounds(linePointsForValidation, this.logX, this.logY);
+          if (lineBounds) {
+            if (lineBounds.minX < minX) minX = lineBounds.minX;
+            if (lineBounds.maxX > maxX) maxX = lineBounds.maxX;
+            if (lineBounds.minY < minY) minY = lineBounds.minY;
+            if (lineBounds.maxY > maxY) maxY = lineBounds.maxY;
           }
         }
       }
@@ -796,36 +758,8 @@ export class WebglLineThick {
       return null;
     }
 
-    let scaleX = 1.0,
-      scaleY = 1.0,
-      offsetX = 0.0,
-      offsetY = 0.0;
     const { minX, maxX, minY, maxY } = bounds;
-    const rangeX = maxX - minX;
-    const rangeY = maxY - minY;
-    const ndcWidth = 2.0,
-      ndcHeight = 2.0;
-    const epsilon = BOUNDS_CALCULATION_EPSILON;
-
-    // Calculate X scale and offset
-    if (rangeX > epsilon) {
-      scaleX = ndcWidth / rangeX;
-      const centerX = minX + rangeX / 2.0;
-      offsetX = 0.0 - centerX * scaleX;
-    } else {
-      scaleX = 1.0;
-      offsetX = 0.0 - minX * scaleX;
-    }
-
-    // Calculate Y scale and offset
-    if (rangeY > epsilon) {
-      scaleY = ndcHeight / rangeY;
-      const centerY = minY + rangeY / 2.0;
-      offsetY = 0.0 - centerY * scaleY;
-    } else {
-      scaleY = 1.0;
-      offsetY = 0.0 - minY * scaleY;
-    }
+    const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(bounds);
 
     DebugLogger.log(
       `AutoScale Results: Bounds [${minX.toFixed(3)}, ${maxX.toFixed(
@@ -1166,111 +1100,37 @@ export class WebglLineThick {
    *                   If provided, uses actual data bounds instead of transform-based bounds.
    * @returns True if smart scaling was applied, false if transformation not feasible
    */
-  public autoScaleToLogSpace(dataBounds?: { minX: number; maxX: number; minY: number; maxY: number } | null): boolean {
+  public autoScaleToLogSpace(dataBounds?: DataBounds | null): boolean {
     // If no log axes are enabled, nothing to do
     if (!this.logX && !this.logY) {
       DebugLogger.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
       return true;
     }
 
-    let viewLeft: number, viewRight: number, viewBottom: number, viewTop: number;
+    let viewBounds: DataBounds;
 
     if (dataBounds) {
       // Use actual data bounds (recommended approach)
-      viewLeft = dataBounds.minX;
-      viewRight = dataBounds.maxX;
-      viewBottom = dataBounds.minY;
-      viewTop = dataBounds.maxY;
-
-      DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+      viewBounds = dataBounds;
+      DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
     } else {
       // Fallback: Calculate bounds from current transform (legacy approach)
-      const currentScaleX = this.globalScale[0];
-      const currentScaleY = this.globalScale[1];
-      const currentOffsetX = this.globalOffset[0];
-      const currentOffsetY = this.globalOffset[1];
-
-      // This reverses the current global transform to find what data range is visible
-      viewLeft = (-1 - currentOffsetX) / currentScaleX;
-      viewRight = (1 - currentOffsetX) / currentScaleX;
-      viewBottom = (-1 - currentOffsetY) / currentScaleY;
-      viewTop = (1 - currentOffsetY) / currentScaleY;
-
-      DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+      viewBounds = reverseGlobalTransform(this.globalScale, this.globalOffset);
+      DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
     }
 
-    // Try to preserve the current view in log space
-    let newMinX = viewLeft;
-    let newMaxX = viewRight;
-    let newMinY = viewBottom;
-    let newMaxY = viewTop;
-    let transformationApplied = false;
-
-    // For log X: if current view has positive bounds, transform them
-    if (this.logX) {
-      if (viewLeft > 0 && viewRight > 0) {
-        newMinX = Math.log10(viewLeft);
-        newMaxX = Math.log10(viewRight);
-        transformationApplied = true;
-        DebugLogger.log(`autoScaleToLogSpace: Transformed X bounds to log space - [${newMinX.toFixed(3)}, ${newMaxX.toFixed(3)}]`);
-      } else {
-        // Current view includes negative/zero X, can't preserve view
-        DebugLogger.log("autoScaleToLogSpace: Current X view includes non-positive values, cannot preserve view");
-        return false;
-      }
+    // Transform bounds to log space
+    const logBounds = transformBoundsToLogSpace(viewBounds, this.logX, this.logY);
+    if (!logBounds) {
+      DebugLogger.log("autoScaleToLogSpace: Cannot transform bounds to log space");
+      return false;
     }
 
-    // For log Y: if current view has positive bounds, transform them
-    if (this.logY) {
-      if (viewBottom > 0 && viewTop > 0) {
-        newMinY = Math.log10(viewBottom);
-        newMaxY = Math.log10(viewTop);
-        transformationApplied = true;
-        DebugLogger.log(`autoScaleToLogSpace: Transformed Y bounds to log space - [${newMinY.toFixed(3)}, ${newMaxY.toFixed(3)}]`);
-      } else {
-        // Current view includes negative/zero Y, can't preserve view
-        DebugLogger.log("autoScaleToLogSpace: Current Y view includes non-positive values, cannot preserve view");
-        return false;
-      }
-    }
+    // Calculate and apply new transform
+    const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(logBounds);
+    this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
 
-    // If no transformation was needed, we're done
-    if (!transformationApplied) {
-      return true;
-    }
-
-    // Calculate new global transform for the preserved view in log space
-    const rangeX = newMaxX - newMinX;
-    const rangeY = newMaxY - newMinY;
-    const ndcWidth = 2.0;
-    const ndcHeight = 2.0;
-    const epsilon = 1e-9;
-
-    let newGlobalScaleX = 1.0;
-    let newGlobalScaleY = 1.0;
-    let newGlobalOffsetX = 0.0;
-    let newGlobalOffsetY = 0.0;
-
-    if (rangeX > epsilon) {
-      newGlobalScaleX = ndcWidth / rangeX;
-      const centerX = newMinX + rangeX / 2.0;
-      newGlobalOffsetX = 0.0 - centerX * newGlobalScaleX;
-    }
-
-    if (rangeY > epsilon) {
-      newGlobalScaleY = ndcHeight / rangeY;
-      const centerY = newMinY + rangeY / 2.0;
-      newGlobalOffsetY = 0.0 - centerY * newGlobalScaleY;
-    }
-
-    // Apply the new transform to the local globalScale and globalOffset
-    this.globalScale[0] = newGlobalScaleX;
-    this.globalScale[1] = newGlobalScaleY;
-    this.globalOffset[0] = newGlobalOffsetX;
-    this.globalOffset[1] = newGlobalOffsetY;
-
-    DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${newGlobalScaleX.toFixed(4)}, ${newGlobalScaleY.toFixed(4)}], Offset[${newGlobalOffsetX.toFixed(4)}, ${newGlobalOffsetY.toFixed(4)}]`);
-
+    DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
     return true;
   }
 

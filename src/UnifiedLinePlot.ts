@@ -198,6 +198,31 @@ export class UnifiedLinePlot {
   }
 
   /**
+   * Enable or disable logarithmic scaling for X and/or Y axes.
+   * Forwards the call to the active internal plotter.
+   * @param x Enable logarithmic base-10 scaling for X-axis
+   * @param y Enable logarithmic base-10 scaling for Y-axis
+   */
+  public setLogAxis(x: boolean, y: boolean): void {
+    if (this.internalPlotter) {
+      this.internalPlotter.setLogAxis(x, y);
+    }
+  }
+
+  /**
+   * Auto-scale the plotter to fit log-transformed data.
+   * Forwards the call to the active internal plotter.
+   * @param dataBounds Optional actual data bounds {minX, maxX, minY, maxY}
+   * @returns True if smart scaling was applied, false if transformation not feasible
+   */
+  public autoScaleToLogSpace(dataBounds?: DataBounds | null): boolean {
+    if (this.internalPlotter) {
+      return this.internalPlotter.autoScaleToLogSpace(dataBounds);
+    }
+    return false;
+  }
+
+  /**
    * Gets the type of the currently active internal plotter.
    * @returns A string indicating the type of the internal plotter:
    * 'WebglLinePlot', 'WebglLineThick', or 'null'.

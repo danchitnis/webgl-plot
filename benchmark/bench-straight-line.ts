@@ -46,7 +46,7 @@ console.log("Line configuration:", straightLine);
 // Initialize the line with our configuration
 plotLine.initLines([straightLine]);
 
-wglp.setLogAxis(false, true); // Enable log axis for both x and y
+plotLine.setLogAxis(false, true); // Enable log axis for both x and y
 
 // Clear the canvas and draw the line
 wglp.clear();

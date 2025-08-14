@@ -21,8 +21,8 @@ plotter.initLines([{
   enabled: true
 }]);
 
-// Enable logarithmic Y-axis (great for exponential data)
-plot.setLogAxis(false, true);
+// Enable logarithmic Y-axis (v1.2.0+: can set directly on plotter)
+plotter.setLogAxis(false, true);
 
 // Auto-scale to fit data (with smart filtering for log axes)
 plotter.autoScaleEnabledLines();
@@ -52,27 +52,34 @@ const thickPlotter = new WebglLineThick(plot, 1);
 // Option 3: Direct unified plotter
 const unifiedPlotter = new UnifiedLinePlot(plot, 1);
 
-// All support the same API with smart log axis auto-scaling
+// All plotters now have local log axis support and identical APIs
 thinPlotter.initLines([{ points: yourData, color: [1,0,0,1], thickness: 1.0, enabled: true }]);
-plot.setLogAxis(false, true);
+thinPlotter.setLogAxis(false, true); // Can set log axes directly on plotter
 thinPlotter.autoScaleEnabledLines(); // Smart filtering applies to all plotters
+
+// Or use the global plot settings (still supported)
+plot.setLogAxis(false, true);
+thinPlotter.autoScaleEnabledLines();
 ```
 
 ## 📚 Core API
 
 ### `setLogAxis(x: boolean, y: boolean)`
 
-Enable or disable logarithmic base-10 scaling for each axis.
+Enable or disable logarithmic base-10 scaling for each axis. Available on both WebglPlot and individual plotters.
 
 ```typescript
-// Enable log Y-axis (exponential data: y = a * e^(b*x))
+// Option 1: Set on WebglPlot (affects all plotters)
 plot.setLogAxis(false, true);
 
-// Enable both axes (power-law data: y = a * x^b appears linear)
-plot.setLogAxis(true, true);
+// Option 2: Set directly on individual plotters (v1.2.0+)
+thinPlotter.setLogAxis(false, true);  // Enable log Y for thin plotter
+thickPlotter.setLogAxis(true, true);  // Enable both axes for thick plotter
+unifiedPlotter.setLogAxis(false, false); // Disable for unified plotter
 
-// Disable all log scaling
-plot.setLogAxis(false, false);
+// Mixed usage: different plotters can have different log settings
+thinPlotter.setLogAxis(false, true);   // Log Y only
+thickPlotter.setLogAxis(true, false);  // Log X only
 ```
 
 **Key Features:**
@@ -83,16 +90,21 @@ plot.setLogAxis(false, false);
 
 ### `autoScaleToLogSpace()`
 
-Intelligently preserve current view when switching between linear and log space.
+Intelligently preserve current view when switching between linear and log space. Available on both WebglPlot and individual plotters.
 
 ```typescript
-// User zoomed into specific region in linear space
-plot.setLogAxis(false, true);           // Switch to log Y
-const preserved = plot.autoScaleToLogSpace(); // Try to maintain current view
+// Option 1: Using WebglPlot (legacy)
+plot.setLogAxis(false, true);           
+const preserved = plot.autoScaleToLogSpace(); 
+
+// Option 2: Using individual plotters (v1.2.0+, recommended)
+thinPlotter.setLogAxis(false, true);
+const bounds = thinPlotter.getDataBounds();
+const preserved = thinPlotter.autoScaleToLogSpace(bounds); // More accurate
 
 if (!preserved) {
   // Fallback to regular auto-scaling if view preservation failed
-  plotter.autoScaleEnabledLines();
+  thinPlotter.autoScaleEnabledLines();
 }
 ```
 
@@ -122,13 +134,17 @@ plotter.autoScaleEnabledLines(); // Automatically excludes problematic lines
 
 **Applies to All Plotter Types:**
 ```typescript
-// Smart auto-scaling works the same for all plotters
-const thinPlotter = new WebglLinePlot(plot, 3);    // ✅ Smart filtering
-const thickPlotter = new WebglLineThick(plot, 3);  // ✅ Smart filtering  
-const unifiedPlotter = new UnifiedLinePlot(plot, 3); // ✅ Smart filtering
+// Smart auto-scaling works the same for all plotters (v1.2.0+)
+const thinPlotter = new WebglLinePlot(plot, 3);    // ✅ Local log axis support
+const thickPlotter = new WebglLineThick(plot, 3);  // ✅ Local log axis support  
+const unifiedPlotter = new UnifiedLinePlot(plot, 3); // ✅ Local log axis support
+
+// Each plotter can have independent log axis settings
+thinPlotter.setLogAxis(false, true);    // Log Y only
+thickPlotter.setLogAxis(true, false);   // Log X only  
+unifiedPlotter.setLogAxis(true, true);  // Both axes
 
 // All will skip lines with insufficient positive data when log axes are enabled
-plot.setLogAxis(false, true);
 thinPlotter.autoScaleEnabledLines();   // Console: "Skipping line X - only Y% valid"
 thickPlotter.autoScaleEnabledLines();  // Console: "Skipping line X - only Y% valid"
 unifiedPlotter.autoScaleEnabledLines(); // Console: "Skipping line X - only Y% valid"
@@ -306,7 +322,8 @@ thinPlotter.initLines([{
   enabled: true
 }]);
 
-// Smart auto-scaling works with log axes
+// Now supports local log axis control (v1.2.0+)
+thinPlotter.setLogAxis(false, true);
 thinPlotter.autoScaleEnabledLines();
 ```
 
@@ -314,6 +331,7 @@ thinPlotter.autoScaleEnabledLines();
 - ✅ Fastest rendering option
 - ✅ Fixed 1-pixel thickness  
 - ✅ Best for real-time data and high-density plots
+- ✅ **New**: Local log axis support with `setLogAxis()` and `autoScaleToLogSpace()`
 
 #### Thick Lines (WebglLineThick) - Full Featured
 ```typescript
@@ -328,7 +346,8 @@ thickPlotter.initLines([{
   enabled: true
 }]);
 
-// Smart auto-scaling works with log axes  
+// Local log axis support (same API as thin lines)
+thickPlotter.setLogAxis(true, true);
 thickPlotter.autoScaleEnabledLines();
 ```
 
@@ -336,6 +355,7 @@ thickPlotter.autoScaleEnabledLines();
 - ✅ Variable thickness with proper joins and end caps
 - ✅ Professional-quality line rendering
 - ✅ Handles sharp angles with automatic bevel detection
+- ✅ **Enhanced**: Improved shared utilities for consistent log axis behavior
 
 #### Unified Lines (UnifiedLinePlot) - Smart Selection
 ```typescript
@@ -350,7 +370,8 @@ unifiedPlotter.initLines([{
   enabled: true
 }]);
 
-// Smart auto-scaling works with log axes
+// Log axis control forwarded to underlying plotter
+unifiedPlotter.setLogAxis(false, true);
 unifiedPlotter.autoScaleEnabledLines();
 ```
 
@@ -358,6 +379,7 @@ unifiedPlotter.autoScaleEnabledLines();
 - ✅ Lines ≤ 1.0 pixel → Uses WebglLinePlot (thin, fast)
 - ✅ Lines > 1.0 pixel → Uses WebglLineThick (thick, full-featured)
 - ✅ Best general-purpose option
+- ✅ **Updated**: Forwards log axis calls to underlying plotter for consistent API
 
 ### Log Transform Performance
 
@@ -371,6 +393,12 @@ Unified (auto-selected):      Linear 2.1ms  →  Log 2.3ms  (9% overhead when th
 ```
 
 All plotters benefit from GPU-accelerated log transformation with minimal performance impact.
+
+**v1.2.0+ Improvements:**
+- ✅ **Shared utilities**: Eliminated ~150 lines of duplicate code between plotters
+- ✅ **Consistent API**: All plotters now have identical log axis methods
+- ✅ **Local control**: Each plotter can have independent log axis settings
+- ✅ **Better maintainability**: Single source of truth for log axis logic
 
 ## 🛠️ Advanced Usage
 
@@ -629,10 +657,19 @@ dashboard.start();
 - **Interactive demo**: `/benchmark/bench-log-axis.html`
   - Use "Multi-Line Test" button to see smart auto-scaling in action
   - Compare linear vs log scaling with mixed positive/negative data
-- **API reference**: Check JSDoc comments in `src/webglplot.ts`
+- **API reference**: Check JSDoc comments in `src/webglplot.ts`, `src/WebglLinePlot.ts`, and `src/WebglLineThick.ts`
 - **Test the smart filtering**: Open browser console when running benchmarks to see auto-scaling decisions
+- **Shared utilities**: See `src/LogAxisUtils.ts` for the common log axis functionality
 
 ## 🎯 Version Notes
+
+**v1.2.0+**: Unified log axis support across all plotters
+- ✅ **Feature parity**: WebglLinePlot now has same log axis capabilities as WebglLineThick
+- ✅ **Local control**: All plotters support `setLogAxis()` and `autoScaleToLogSpace()` methods
+- ✅ **Shared utilities**: Extracted common log axis logic into `LogAxisUtils.ts`
+- ✅ **Better performance**: Improved efficiency through code deduplication
+- ✅ **Enhanced documentation**: Complete API coverage for all plotter types
+- ✅ **Backward compatibility**: All existing code continues to work unchanged
 
 **v1.1.1+**: Enhanced auto-scaling for log axes
 - Automatically excludes lines with insufficient positive data from bounds calculation

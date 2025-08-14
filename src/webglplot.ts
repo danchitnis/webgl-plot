@@ -395,4 +395,16 @@ export class WebglPlot {
   public newUnifiedLinePlotter(maxLines: number): UnifiedLinePlot {
     return new UnifiedLinePlot(this, maxLines);
   }
+
+
+  /**
+   * Update canvas dimensions and WebGL viewport
+   * Call this method when canvas size changes
+   */
+  public update(): void {
+    const canvas = this.gl.canvas as HTMLCanvasElement;
+    this.width = canvas.width;
+    this.height = canvas.height;
+    this.gl.viewport(0, 0, canvas.width, canvas.height);
+  }
 }

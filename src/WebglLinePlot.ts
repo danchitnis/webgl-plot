@@ -2,6 +2,14 @@
 import type { WebglPlot } from "./webglplot";
 import type { LineConfig } from "./LineConfig";
 import { DebugLogger } from "./DebugLogger";
+import { 
+  validateLineForLogAxes, 
+  calculateLogAwareBounds, 
+  calculateAutoScaleTransform,
+  transformBoundsToLogSpace,
+  reverseGlobalTransform,
+  type DataBounds 
+} from "./LogAxisUtils";
 export type { LineConfig }; // Re-export LineConfig
 
 export class WebglLinePlot {
@@ -27,6 +35,10 @@ export class WebglLinePlot {
     u_opacity?: WebGLUniformLocation | null;
     u_log_axis?: WebGLUniformLocation | null;
   } = {};
+
+  // Log axis flags
+  public logX: boolean = false;
+  public logY: boolean = false;
 
   constructor(wglp: WebglPlot, maxLines: number) {
     this.wglp = wglp;
@@ -463,10 +475,103 @@ export class WebglLinePlot {
   }
 
   /**
+   * Enable or disable logarithmic scaling for X and/or Y axes.
+   * 
+   * When enabled, coordinates are transformed using log₁₀ on the GPU in real-time.
+   * Negative and zero values are automatically filtered out (moved off-screen).
+   * 
+   * **Important Notes:**
+   * - Transformation happens on GPU for optimal performance
+   * - No graph reinitialization required - changes apply immediately
+   * - Auto-scaling will automatically account for log transformation
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * // Enable log Y-axis for exponential data
+   * thinPlotter.setLogAxis(false, true);
+   * 
+   * // Enable both axes for power-law data
+   * thinPlotter.setLogAxis(true, true);
+   * 
+   * // Disable all log scaling
+   * thinPlotter.setLogAxis(false, false);
+   * ```
+   * 
+   * @param x Enable logarithmic base-10 scaling for X-axis
+   * @param y Enable logarithmic base-10 scaling for Y-axis
+   */
+  public setLogAxis(x: boolean, y: boolean): void {
+    this.logX = x;
+    this.logY = y;
+  }
+
+  /**
+   * Auto-scale the plotter to fit log-transformed data, using either actual data bounds
+   * or converting existing transform-based viewport bounds to log space.
+   * 
+   * This function intelligently handles the transition from linear to log space by
+   * using actual data bounds when provided, or falling back to transforming the 
+   * current viewport bounds from linear to log space.
+   * 
+   * **Use Cases:**
+   * - After toggling log axes to maintain current view
+   * - For smooth transitions between linear and log representations  
+   * - When you want to preserve user's current zoom/pan state
+   * - For accurate scaling based on actual data bounds
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * // Using actual data bounds (recommended)
+   * const bounds = thinPlotter.getDataBounds();
+   * thinPlotter.autoScaleToLogSpace(bounds);
+   * 
+   * // Using current viewport bounds (legacy)
+   * thinPlotter.autoScaleToLogSpace();
+   * ```
+   * 
+   * @param dataBounds Optional actual data bounds {minX, maxX, minY, maxY}. 
+   *                   If provided, uses actual data bounds instead of transform-based bounds.
+   * @returns True if smart scaling was applied, false if transformation not feasible
+   */
+  public autoScaleToLogSpace(dataBounds?: DataBounds | null): boolean {
+    // If no log axes are enabled, nothing to do
+    if (!this.logX && !this.logY) {
+      DebugLogger.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
+      return true;
+    }
+
+    let viewBounds: DataBounds;
+
+    if (dataBounds) {
+      // Use actual data bounds (recommended approach)
+      viewBounds = dataBounds;
+      DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+    } else {
+      // Fallback: Calculate bounds from current transform (legacy approach)
+      viewBounds = reverseGlobalTransform(this.globalScale, this.globalOffset);
+      DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+    }
+
+    // Transform bounds to log space
+    const logBounds = transformBoundsToLogSpace(viewBounds, this.logX, this.logY);
+    if (!logBounds) {
+      DebugLogger.log("autoScaleToLogSpace: Cannot transform bounds to log space");
+      return false;
+    }
+
+    // Calculate and apply new transform
+    const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(logBounds);
+    this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
+
+    DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
+    return true;
+  }
+
+  /**
    * Get the data bounds of all enabled lines.
    * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
    */
-  public getDataBounds(): { minX: number; maxX: number; minY: number; maxY: number } | null {
+  public getDataBounds(): DataBounds | null {
     if (this.numLines === 0) {
       return null;
     }
@@ -486,43 +591,22 @@ export class WebglLinePlot {
       
       const points = line.points;
       
-      // Pre-check: if log axes are enabled, verify this line has enough positive values
-      if (this.wglp.logX || this.wglp.logY) {
-        let validPointCount = 0;
-        const totalPoints = points.length / 2;
-        
-        for (let j = 0; j < points.length; j += 2) {
-          const x = points[j];
-          const y = points[j + 1];
-          
-          const xValid = !this.wglp.logX || x > 0;
-          const yValid = !this.wglp.logY || y > 0;
-          
-          if (xValid && yValid) {
-            validPointCount++;
-          }
-        }
-        
-        const validRatio = validPointCount / totalPoints;
-        if (validPointCount < 2 || validRatio < 0.1) {
-          continue;
-        }
+      // Use shared utility for validation
+      const validation = validateLineForLogAxes(points, this.logX, this.logY);
+      if (!validation.isValid) {
+        DebugLogger.log(`getDataBounds: Skipping line ${i} - only ${validation.validPointCount}/${validation.totalPoints} (${(validation.validRatio * 100).toFixed(1)}%) points valid for log axes`);
+        continue;
       }
       
       foundEnabledData = true;
 
-      for (let j = 0; j < points.length; j += 2) {
-        const x = points[j];
-        const y = points[j + 1];
-        
-        // Skip invalid values for log axes
-        if (this.wglp.logX && x <= 0) continue;
-        if (this.wglp.logY && y <= 0) continue;
-        
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
+      // Use shared utility for bounds calculation
+      const lineBounds = calculateLogAwareBounds(points, this.logX, this.logY);
+      if (lineBounds) {
+        if (lineBounds.minX < minX) minX = lineBounds.minX;
+        if (lineBounds.maxX > maxX) maxX = lineBounds.maxX;
+        if (lineBounds.minY < minY) minY = lineBounds.minY;
+        if (lineBounds.maxY > maxY) maxY = lineBounds.maxY;
       }
     }
 
@@ -539,10 +623,10 @@ export class WebglLinePlot {
     return { minX, maxX, minY, maxY };
   }
 
-  public autoScaleEnabledLines(): void {
+  public autoScaleEnabledLines(): DataBounds | null {
     if (this.numLines === 0) {
       DebugLogger.warn("No lines to auto-scale.");
-      return;
+      return null;
     }
 
     let minX = Infinity;
@@ -562,32 +646,11 @@ export class WebglLinePlot {
       
       const points = line.points;
       
-      // Pre-check: if log axes are enabled, verify this line has enough positive values
-      // to be meaningful for auto-scaling
-      if (this.wglp.logX || this.wglp.logY) {
-        let validPointCount = 0;
-        const totalPoints = points.length / 2;
-        
-        for (let j = 0; j < points.length; j += 2) {
-          const x = points[j];
-          const y = points[j + 1];
-          
-          // Check if this point would be visible on log axes
-          const xValid = !this.wglp.logX || x > 0;
-          const yValid = !this.wglp.logY || y > 0;
-          
-          if (xValid && yValid) {
-            validPointCount++;
-          }
-        }
-        
-        // Skip lines that have less than 10% positive values or fewer than 2 valid points
-        // This prevents lines with mostly negative data from affecting auto-scaling
-        const validRatio = validPointCount / totalPoints;
-        if (validPointCount < 2 || validRatio < 0.1) {
-          DebugLogger.log(`autoScaleEnabledLines: Skipping line ${i} - only ${validPointCount}/${totalPoints} (${(validRatio*100).toFixed(1)}%) points valid for log axes`);
-          continue;
-        }
+      // Use shared utility for validation
+      const validation = validateLineForLogAxes(points, this.logX, this.logY);
+      if (!validation.isValid) {
+        DebugLogger.log(`autoScaleEnabledLines: Skipping line ${i} - only ${validation.validPointCount}/${validation.totalPoints} (${(validation.validRatio*100).toFixed(1)}%) points valid for log axes`);
+        continue;
       }
       
       foundEnabledData = true;
@@ -597,14 +660,14 @@ export class WebglLinePlot {
         let y = points[j + 1];
         
         // Apply log transformation if enabled (same as GPU)
-        if (this.wglp.logX) {
+        if (this.logX) {
           if (x > 0) {
             x = Math.log10(x);
           } else {
             continue; // Skip negative/zero values for log X axis
           }
         }
-        if (this.wglp.logY) {
+        if (this.logY) {
           if (y > 0) {
             y = Math.log10(y);
           } else {
@@ -634,44 +697,24 @@ export class WebglLinePlot {
         "No data available for scaling or bounds are invalid. Resetting global transform."
       );
       this.setGlobalTransform([1, 1], [0, 0]);
-      return;
+      return null;
     }
 
-    let newGlobalScaleX = 1.0;
-    let newGlobalScaleY = 1.0;
-    let newGlobalOffsetX = 0.0;
-    let newGlobalOffsetY = 0.0;
-
-    const rangeX = maxX - minX;
-    const rangeY = maxY - minY;
-    const ndcWidth = 2.0; // NDC coordinates from -1 to 1
-    const ndcHeight = 2.0;
-    const epsilon = 1e-9; // To avoid division by zero or very small numbers
-
-    if (rangeX > epsilon) {
-      newGlobalScaleX = ndcWidth / rangeX;
-      const centerX = minX + rangeX / 2.0;
-      newGlobalOffsetX = 0.0 - centerX * newGlobalScaleX;
-    } else {
-      // Single point or all points have same X. Center it.
-      newGlobalScaleX = 1.0; // Default zoom
-      newGlobalOffsetX = 0.0 - minX * newGlobalScaleX;
-    }
-
-    if (rangeY > epsilon) {
-      newGlobalScaleY = ndcHeight / rangeY;
-      const centerY = minY + rangeY / 2.0;
-      newGlobalOffsetY = 0.0 - centerY * newGlobalScaleY;
-    } else {
-      // Single point or all points have same Y. Center it.
-      newGlobalScaleY = 1.0; // Default zoom
-      newGlobalOffsetY = 0.0 - minY * newGlobalScaleY;
-    }
-
-    this.setGlobalTransform(
-      [newGlobalScaleX, newGlobalScaleY],
-      [newGlobalOffsetX, newGlobalOffsetY]
+    const bounds = { minX, maxX, minY, maxY };
+    const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(bounds);
+    
+    DebugLogger.log(
+      `AutoScale Results: Bounds [${minX.toFixed(3)}, ${maxX.toFixed(
+        3
+      )}], [${minY.toFixed(3)}, ${maxY.toFixed(
+        3
+      )}] -> Global Scale: [${scaleX.toFixed(4)}, ${scaleY.toFixed(
+        4
+      )}], Offset: [${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`
     );
+
+    this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
+    return bounds;
   }
 
   public draw = () => {
@@ -708,11 +751,11 @@ export class WebglLinePlot {
       this.globalOffset[1]
     );
     
-    // Set log axis uniforms
+    // Set log axis uniforms - use local log axis properties
     gl.uniform2f(
       this.locations.u_log_axis,
-      this.wglp.logX ? 1.0 : 0.0,
-      this.wglp.logY ? 1.0 : 0.0
+      this.logX ? 1.0 : 0.0,
+      this.logY ? 1.0 : 0.0
     );
 
     // Bind Vertex Buffer and Set Attributes
