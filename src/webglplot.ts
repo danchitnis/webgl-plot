@@ -43,15 +43,21 @@ export {
  * @returns Array of [r, g, b, a] where all values are normalized to 0-1 range
  */
 function parseCSSColor(cssColor: string): [number, number, number, number] {
-  const rgbaMatch = cssColor.match(/rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*(?:,\s*([\d.]+))?\s*\)/);
+  const rgbaMatch = cssColor.match(
+    /rgba?\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*(?:,\s*([\d.]+))?\s*\)/
+  );
   if (!rgbaMatch) {
-    throw new Error(`Invalid CSS color format: ${cssColor}. Expected format: "rgba(r, g, b, a)" where r,g,b are 0-255 and a is 0-1`);
+    throw new Error(
+      `Invalid CSS color format: ${cssColor}. Expected format: "rgba(r, g, b, a)" where r,g,b are 0-255 and a is 0-1`
+    );
   }
 
   const r = Math.max(0, Math.min(255, parseFloat(rgbaMatch[1]))) / 255;
   const g = Math.max(0, Math.min(255, parseFloat(rgbaMatch[2]))) / 255;
   const b = Math.max(0, Math.min(255, parseFloat(rgbaMatch[3]))) / 255;
-  const a = rgbaMatch[4] ? Math.max(0, Math.min(1, parseFloat(rgbaMatch[4]))) : 1;
+  const a = rgbaMatch[4]
+    ? Math.max(0, Math.min(1, parseFloat(rgbaMatch[4])))
+    : 1;
 
   return [r, g, b, a];
 }
@@ -63,7 +69,7 @@ export type WebglPlotConfig = {
   deSync?: boolean;
   preserveDrawing?: boolean;
   debug?: boolean;
-  /** 
+  /**
    * Background color as either:
    * - Array of [r, g, b, a] where all values are 0-1
    * - CSS color string in format "rgba(r, g, b, a)" where r,g,b are 0-255 and a is 0-1
@@ -91,18 +97,18 @@ export class WebglPlot {
 
   /**
    * Creates a new WebglLineThick instance for rendering thick lines (thickness > 1.0).
-   * 
+   *
    * **Features:**
    * - Supports variable line thickness with proper joins and end caps
    * - Handles sharp angles with automatic bevel detection
    * - More computationally expensive than thin lines (~6x slower)
    * - Automatically supports log axis transformations on GPU
-   * 
+   *
    * **Performance Notes:**
    * - Use for lines requiring thickness > 1.0 pixel
    * - Consider `newUnifiedLinePlotter()` for automatic thin/thick selection
    * - Thickness is maintained in screen space regardless of zoom level
-   * 
+   *
    * **Example Usage:**
    * ```typescript
    * const thickPlotter = plot.newThickLinePlotter(10);
@@ -113,7 +119,7 @@ export class WebglPlot {
    *   enabled: true
    * }]);
    * ```
-   * 
+   *
    * @param maxLines The maximum number of thick lines this instance can handle
    * @returns A new WebglLineThick instance ready for use
    */
@@ -123,18 +129,18 @@ export class WebglPlot {
 
   /**
    * Creates a new WebglLinePlot instance for rendering thin lines (thickness = 1.0).
-   * 
+   *
    * **Features:**
    * - Highest performance line rendering using native WebGL lines
    * - Fixed thickness of 1.0 pixel in screen space
    * - Automatically supports log axis transformations on GPU
    * - Ideal for high-density data visualization
-   * 
+   *
    * **Performance Notes:**
    * - Fastest line rendering option available
    * - Use for real-time data visualization with many points
    * - Thickness cannot be varied (always 1.0 pixel)
-   * 
+   *
    * **Example Usage:**
    * ```typescript
    * const thinPlotter = plot.newThinLinePlotter(50);
@@ -145,7 +151,7 @@ export class WebglPlot {
    *   enabled: true
    * }]);
    * ```
-   * 
+   *
    * @param maxLines The maximum number of thin lines this instance can handle
    * @returns A new WebglLinePlot instance ready for use
    */
@@ -204,7 +210,7 @@ export class WebglPlot {
    * Create a new WebglPlot instance
    * @param canvas HTMLCanvasElement to render on
    * @param options Configuration options including background color
-   * 
+   *
    * For React applications: To prevent black background flash during initialization,
    * set the canvas CSS background-color to match the WebGL background:
    * ```css
@@ -258,7 +264,7 @@ export class WebglPlot {
     // Set background color from options or default to black
     let bgColor: [number, number, number, number];
     if (options?.backgroundColor) {
-      if (typeof options.backgroundColor === 'string') {
+      if (typeof options.backgroundColor === "string") {
         bgColor = parseCSSColor(options.backgroundColor);
       } else {
         bgColor = options.backgroundColor;
@@ -269,14 +275,17 @@ export class WebglPlot {
     this._backgroundColor = bgColor;
   }
 
-
-
   /**
    * Clear the canvas
    */
   public clear(): void {
     // Ensure background color is set before clearing
-    this.gl.clearColor(this._backgroundColor[0], this._backgroundColor[1], this._backgroundColor[2], this._backgroundColor[3]);
+    this.gl.clearColor(
+      this._backgroundColor[0],
+      this._backgroundColor[1],
+      this._backgroundColor[2],
+      this._backgroundColor[3]
+    );
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
 
@@ -287,7 +296,9 @@ export class WebglPlot {
    *   - Array of [r, g, b, a] where all values are 0-1
    * Example: "rgba(25, 0, 100, 1)" or [0.1, 0, 0.4, 1]
    */
-  public setBackgroundColor(color: string | [number, number, number, number]): void;
+  public setBackgroundColor(
+    color: string | [number, number, number, number]
+  ): void;
   /**
    * Set the background color of the canvas (legacy method)
    * @param r Red component (0-1)
@@ -302,206 +313,31 @@ export class WebglPlot {
     b?: number,
     a?: number
   ): void {
-    if (typeof colorOrR === 'string') {
+    if (typeof colorOrR === "string") {
       this._backgroundColor = parseCSSColor(colorOrR);
     } else if (Array.isArray(colorOrR)) {
       this._backgroundColor = colorOrR;
-    } else if (typeof colorOrR === 'number' && g !== undefined && b !== undefined && a !== undefined) {
+    } else if (
+      typeof colorOrR === "number" &&
+      g !== undefined &&
+      b !== undefined &&
+      a !== undefined
+    ) {
       this._backgroundColor = [colorOrR, g, b, a];
     } else {
-      throw new Error('Invalid arguments. Use either CSS color string, color array, or individual RGBA values.');
+      throw new Error(
+        "Invalid arguments. Use either CSS color string, color array, or individual RGBA values."
+      );
     }
 
-    this.gl.clearColor(this._backgroundColor[0], this._backgroundColor[1], this._backgroundColor[2], this._backgroundColor[3]);
+    this.gl.clearColor(
+      this._backgroundColor[0],
+      this._backgroundColor[1],
+      this._backgroundColor[2],
+      this._backgroundColor[3]
+    );
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
-
-  /**
-   * Enable or disable logarithmic scaling for X and/or Y axes.
-   * 
-   * When enabled, coordinates are transformed using log₁₀ on the GPU in real-time.
-   * Negative and zero values are automatically filtered out (moved off-screen).
-   * 
-   * **Important Notes:**
-   * - Transformation happens on GPU for optimal performance
-   * - No graph reinitialization required - changes apply immediately
-   * - Auto-scaling will automatically account for log transformation
-   * - Use `autoScaleToLogSpace()` for smooth transitions from linear to log space
-   * - Individual plotters (WebglLineThick, etc.) also have their own `setLogAxis()` method
-   *   for independent control. This method only affects the main WebglPlot instance.
-   * 
-   * **Example Usage:**
-   * ```typescript
-   * // Enable log Y-axis for exponential data
-   * plot.setLogAxis(false, true);
-   * 
-   * // Enable both axes for power-law data
-   * plot.setLogAxis(true, true);
-   * 
-   * // Disable all log scaling
-   * plot.setLogAxis(false, false);
-   * ```
-   * 
-   * @param x Enable logarithmic base-10 scaling for X-axis
-   * @param y Enable logarithmic base-10 scaling for Y-axis
-   */
-  public setLogAxis(x: boolean, y: boolean): void {
-    this.logX = x;
-    this.logY = y;
-  }
-
-  /**
-   * Auto-scale the plot to fit log-transformed data, using either actual data bounds
-   * or converting existing transform-based viewport bounds to log space.
-   * 
-   * This function intelligently handles the transition from linear to log space by
-   * using actual data bounds when provided, or falling back to transforming the 
-   * current viewport bounds from linear to log space.
-   * 
-   * **Use Cases:**
-   * - After toggling log axes to maintain current view
-   * - For smooth transitions between linear and log representations  
-   * - When you want to preserve user's current zoom/pan state
-   * - For accurate scaling based on actual data bounds
-   * 
-   * **Example Usage:**
-   * ```typescript
-   * // Using actual data bounds (recommended)
-   * const bounds = plotter.getDataBounds();
-   * plot.autoScaleToLogSpace(bounds);
-   * 
-   * // Using current viewport bounds (legacy)
-   * plot.autoScaleToLogSpace();
-   * ```
-   * 
-   * @param dataBounds Optional actual data bounds {minX, maxX, minY, maxY}. 
-   *                   If provided, uses actual data bounds instead of transform-based bounds.
-   * @returns True if smart scaling was applied, false if transformation not feasible
-   */
-  public autoScaleToLogSpace(dataBounds?: { minX: number; maxX: number; minY: number; maxY: number } | null): boolean {
-    // If no log axes are enabled, nothing to do
-    if (!this.logX && !this.logY) {
-      if (this.debug) {
-        DebugLogger.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
-      }
-      return true;
-    }
-
-    let viewLeft: number, viewRight: number, viewBottom: number, viewTop: number;
-
-    if (dataBounds) {
-      // Use actual data bounds (recommended approach)
-      viewLeft = dataBounds.minX;
-      viewRight = dataBounds.maxX;
-      viewBottom = dataBounds.minY;
-      viewTop = dataBounds.maxY;
-
-      if (this.debug) {
-        DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
-      }
-    } else {
-      // Fallback: Calculate bounds from current transform (legacy approach)
-      const currentScaleX = this.gScaleX;
-      const currentScaleY = this.gScaleY;
-      const currentOffsetX = this.gOffsetX;
-      const currentOffsetY = this.gOffsetY;
-
-      // This reverses the current global transform to find what data range is visible
-      viewLeft = (-1 - currentOffsetX) / currentScaleX;
-      viewRight = (1 - currentOffsetX) / currentScaleX;
-      viewBottom = (-1 - currentOffsetY) / currentScaleY;
-      viewTop = (1 - currentOffsetY) / currentScaleY;
-
-      if (this.debug) {
-        DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
-      }
-    }
-
-    // Try to preserve the current view in log space
-    let newMinX = viewLeft;
-    let newMaxX = viewRight;
-    let newMinY = viewBottom;
-    let newMaxY = viewTop;
-    let transformationApplied = false;
-
-    // For log X: if current view has positive bounds, transform them
-    if (this.logX) {
-      if (viewLeft > 0 && viewRight > 0) {
-        newMinX = Math.log10(viewLeft);
-        newMaxX = Math.log10(viewRight);
-        transformationApplied = true;
-        if (this.debug) {
-          DebugLogger.log(`autoScaleToLogSpace: Transformed X bounds to log space - [${newMinX.toFixed(3)}, ${newMaxX.toFixed(3)}]`);
-        }
-      } else {
-        // Current view includes negative/zero X, can't preserve view
-        if (this.debug) {
-          DebugLogger.log("autoScaleToLogSpace: Current X view includes non-positive values, cannot preserve view");
-        }
-        return false;
-      }
-    }
-
-    // For log Y: if current view has positive bounds, transform them
-    if (this.logY) {
-      if (viewBottom > 0 && viewTop > 0) {
-        newMinY = Math.log10(viewBottom);
-        newMaxY = Math.log10(viewTop);
-        transformationApplied = true;
-        if (this.debug) {
-          DebugLogger.log(`autoScaleToLogSpace: Transformed Y bounds to log space - [${newMinY.toFixed(3)}, ${newMaxY.toFixed(3)}]`);
-        }
-      } else {
-        // Current view includes negative/zero Y, can't preserve view
-        if (this.debug) {
-          DebugLogger.log("autoScaleToLogSpace: Current Y view includes non-positive values, cannot preserve view");
-        }
-        return false;
-      }
-    }
-
-    // If no transformation was needed, we're done
-    if (!transformationApplied) {
-      return true;
-    }
-
-    // Calculate new global transform for the preserved view in log space
-    const rangeX = newMaxX - newMinX;
-    const rangeY = newMaxY - newMinY;
-    const ndcWidth = 2.0;
-    const ndcHeight = 2.0;
-    const epsilon = 1e-9;
-
-    let newGlobalScaleX = 1.0;
-    let newGlobalScaleY = 1.0;
-    let newGlobalOffsetX = 0.0;
-    let newGlobalOffsetY = 0.0;
-
-    if (rangeX > epsilon) {
-      newGlobalScaleX = ndcWidth / rangeX;
-      const centerX = newMinX + rangeX / 2.0;
-      newGlobalOffsetX = 0.0 - centerX * newGlobalScaleX;
-    }
-
-    if (rangeY > epsilon) {
-      newGlobalScaleY = ndcHeight / rangeY;
-      const centerY = newMinY + rangeY / 2.0;
-      newGlobalOffsetY = 0.0 - centerY * newGlobalScaleY;
-    }
-
-    // Apply the new transform
-    this.gScaleX = newGlobalScaleX;
-    this.gScaleY = newGlobalScaleY;
-    this.gOffsetX = newGlobalOffsetX;
-    this.gOffsetY = newGlobalOffsetY;
-
-    if (this.debug) {
-      DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${newGlobalScaleX.toFixed(4)}, ${newGlobalScaleY.toFixed(4)}], Offset[${newGlobalOffsetX.toFixed(4)}, ${newGlobalOffsetY.toFixed(4)}]`);
-    }
-
-    return true;
-  }
-
 
   /**
    * remove all data lines
@@ -524,23 +360,23 @@ export class WebglPlot {
 
   /**
    * Creates a new UnifiedLinePlot instance that automatically chooses between thin and thick line rendering.
-   * 
+   *
    * **Smart Selection Logic:**
    * - Lines with thickness ≤ 1.0 → Uses WebglLinePlot (thin, high performance)
    * - Lines with thickness > 1.0 → Uses WebglLineThick (thick, full-featured)
    * - Decision made based on the first line's thickness in `initLines()`
-   * 
+   *
    * **Features:**
    * - Automatic optimization based on line requirements
    * - Unified API regardless of internal plotter type
    * - Automatically supports log axis transformations on GPU
    * - Seamless switching between rendering backends
-   * 
+   *
    * **Use Cases:**
    * - When you want optimal performance without manual plotter selection
    * - For applications with mixed line thickness requirements
    * - When you need a simple, unified interface for all line types
-   * 
+   *
    * **Example Usage:**
    * ```typescript
    * const plotter = plot.newUnifiedLinePlotter(20);
@@ -549,10 +385,10 @@ export class WebglPlot {
    *   { points: data2, thickness: 3.0, color: [0,1,0,1] }, // → thick plotter (all lines)
    * ]);
    * ```
-   * 
+   *
    * **Note:** All lines in a single UnifiedLinePlot instance use the same internal plotter,
    * determined by the thickness of the first line.
-   * 
+   *
    * @param maxLines The maximum number of lines this instance can handle
    * @returns A new UnifiedLinePlot instance ready for intelligent line rendering
    */
