@@ -1,4 +1,4 @@
-import { WebglPlot, WebglLineThick, LineConfig } from "../src/webglplot";
+import { setupCanvasAndWebGL, WebglLineThick, clearCanvas, LineConfig } from "../src/webglplot";
 
 const fpsElem = document.getElementById("fps");
 const btClick = document.getElementById("btClick");
@@ -9,21 +9,17 @@ if (!canvas) {
   throw new Error("Canvas element not found");
 }
 
-const devicePixelRatio = window.devicePixelRatio || 1;
-canvas.width = canvas.clientWidth * devicePixelRatio;
-canvas.height = canvas.clientHeight * devicePixelRatio;
-
-//const numX = canvas.width;
+const gl = setupCanvasAndWebGL(canvas, {
+  backgroundColor: [0, 0, 0, 1], // Black background
+  antialias: true
+});
 
 const maxLines = 5;
-
 const numX = 1000;
 
 console.log("numX", numX);
 
-const wglp = new WebglPlot(canvas);
-
-const plotLine = new WebglLineThick(wglp, maxLines);
+const plotLine = new WebglLineThick(gl, maxLines);
 
 let prevTime = new Date();
 
@@ -71,7 +67,7 @@ let frame = 0;
 let thickIndex = 0;
 
 function newFrame() {
-  wglp.clear();
+  clearCanvas(gl);
 
   offset = offset + 0.003;
   if (offset > 1) {

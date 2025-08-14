@@ -112,7 +112,6 @@ function createProgram(
 // --- Main Class ---
 export class WebglLineThick {
   private gl: WebGL2RenderingContext;
-  private wglp: { gl: WebGL2RenderingContext; applyLogTransform?: (points: Float32Array) => Float32Array }; // WebglPlot instance
   public prog: WebGLProgram | null;
   private maxLines: number;
   private pointsTexture: WebGLTexture | null;
@@ -159,16 +158,12 @@ export class WebglLineThick {
 
   /**
    * Creates an instance of WebglLineThick.
-   * @param wglp Context wrapper object or WebglPlot instance.
+   * @param gl WebGL2 rendering context.
    * @param maxLines Maximum number of lines this instance can handle.
-   * @param useGpuReduction Optional: Set to true to attempt GPU-based min/max calculation. Defaults to true.
    */
-  constructor(wglp: { gl: WebGL2RenderingContext; applyLogTransform?: (points: Float32Array) => Float32Array }, maxLines: number) {
-    this.wglp = wglp;
-    this.gl = wglp.gl;
+  constructor(gl: WebGL2RenderingContext, maxLines: number) {
+    this.gl = gl;
     this.maxLines = Math.max(1, maxLines);
-
-    const gl = this.gl;
 
     // Use extracted shader source
     const vsSource = VERTEX_SHADER_SOURCE(this.maxLines);
@@ -176,23 +171,23 @@ export class WebglLineThick {
 
     // --- Create Main Program ---
     try {
-      this.prog = createProgram(gl, vsSource, fsSource);
+      this.prog = createProgram(this.gl, vsSource, fsSource);
     } catch (error) {
       DebugLogger.error(`Error creating main GL program: ${error}`);
       this.prog = null;
       throw error; // Re-throw after logging
     }
-    gl.useProgram(this.prog);
+    this.gl.useProgram(this.prog);
 
     // --- Get Main Uniform Locations & Check ---
     this.locations = {
-      uPointsTex: gl.getUniformLocation(this.prog, "uPointsTex"),
-      uTexWidth: gl.getUniformLocation(this.prog, "uTexWidth"),
-      uTexHeight: gl.getUniformLocation(this.prog, "uTexHeight"),
-      uGlobalScale: gl.getUniformLocation(this.prog, "uGlobalScale"),
-      uGlobalOffset: gl.getUniformLocation(this.prog, "uGlobalOffset"),
-      uViewportSize: gl.getUniformLocation(this.prog, "uViewportSize"),
-      uLogAxis: gl.getUniformLocation(this.prog, "uLogAxis"),
+      uPointsTex: this.gl.getUniformLocation(this.prog, "uPointsTex"),
+      uTexWidth: this.gl.getUniformLocation(this.prog, "uTexWidth"),
+      uTexHeight: this.gl.getUniformLocation(this.prog, "uTexHeight"),
+      uGlobalScale: this.gl.getUniformLocation(this.prog, "uGlobalScale"),
+      uGlobalOffset: this.gl.getUniformLocation(this.prog, "uGlobalOffset"),
+      uViewportSize: this.gl.getUniformLocation(this.prog, "uViewportSize"),
+      uLogAxis: this.gl.getUniformLocation(this.prog, "uLogAxis"),
     };
     if (!this.locations.uPointsTex)
       DebugLogger.warn("Main uniform 'uPointsTex' not found.");
@@ -208,13 +203,13 @@ export class WebglLineThick {
 
     // --- Bind Main UBO Block ---
     const blockName = "LineDataBlock";
-    const blockIndex = gl.getUniformBlockIndex(this.prog, blockName);
-    if (blockIndex === gl.INVALID_INDEX) {
+    const blockIndex = this.gl.getUniformBlockIndex(this.prog, blockName);
+    if (blockIndex === this.gl.INVALID_INDEX) {
       DebugLogger.warn(
         `Main program: Uniform block '${blockName}' not found or not active.`
       );
     } else {
-      gl.uniformBlockBinding(
+      this.gl.uniformBlockBinding(
         this.prog,
         blockIndex,
         this.lineDataUBObindingPoint
@@ -222,25 +217,25 @@ export class WebglLineThick {
     }
 
     // --- Set Constant Main Uniforms ---
-    if (this.locations.uPointsTex) gl.uniform1i(this.locations.uPointsTex, 0); // Texture unit 0
+    if (this.locations.uPointsTex) this.gl.uniform1i(this.locations.uPointsTex, 0); // Texture unit 0
 
     // --- Create Main UBO, VBO, VAO, Points Texture & Check ---
-    this.lineDataUBO = gl.createBuffer();
+    this.lineDataUBO = this.gl.createBuffer();
     if (!this.lineDataUBO) throw new Error("Failed to create UBO buffer.");
 
-    this.pointsTexture = gl.createTexture();
+    this.pointsTexture = this.gl.createTexture();
     if (!this.pointsTexture)
       throw new Error("Failed to create points texture.");
 
-    this.vertexBuffer = gl.createBuffer();
+    this.vertexBuffer = this.gl.createBuffer();
     if (!this.vertexBuffer) throw new Error("Failed to create vertex buffer.");
 
-    this.vao = gl.createVertexArray();
+    this.vao = this.gl.createVertexArray();
     if (!this.vao) throw new Error("Failed to create vertex array object.");
 
     // --- Setup Main VAO & Check Attributes ---
-    gl.bindVertexArray(this.vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    this.gl.bindVertexArray(this.vao);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
     const stride = 6 * BYTES_PER_FLOAT; // New structure: lineId, pointIndex, isBevel, bevelNormalX, bevelNormalY, side
 
     // Setup all attributes using helper function
@@ -252,8 +247,8 @@ export class WebglLineThick {
       { name: 'aSide', size: 1, offset: 5 * BYTES_PER_FLOAT }
     ], stride);
 
-    gl.bindVertexArray(null);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    this.gl.bindVertexArray(null);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
     // --- End Main Resource Creation ---
 
     // --- Initialize State ---
@@ -262,11 +257,11 @@ export class WebglLineThick {
     this.lineStartIndexCache = new Array(this.maxLines).fill(0);
     this.setGlobalTransform(this.globalScale, this.globalOffset); // Set initial global transform uniforms
 
-    gl.useProgram(null); // Unbind program initially
+    this.gl.useProgram(null); // Unbind program initially
 
     // --- Enable Blending ---
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    this.gl.enable(this.gl.BLEND);
+    this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
   }
 
   /**

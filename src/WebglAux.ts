@@ -1,4 +1,3 @@
-import type { WebglPlot } from "./webglplot";
 import type { WebglLine } from "./WebglLine";
 import { DebugLogger } from "./DebugLogger";
 
@@ -11,18 +10,14 @@ import { DebugLogger } from "./DebugLogger";
  * The standard Line class
  */
 export class WebglAux {
-  private wglp: WebglPlot;
   private lines: WebglLine[];
   private gl: WebGL2RenderingContext;
   private coord: number;
   private vbuffer: WebGLBuffer;
   public prog: WebGLProgram;
 
-  constructor(wglp: WebglPlot) {
-    //super();
-    this.wglp = wglp;
-    this.gl = wglp.gl;
-    const gl = this.gl;
+  constructor(gl: WebGL2RenderingContext) {
+    this.gl = gl;
     this.lines = [];
 
     const vertCode = `#version 300 es
@@ -84,23 +79,23 @@ export class WebglAux {
     this.gl.vertexAttribPointer(this.coord, 2, this.gl.FLOAT, false, 0, 0);
     this.gl.enableVertexAttribArray(this.coord);
 
-    gl.useProgram(this.prog);
+    this.gl.useProgram(this.prog);
 
     const uscale = gl.getUniformLocation(this.prog, "uscale");
-    gl.uniformMatrix2fv(
+    this.gl.uniformMatrix2fv(
       uscale,
       false,
-      new Float32Array([this.wglp.gScaleX, 0, 0, this.wglp.gScaleY])
+      new Float32Array([1, 0, 0, 1])
     );
 
     const uoffset = gl.getUniformLocation(this.prog, "uoffset");
-    gl.uniform2fv(
+    this.gl.uniform2fv(
       uoffset,
-      new Float32Array([this.wglp.gOffsetX, this.wglp.gOffsetY])
+      new Float32Array([0, 0])
     );
 
     const uColor = gl.getUniformLocation(this.prog, "uColor");
-    gl.uniform4fv(uColor, [1, 1, 0, 1]);
+    this.gl.uniform4fv(uColor, [1, 1, 0, 1]);
   }
 
   addLine(line: WebglLine) {

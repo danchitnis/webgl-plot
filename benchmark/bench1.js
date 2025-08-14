@@ -1,23 +1,24 @@
-import { WebglPlot, WebglLine, ColorRGBA } from "../dist/webglplot.mjs";
+import { setupCanvasAndWebGL, clearCanvas, WebglLine, ColorRGBA } from "../dist/webglplot.mjs";
 
 const canvas = document.getElementById("my_canvas");
 
-const devicePixelRatio = window.devicePixelRatio || 1;
-canvas.width = canvas.clientWidth * devicePixelRatio;
-canvas.height = canvas.clientHeight * devicePixelRatio;
+const numX = 1000; // Fixed size for consistency
 
-const numX = canvas.width;
+const gl = setupCanvasAndWebGL(canvas, { 
+  powerPerformance: "high-performance",
+  backgroundColor: [0, 0, 0, 1]
+});
 
-const wglp = new WebglPlot(canvas, { powerPerformance: "high-performance" });
+let lines = [];
 
 const createLines = (num) => {
-  wglp.removeAllLines();
+  lines = [];
   for (let i = 0; i < num; i++) {
     const color = new ColorRGBA(Math.random(), Math.random(), Math.random(), 1);
     const line = new WebglLine(color, numX);
     line.lineSpaceX(-1, 2 / numX);
     line.offsetY = (i - Math.floor(num / 2)) / num;
-    wglp.addLine(line);
+    lines.push(line);
   }
 };
 
@@ -29,7 +30,14 @@ let prevTime = new Date();
 function newFrame() {
   //const timeStrat = +new Date();
   update();
-  wglp.update();
+  
+  clearCanvas(gl);
+  lines.forEach(line => {
+    if (line.draw) {
+      line.draw();
+    }
+  });
+  
   const timeNow = new Date();
   if (timeNow - prevTime > 1000) {
     console.log(frame);
@@ -57,7 +65,7 @@ function update() {
   }
   //console.log(yFinal);
 
-  wglp.linesData.forEach((line) => {
+  lines.forEach((line) => {
     for (let i = 0; i < yFinal.length; i++) {
       line.setY(i, yFinal[i]);
     }

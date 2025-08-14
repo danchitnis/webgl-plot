@@ -1,12 +1,10 @@
 import { ColorRGBA } from "./ColorRGBA";
-import type { WebglPlot } from "./webglplot";
 import { DebugLogger } from "./DebugLogger";
 
 /**
  * The standard Line class
  */
 export class WebglScatterAcc {
-  private wglp: WebglPlot;
   private headIndex = 0;
   private color: ColorRGBA;
   private squareSize: number;
@@ -19,23 +17,18 @@ export class WebglScatterAcc {
   private attrPosLocation: number;
   private attrColorLocation: number;
 
-  constructor(wglp: WebglPlot, maxSquare: number) {
-    //super();
-    this.wglp = wglp;
-
+  constructor(gl: WebGL2RenderingContext, maxSquare: number) {
     this.color = new ColorRGBA(1, 1, 1, 1);
     this.squareSize = 0.1;
     this.maxSquare = maxSquare;
-
-    this.gl = wglp.gl;
-    const gl = this.gl;
+    this.gl = gl;
 
     // Create vertex shader
-    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    const vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER);
     if (!vertexShader) {
       throw new Error("Unable to create vertex shader");
     }
-    gl.shaderSource(
+    this.gl.shaderSource(
       vertexShader,
       `#version 300 es
 
@@ -56,7 +49,7 @@ export class WebglScatterAcc {
 
 `
     );
-    gl.compileShader(vertexShader);
+    this.gl.compileShader(vertexShader);
 
     if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
       // there was an error
@@ -68,7 +61,7 @@ export class WebglScatterAcc {
     if (!fragmentShader) {
       throw new Error("Unable to create fragment shader");
     }
-    gl.shaderSource(
+    this.gl.shaderSource(
       fragmentShader,
       `#version 300 es
     precision mediump float;
@@ -82,7 +75,7 @@ export class WebglScatterAcc {
     }
 `
     );
-    gl.compileShader(fragmentShader);
+    this.gl.compileShader(fragmentShader);
 
     if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
       // there was an error
@@ -91,46 +84,46 @@ export class WebglScatterAcc {
 
     // Create program
     const program = gl.createProgram();
-    gl.attachShader(program, vertexShader);
-    gl.attachShader(program, fragmentShader);
-    gl.linkProgram(program);
-    gl.useProgram(program);
+    this.gl.attachShader(program, vertexShader);
+    this.gl.attachShader(program, fragmentShader);
+    this.gl.linkProgram(program);
+    this.gl.useProgram(program);
     this.prog = program;
 
     const indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.squareIndices, gl.STATIC_DRAW);
+    this.gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    this.gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.squareIndices, gl.STATIC_DRAW);
 
     // Create the square positions buffer
     const squarePositions = new Float32Array(
       Array.from({ length: this.maxSquare * 2 }, () => 0)
     );
     this.positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    this.gl.bufferData(gl.ARRAY_BUFFER, squarePositions, gl.DYNAMIC_DRAW);
     this.attrPosLocation = gl.getAttribLocation(this.prog, "position");
-    gl.vertexAttribPointer(this.attrPosLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.vertexAttribDivisor(this.attrPosLocation, 1);
-    gl.enableVertexAttribArray(this.attrPosLocation);
+    this.gl.vertexAttribPointer(this.attrPosLocation, 2, gl.FLOAT, false, 0, 0);
+    this.gl.vertexAttribDivisor(this.attrPosLocation, 1);
+    this.gl.enableVertexAttribArray(this.attrPosLocation);
 
     // Create the color buffer
     const colors = new Uint8Array(
       Array.from({ length: this.maxSquare * 3 }, () => 255)
     );
     this.colorsBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorsBuffer);
+    this.gl.bufferData(gl.ARRAY_BUFFER, colors, gl.DYNAMIC_DRAW);
     this.attrColorLocation = gl.getAttribLocation(this.prog, "sColor");
-    gl.vertexAttribPointer(
+    this.gl.vertexAttribPointer(
       this.attrColorLocation,
       3,
-      gl.UNSIGNED_BYTE,
+      this.gl.UNSIGNED_BYTE,
       false,
       0,
       0
     );
-    gl.vertexAttribDivisor(this.attrColorLocation, 1);
-    gl.enableVertexAttribArray(this.attrColorLocation);
+    this.gl.vertexAttribDivisor(this.attrColorLocation, 1);
+    this.gl.enableVertexAttribArray(this.attrColorLocation);
 
     this.setScale(1, 1);
     this.setOffset(0, 0);
@@ -168,10 +161,10 @@ export class WebglScatterAcc {
       "u_scale"
     );
     this.gl.uniformMatrix2fv(scaleUniformLocation, false, [
-      scaleX * this.wglp.gScaleX,
+      scaleX,
       0,
       0,
-      scaleY * this.wglp.gScaleY,
+      scaleY,
     ]);
   }
 
@@ -182,33 +175,32 @@ export class WebglScatterAcc {
     );
     this.gl.uniform2f(
       offsetUniformLocation,
-      offsetX + this.wglp.gOffsetX,
-      offsetY + this.wglp.gOffsetY
+      offsetX,
+      offsetY
     );
   }
 
   public addSquare(pos: Float32Array, color: Uint8Array): void {
-    const gl = this.gl;
-    gl.useProgram(this.prog);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
-    gl.bufferSubData(
+    this.gl.useProgram(this.prog);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+    this.gl.bufferSubData(
       this.gl.ARRAY_BUFFER,
       this.headIndex * 2 * 4,
       pos,
       0,
       pos.length
     );
-    gl.enableVertexAttribArray(this.attrPosLocation);
+    this.gl.enableVertexAttribArray(this.attrPosLocation);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorsBuffer);
-    gl.bufferSubData(
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorsBuffer);
+    this.gl.bufferSubData(
       this.gl.ARRAY_BUFFER,
       this.headIndex * 3 * 1,
       color,
       0,
       color.length
     );
-    gl.enableVertexAttribArray(this.attrColorLocation);
+    this.gl.enableVertexAttribArray(this.attrColorLocation);
 
     this.headIndex = (this.headIndex + pos.length / 2) % this.maxSquare;
   }

@@ -1,18 +1,15 @@
-import type { WebglPlot } from "./webglplot"; // This will be the main class, ok for type
 import { WebglLinePlot } from "./WebglLinePlot"; // Corrected import
 import { WebglLineThick, DataBounds } from "./WebglLineThick"; // Corrected import
 import type { LineConfig } from "./LineConfig";
 import { DebugLogger } from "./DebugLogger";
 
 export class UnifiedLinePlot {
-  private wglp: WebglPlot;
   private gl: WebGL2RenderingContext;
   private maxLines: number;
   private internalPlotter: WebglLinePlot | WebglLineThick | null = null;
 
-  constructor(wglp: WebglPlot, maxLines: number) {
-    this.wglp = wglp;
-    this.gl = wglp.gl;
+  constructor(gl: WebGL2RenderingContext, maxLines: number) {
+    this.gl = gl;
     this.maxLines = maxLines;
   }
 
@@ -46,7 +43,7 @@ export class UnifiedLinePlot {
         if (this.internalPlotter) {
           this.internalPlotter.cleanup();
         }
-        this.internalPlotter = new WebglLinePlot(this.wglp, this.maxLines);
+        this.internalPlotter = new WebglLinePlot(this.gl, this.maxLines);
       }
       // Adjust all line configs for the thin plotter: thicknesses become 1.0
       const thinLinesConfig = linesConfig.map((config) => ({
@@ -60,9 +57,9 @@ export class UnifiedLinePlot {
         if (this.internalPlotter) {
           this.internalPlotter.cleanup();
         }
-        // WebglLineThick constructor now expects WebglPlot instance
+        // WebglLineThick constructor now expects WebGL2RenderingContext
         this.internalPlotter = new WebglLineThick(
-          this.wglp,
+          this.gl,
           this.maxLines
         );
       }

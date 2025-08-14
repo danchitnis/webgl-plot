@@ -1,4 +1,4 @@
-import { WebglPlot, WebglLineThick, LineConfig } from "../src/webglplot";
+import { setupCanvasAndWebGL, WebglLineThick, clearCanvas, LineConfig } from "../src/webglplot";
 
 const fpsElem = document.getElementById("fps");
 const statusElem = document.getElementById("status");
@@ -8,12 +8,12 @@ if (!canvas) {
   throw new Error("Canvas element not found");
 }
 
-const devicePixelRatio = window.devicePixelRatio || 1;
-canvas.width = canvas.clientWidth * devicePixelRatio;
-canvas.height = canvas.clientHeight * devicePixelRatio;
+const gl = setupCanvasAndWebGL(canvas, {
+  backgroundColor: [0, 0, 0, 1], // Black background
+  antialias: true
+});
 
-const wglp = new WebglPlot(canvas);
-const plotLine = new WebglLineThick(wglp, 10);
+const plotLine = new WebglLineThick(gl, 10);
 
 let frameCount = 0;
 let lastTime = performance.now();
@@ -147,7 +147,7 @@ function testVaryingThickness() {
 }
 
 function animate() {
-  wglp.clear();
+  clearCanvas(gl);
   plotLine.draw();
   updateFPS();
   requestAnimationFrame(animate);

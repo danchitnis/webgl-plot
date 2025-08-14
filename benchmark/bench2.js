@@ -1,21 +1,20 @@
 import {
-  ColorRGBA,
-  WebglPlot,
+  setupCanvasAndWebGL,
+  clearCanvas,
   WebglLinePlot,
   WebglLine,
+  ColorRGBA,
 } from "../dist/webglplot.mjs";
 
 const canvas = document.getElementById("my_canvas");
 
-const devicePixelRatio = window.devicePixelRatio || 1;
-canvas.width = canvas.clientWidth * devicePixelRatio;
-canvas.height = canvas.clientHeight * devicePixelRatio;
-
-const numX = canvas.width;
+const numX = 1000; // Fixed size
 
 console.log("numX", numX);
 
-const wglp = new WebglPlot(canvas);
+const gl = setupCanvasAndWebGL(canvas, {
+  backgroundColor: [0, 0, 0, 1]
+});
 
 let lines = [];
 let plotLine;
@@ -28,7 +27,16 @@ const createLines = (num) => {
     line.lineSpaceX(numX);
   });
 
-  plotLine = new WebglLinePlot(wglp, lines);
+  plotLine = new WebglLinePlot(gl, lines.length);
+  
+  // Initialize lines with WebglLinePlot
+  const lineConfigs = lines.map((line, index) => ({
+    points: new Float32Array(numX * 2), // Will be updated in render loop
+    color: [Math.random(), Math.random(), Math.random(), 1],
+    thickness: 1.0,
+    enabled: true
+  }));
+  plotLine.initLines(lineConfigs);
   newYData = Array(lines[0].getSize()).fill(0);
 }
 
@@ -43,19 +51,17 @@ let prevTime = new Date();
 
 
 function newFrame() {
-  wglp.clear();
+  clearCanvas(gl);
 
   for (let i = 0; i < lines.length; i++) {
-    
     const y0 = (i / lines.length) + (window.performance.now() * 0.0001)
     for (let j = 0; j < numX; j++) {
       const y = y0 + j * 0.1 / numX;
       const yy = y - Math.floor(y);
       newYData[j] = yy * 2 - 1;
-
     }
-    lines[i].setYs(newYData);
-    plotLine.updateLine(i);
+    // Update Y data for this line
+    plotLine.updateLineY(i, new Float32Array(newYData));
   }
 
   plotLine.draw();

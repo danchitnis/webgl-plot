@@ -1,4 +1,4 @@
-import { WebglPlot, LineConfig } from "../src/webglplot";
+import { setupCanvasAndWebGL, WebglLinePlot, WebglLineThick, clearCanvas, LineConfig } from "../src/webglplot";
 
 function main() {
   const canvas = document.getElementById(
@@ -9,15 +9,14 @@ function main() {
     return;
   }
 
-  const devicePixelRatio = window.devicePixelRatio || 1;
-  canvas.width = canvas.clientWidth * devicePixelRatio;
-  canvas.height = canvas.clientHeight * devicePixelRatio;
-
-  const wglp = new WebglPlot(canvas);
+  const gl = setupCanvasAndWebGL(canvas, {
+    backgroundColor: [0, 0, 0, 1], // Black background
+    antialias: true
+  });
 
   // Instantiate Plotters
-  const thinLinePlotter = wglp.newThinLinePlotter(1); // For one thin line
-  const thickLinePlotter = wglp.newThickLinePlotter(1); // For one thick line
+  const thinLinePlotter = new WebglLinePlot(gl, 1); // For one thin line
+  const thickLinePlotter = new WebglLineThick(gl, 1); // For one thick line
 
   // Define Thin Line using LineConfig
   const numXThin = 500;
@@ -54,7 +53,7 @@ function main() {
   thickLinePlotter.initLines([thickLineConfig]);
 
   // Render Both Lines
-  wglp.clear();
+  clearCanvas(gl);
   thinLinePlotter.draw();
   thickLinePlotter.draw();
 

@@ -1,4 +1,4 @@
-import { WebglPlot, WebglLineThick, LineConfig } from "../src/webglplot";
+import { setupCanvasAndWebGL, WebglLineThick, clearCanvas, LineConfig } from "../src/webglplot";
 
 // Get the canvas element
 const canvas = document.getElementById("myCanvas") as HTMLCanvasElement | null;
@@ -6,18 +6,15 @@ if (!canvas) {
     throw new Error("Canvas element not found");
 }
 
-// Set up canvas size with device pixel ratio for crisp rendering
-const devicePixelRatio = window.devicePixelRatio || 1;
-canvas.width = canvas.clientWidth * devicePixelRatio;
-canvas.height = canvas.clientHeight * devicePixelRatio;
+const gl = setupCanvasAndWebGL(canvas, {
+  backgroundColor: [0, 0, 0, 1], // Black background
+  antialias: true
+});
 
 console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
 
-// Create the WebGL plot instance
-const wglp = new WebglPlot(canvas);
-
 // Create a thick line plotter (max 1 line)
-const plotLine = new WebglLineThick(wglp, 1);
+const plotLine = new WebglLineThick(gl, 1);
 
 // Define a 45-degree line with 100 points from 0.1 to 1
 // Generate points for a diagonal line
@@ -49,7 +46,7 @@ plotLine.initLines([straightLine]);
 plotLine.setLogAxis(false, true); // Enable log axis for both x and y
 
 // Clear the canvas and draw the line
-wglp.clear();
+clearCanvas(gl);
 plotLine.draw();
 
 console.log("45-degree line rendered successfully with", numPoints, "points!");

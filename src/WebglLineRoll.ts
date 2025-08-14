@@ -1,5 +1,4 @@
 import type { ColorRGBA } from "./ColorRGBA";
-import type { WebglPlot } from "./webglplot";
 import { DebugLogger } from "./DebugLogger";
 
 export class WebglLineRoll {
@@ -19,8 +18,8 @@ export class WebglLineRoll {
   private aColorLocation: number;
   private uShiftLocation: WebGLUniformLocation;
 
-  constructor(wglp: WebglPlot, rollBufferSize: number, numLines: number) {
-    this.gl = wglp.gl;
+  constructor(gl: WebGL2RenderingContext, rollBufferSize: number, numLines: number) {
+    this.gl = gl;
     this.rollBufferSize = rollBufferSize;
     this.shift = 0;
     this.dataIndex = 0;
@@ -29,9 +28,7 @@ export class WebglLineRoll {
     this.lastDataY = Array(numLines).fill(0);
     this.numLines = numLines;
 
-    const gl = this.gl;
-
-    this.ext = gl.getExtension("WEBGL_multi_draw");
+    this.ext = this.gl.getExtension("WEBGL_multi_draw");
 
     const vertCode = `#version 300 es
         layout(location = 1) in vec2 a_position;
@@ -49,16 +46,16 @@ export class WebglLineRoll {
             vColor = a_color/ vec3(255.0, 255.0, 255.0);
         }`;
 
-    const vertShader = gl.createShader(gl.VERTEX_SHADER);
+    const vertShader = this.gl.createShader(this.gl.VERTEX_SHADER);
     if (!vertShader) {
       throw new Error("Failed to create vertex shader");
     }
-    gl.shaderSource(vertShader, vertCode);
-    gl.compileShader(vertShader);
+    this.gl.shaderSource(vertShader, vertCode);
+    this.gl.compileShader(vertShader);
 
-    if (!gl.getShaderParameter(vertShader, gl.COMPILE_STATUS)) {
+    if (!this.gl.getShaderParameter(vertShader, this.gl.COMPILE_STATUS)) {
       // there was an error
-      DebugLogger.error(gl.getShaderInfoLog(vertShader) || "Vertex shader compilation failed");
+      DebugLogger.error(this.gl.getShaderInfoLog(vertShader) || "Vertex shader compilation failed");
     }
 
     // Fragment shader source code
@@ -71,89 +68,88 @@ export class WebglLineRoll {
             outColor = vec4(vColor, 0.7);
         }`;
 
-    const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    const fragShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
     if (!fragShader) {
       throw new Error("Failed to create fragment shader");
     }
-    gl.shaderSource(fragShader, fragCode);
-    gl.compileShader(fragShader);
+    this.gl.shaderSource(fragShader, fragCode);
+    this.gl.compileShader(fragShader);
 
-    if (!gl.getShaderParameter(fragShader, gl.COMPILE_STATUS)) {
+    if (!this.gl.getShaderParameter(fragShader, this.gl.COMPILE_STATUS)) {
       // there was an error
-      DebugLogger.error(gl.getShaderInfoLog(fragShader) || "Fragment shader compilation failed");
+      DebugLogger.error(this.gl.getShaderInfoLog(fragShader) || "Fragment shader compilation failed");
     }
 
     // Create the shader program
-    this.program = gl.createProgram();
-    gl.attachShader(this.program, vertShader);
-    gl.attachShader(this.program, fragShader);
-    gl.linkProgram(this.program);
+    this.program = this.gl.createProgram();
+    this.gl.attachShader(this.program, vertShader);
+    this.gl.attachShader(this.program, fragShader);
+    this.gl.linkProgram(this.program);
 
-    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+    if (!this.gl.getProgramParameter(this.program, this.gl.LINK_STATUS)) {
       // there was an error
-      DebugLogger.error(gl.getProgramInfoLog(this.program) || "Program linking failed");
+      DebugLogger.error(this.gl.getProgramInfoLog(this.program) || "Program linking failed");
     }
 
     // Create a buffer for the vertex coordinates
-    this.vertexBuffer = gl.createBuffer();
+    this.vertexBuffer = this.gl.createBuffer();
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
+    this.gl.bufferData(
+      this.gl.ARRAY_BUFFER,
       new Float32Array((this.rollBufferSize + 2) * 2 * numLines),
-      gl.DYNAMIC_DRAW
+      this.gl.DYNAMIC_DRAW
     );
 
-    this.aPositionLocation = gl.getAttribLocation(this.program, "a_position");
-    gl.vertexAttribPointer(this.aPositionLocation, 2, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(this.aPositionLocation);
+    this.aPositionLocation = this.gl.getAttribLocation(this.program, "a_position");
+    this.gl.vertexAttribPointer(this.aPositionLocation, 2, this.gl.FLOAT, false, 0, 0);
+    this.gl.enableVertexAttribArray(this.aPositionLocation);
 
     // Create a buffer for the colors
-    this.colorBuffer = gl.createBuffer();
+    this.colorBuffer = this.gl.createBuffer();
 
     const colors = Array((this.rollBufferSize + 2) * 3 * numLines).fill(128);
 
-    gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
     this.gl.bufferData(
       this.gl.ARRAY_BUFFER,
       new Uint8Array(colors),
-      gl.STATIC_DRAW
+      this.gl.STATIC_DRAW
     );
 
-    this.aColorLocation = gl.getAttribLocation(this.program, "a_color");
-    gl.vertexAttribPointer(
+    this.aColorLocation = this.gl.getAttribLocation(this.program, "a_color");
+    this.gl.vertexAttribPointer(
       this.aColorLocation,
       3,
-      gl.UNSIGNED_BYTE,
+      this.gl.UNSIGNED_BYTE,
       false,
       0,
       0
     );
-    gl.enableVertexAttribArray(this.aColorLocation);
+    this.gl.enableVertexAttribArray(this.aColorLocation);
 
-    this.uShiftLocation = gl.getUniformLocation(this.program, "uShift")!;
+    this.uShiftLocation = this.gl.getUniformLocation(this.program, "uShift")!;
 
-    //this.uColorLocation = gl.getUniformLocation(this.program, "uColor");
+    //this.uColorLocation = this.gl.getUniformLocation(this.program, "uColor");
   }
 
   addPoint(ys: number[]) {
-    const gl = this.gl;
     const bfsize = this.rollBufferSize + 2;
     this.shift += 2 / this.rollBufferSize;
     this.dataX += 2 / this.rollBufferSize;
-    gl.useProgram(this.program);
-    gl.uniform1f(this.uShiftLocation, this.shift);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    this.gl.useProgram(this.program);
+    this.gl.uniform1f(this.uShiftLocation, this.shift);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
 
     for (let i = 0; i < this.numLines; i++) {
-      gl.bufferSubData(
-        gl.ARRAY_BUFFER,
+      this.gl.bufferSubData(
+        this.gl.ARRAY_BUFFER,
         (this.dataIndex + bfsize * i) * 2 * 4,
         new Float32Array([this.dataX, ys[i]])
       );
     }
 
-    gl.enableVertexAttribArray(this.aPositionLocation);
+    this.gl.enableVertexAttribArray(this.aPositionLocation);
 
     if (this.dataIndex === this.rollBufferSize - 1) {
       for (let i = 0; i < this.numLines; i++) {
@@ -165,8 +161,8 @@ export class WebglLineRoll {
 
     if (this.dataIndex === 0 && this.lastDataX[0] !== 0) {
       for (let i = 0; i < this.numLines; i++) {
-        gl.bufferSubData(
-          gl.ARRAY_BUFFER,
+        this.gl.bufferSubData(
+          this.gl.ARRAY_BUFFER,
           (this.rollBufferSize + bfsize * i) * 2 * 4,
           new Float32Array([
             this.lastDataX[i],
@@ -182,12 +178,11 @@ export class WebglLineRoll {
   }
 
   addPoints(ys: number[][]) {
-    const gl = this.gl;
     const bfsize = this.rollBufferSize + 2;
 
-    gl.useProgram(this.program);
-    gl.uniform1f(this.uShiftLocation, this.shift);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
+    this.gl.useProgram(this.program);
+    this.gl.uniform1f(this.uShiftLocation, this.shift);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
 
     let index = this.dataIndex;
     let lastX = 0;
@@ -200,8 +195,8 @@ export class WebglLineRoll {
         const x = this.dataX + (i * 2) / this.rollBufferSize;
 
         if (index < this.rollBufferSize) {
-          gl.bufferSubData(
-            gl.ARRAY_BUFFER,
+          this.gl.bufferSubData(
+            this.gl.ARRAY_BUFFER,
             (index + line * bfsize) * 2 * 4,
             new Float32Array([x, ys[line][i]])
           );
@@ -213,8 +208,8 @@ export class WebglLineRoll {
         }
 
         if (index % this.rollBufferSize === 0 && this.lastDataX[line] !== 0) {
-          gl.bufferSubData(
-            gl.ARRAY_BUFFER,
+          this.gl.bufferSubData(
+            this.gl.ARRAY_BUFFER,
             (this.rollBufferSize + line * bfsize) * 2 * 4,
             new Float32Array([
               this.lastDataX[line],
@@ -227,8 +222,8 @@ export class WebglLineRoll {
 
         if (index >= this.rollBufferSize) {
           const index2 = index % this.rollBufferSize;
-          gl.bufferSubData(
-            gl.ARRAY_BUFFER,
+          this.gl.bufferSubData(
+            this.gl.ARRAY_BUFFER,
             (index2 + line * bfsize) * 2 * 4,
             new Float32Array([x, ys[line][i]])
           );
@@ -243,28 +238,26 @@ export class WebglLineRoll {
     this.dataX = lastX + 2 / this.rollBufferSize;
     this.dataIndex = index % this.rollBufferSize;
 
-    gl.enableVertexAttribArray(this.aPositionLocation);
+    this.gl.enableVertexAttribArray(this.aPositionLocation);
   }
 
   private drawOld() {
     const bfsize = this.rollBufferSize + 2;
-    const gl = this.gl;
     this.gl.useProgram(this.program);
 
     for (let i = 0; i < this.numLines; i++) {
-      gl.drawArrays(gl.LINE_STRIP, i * bfsize, this.dataIndex);
-      gl.drawArrays(
-        gl.LINE_STRIP,
+      this.gl.drawArrays(this.gl.LINE_STRIP, i * bfsize, this.dataIndex);
+      this.gl.drawArrays(
+        this.gl.LINE_STRIP,
         i * bfsize + this.dataIndex,
         this.rollBufferSize - this.dataIndex
       );
-      gl.drawArrays(gl.LINE_STRIP, i * bfsize + this.rollBufferSize, 2);
+      this.gl.drawArrays(this.gl.LINE_STRIP, i * bfsize + this.rollBufferSize, 2);
     }
   }
 
   private drawExt() {
     const bfsize = this.rollBufferSize + 2;
-    const gl = this.gl;
     this.gl.useProgram(this.program);
 
     const firsts = [];
@@ -282,7 +275,7 @@ export class WebglLineRoll {
       throw new Error("Multi draw extension not available");
     }
     this.ext.multiDrawArraysWEBGL(
-      gl.LINE_STRIP,
+      this.gl.LINE_STRIP,
       firsts,
       0,
       counts,
@@ -300,9 +293,8 @@ export class WebglLineRoll {
   }
 
   setLineColor(colors: ColorRGBA, lineIndex: number) {
-    const gl = this.gl;
-    gl.useProgram(this.program);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.colorBuffer);
+    this.gl.useProgram(this.program);
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.colorBuffer);
 
     const colorsArray = [];
     for (let i = 0; i < this.rollBufferSize + 2; i++) {
@@ -311,12 +303,12 @@ export class WebglLineRoll {
       colorsArray.push(colors.b);
     }
 
-    gl.bufferSubData(
-      gl.ARRAY_BUFFER,
+    this.gl.bufferSubData(
+      this.gl.ARRAY_BUFFER,
       (this.rollBufferSize + 2) * 3 * lineIndex * 1,
       new Uint8Array(colorsArray)
     );
 
-    gl.enableVertexAttribArray(this.aColorLocation);
+    this.gl.enableVertexAttribArray(this.aColorLocation);
   }
 }

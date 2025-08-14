@@ -1,4 +1,4 @@
-import { WebglPlot } from "../src/webglplot";
+import { setupCanvasAndWebGL, clearCanvas } from "../src/webglplot";
 import { WebglPolygonPlot, PolygonConfig } from "../src/WebglPolygonPlot";
 import { WebglLinePlot, LineConfig } from "../src/WebglLinePlot"; // Corrected import name
 
@@ -10,13 +10,16 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   // canvas.width and canvas.height are now controlled by CSS via .canvas class
 
-  const wglp = new WebglPlot(canvas);
+  const gl = setupCanvasAndWebGL(canvas, {
+    backgroundColor: [0, 0, 0, 1], // Black background
+    antialias: true
+  });
 
   // Initialize WbglPolygonPlot
-  const polygonPlot = new WebglPolygonPlot(wglp);
+  const polygonPlot = new WebglPolygonPlot(gl);
 
   // Initialize WbglLinePlot
-  const linePlot = new WebglLinePlot(wglp, 2); // Corrected class name
+  const linePlot = new WebglLinePlot(gl, 2); // Corrected class name
 
   // Create Polygon Configurations
   const polygonConfigs: PolygonConfig[] = [];
@@ -162,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Render Loop
   function animate() {
-    wglp.clear(); // Clear the canvas (background color is set in WebglPlot constructor or default)
+    clearCanvas(gl); // Clear the canvas (background color is set in WebglPlot constructor or default)
 
     linePlot.draw();
     polygonPlot.draw();

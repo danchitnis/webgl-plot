@@ -1,17 +1,16 @@
-import { WebglPlot, LineConfig } from "../src/webglplot";
+import { setupCanvasAndWebGL, UnifiedLinePlot, clearCanvas, LineConfig } from "../src/webglplot";
 
 const canvas = document.getElementById("my_canvas") as HTMLCanvasElement | null;
 if (!canvas) {
   throw new Error("Canvas element not found");
 }
 
-const devicePixelRatio = window.devicePixelRatio || 1;
-canvas.width = canvas.clientWidth * devicePixelRatio;
-canvas.height = canvas.clientHeight * devicePixelRatio;
+const gl = setupCanvasAndWebGL(canvas, {
+  backgroundColor: [0, 0, 0, 1], // Black background
+  antialias: true
+});
 
 const numX = 500; // Number of points for each line
-
-const webglPlot = new WebglPlot(canvas);
 
 const lineAmplitude = 0.15; // Amplitude of the sine wave for points
 
@@ -69,7 +68,7 @@ lineConfigs.forEach((config, index) => {
 // Create UnifiedLinePlot instances for each configuration
 const plotObjects = lineConfigs.map((config) => {
   // Each UnifiedLinePlot instance will manage one line as per this benchmark's goal
-  const unifiedPlotter = webglPlot.newUnifiedLinePlotter(1);
+  const unifiedPlotter = new UnifiedLinePlot(gl, 1);
   // Initialize with this specific line's config.
   // UnifiedLinePlot's initLines will handle the internal plotter choice.
   unifiedPlotter.initLines([config]);
@@ -106,7 +105,7 @@ plotObjects.forEach((plot, index) => {
 let time = 0;
 function simplifiedRender() {
   time += 0.01;
-  webglPlot.clear();
+  clearCanvas(gl);
 
   plotObjects.forEach((plot, index) => {
     const originalConfig = lineConfigs[index];

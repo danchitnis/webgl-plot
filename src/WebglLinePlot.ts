@@ -1,5 +1,4 @@
 //import { ColorRGBA } from "./ColorRGBA";
-import type { WebglPlot } from "./webglplot";
 import type { LineConfig } from "./LineConfig";
 import { DebugLogger } from "./DebugLogger";
 import { 
@@ -13,7 +12,6 @@ import {
 export type { LineConfig }; // Re-export LineConfig
 
 export class WebglLinePlot {
-  private wglp: WebglPlot;
   private gl: WebGL2RenderingContext;
   private maxLines: number;
   private linesConfig: LineConfig[] = [];
@@ -40,10 +38,8 @@ export class WebglLinePlot {
   public logX: boolean = false;
   public logY: boolean = false;
 
-  constructor(wglp: WebglPlot, maxLines: number) {
-    this.wglp = wglp;
-    this.gl = wglp.gl;
-    const gl = this.gl;
+  constructor(gl: WebGL2RenderingContext, maxLines: number) {
+    this.gl = gl;
     this.maxLines = maxLines;
     this.linesConfig = [];
     this.numLines = 0;

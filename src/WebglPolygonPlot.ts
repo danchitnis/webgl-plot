@@ -1,4 +1,3 @@
-import { WebglPlot } from "./webglplot";
 import { DebugLogger } from "./DebugLogger";
 
 export interface PolygonConfig {
@@ -87,7 +86,6 @@ interface CachedState {
 
 export class WebglPolygonPlot {
   private gl: WebGL2RenderingContext;
-  private wglp: WebglPlot;
   private prog: WebGLProgram | null;
   private strokeProg: WebGLProgram | null;
   private fillVAO: WebGLVertexArrayObject | null = null;
@@ -109,9 +107,8 @@ export class WebglPolygonPlot {
     opacityArray: Float32Array;
   };
 
-  constructor(wglp: WebglPlot) {
-    this.gl = wglp.gl as WebGL2RenderingContext;
-    this.wglp = wglp;
+  constructor(gl: WebGL2RenderingContext) {
+    this.gl = gl;
     
     // Initialize cached state
     const viewport = this.gl.getParameter(this.gl.VIEWPORT) as [number, number, number, number];

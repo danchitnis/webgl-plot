@@ -1,17 +1,16 @@
-import { WebglPlot, ColorRGBA, WebglScatterAcc } from "../dist/webglplot.mjs";
+import { setupCanvasAndWebGL, clearCanvas, ColorRGBA, WebglScatterAcc } from "../dist/webglplot.mjs";
 
 const canvas = document.getElementById("my_canvas");
-
-const devicePixelRatio = window.devicePixelRatio || 1;
-canvas.width = canvas.clientWidth * devicePixelRatio;
-canvas.height = canvas.clientHeight * devicePixelRatio;
 
 const maxSquare = 1_000_000;
 const newDataSize = 1_000;
 
-const wglp = new WebglPlot(canvas, { powerPerformance: "high-performance" });
+const gl = setupCanvasAndWebGL(canvas, { 
+  powerPerformance: "high-performance",
+  backgroundColor: [0, 0, 0, 1]
+});
 
-const sqAcc = new WebglScatterAcc(wglp, maxSquare);
+const sqAcc = new WebglScatterAcc(gl, maxSquare);
 sqAcc.setSquareSize(0.001);
 sqAcc.setColor(new ColorRGBA(255, 255, 0, 255));
 sqAcc.setScale(1, canvas.width / canvas.height);
@@ -27,7 +26,7 @@ const render = () => {
     Array.from({ length: newDataSize * 3 }, () => Math.random() * 255)
   );
   sqAcc.addSquare(sqPos, sqColor);
-  wglp.clear();
+  clearCanvas(gl);
   sqAcc.draw();
   requestAnimationFrame(render);
 };

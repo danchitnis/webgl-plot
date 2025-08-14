@@ -1,4 +1,4 @@
-import { WebglPlot, type LineConfig } from "../src/webglplot";
+import { setupCanvasAndWebGL, UnifiedLinePlot, WebglLinePlot, WebglLineThick, clearCanvas, type LineConfig } from "../src/webglplot";
 import type { DataBounds } from "../src/LogAxisUtils";
 
 // Add type for the line plotters
@@ -11,8 +11,8 @@ type LinePlotter = {
   autoScaleToLogSpace: (dataBounds?: DataBounds | null) => boolean;
 };
 
-let linearPlot: WebglPlot;
-let logPlot: WebglPlot;
+let linearGL: WebGL2RenderingContext;
+let logGL: WebGL2RenderingContext;
 let currentData: Float32Array = new Float32Array(0);
 let logXEnabled = false;
 let logYEnabled = false;
@@ -33,28 +33,15 @@ function initPlots() {
     return;
   }
 
-  // Set up canvas dimensions for high DPI displays
-  const setupCanvas = (canvas: HTMLCanvasElement) => {
-    const devicePixelRatio = window.devicePixelRatio || 1;
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * devicePixelRatio;
-    canvas.height = rect.height * devicePixelRatio;
-  };
-
-  setupCanvas(linearCanvas);
-  setupCanvas(logCanvas);
-
   try {
-    linearPlot = new WebglPlot(linearCanvas, {
-      antialias: true,
+    linearGL = setupCanvasAndWebGL(linearCanvas, {
       backgroundColor: [0.1, 0.1, 0.1, 1],
-      debug: true
+      antialias: true
     });
 
-    logPlot = new WebglPlot(logCanvas, {
-      antialias: true,
+    logGL = setupCanvasAndWebGL(logCanvas, {
       backgroundColor: [0.1, 0.1, 0.1, 1],
-      debug: true
+      antialias: true
     });
 
     console.log("Plots initialized successfully");
@@ -125,7 +112,7 @@ function generateMultiLineTestData() {
   // and tests that auto-scaling only considers enabled lines when using log axes
   
   // We'll update the plots to show multiple lines instead of single line
-  if (!linearPlot || !logPlot) {
+  if (!linearGL || !logGL) {
     console.error("Plots not initialized");
     return;
   }
@@ -161,20 +148,20 @@ function generateMultiLineTestData() {
     }
 
     // Create line plotters
-    const createLinePlotter = (plot: WebglPlot) => {
+    const createLinePlotter = (gl: WebGL2RenderingContext) => {
       switch (currentLineType) {
         case 'thin':
-          return plot.newThinLinePlotter(3);
+          return new WebglLinePlot(gl, 3);
         case 'thick':
-          return plot.newThickLinePlotter(3);
+          return new WebglLineThick(gl, 3);
         case 'unified':
         default:
-          return plot.newUnifiedLinePlotter(3);
+          return new UnifiedLinePlot(gl, 3);
       }
     };
 
     // Linear plot setup
-    linearLinePlotter = createLinePlotter(linearPlot);
+    linearLinePlotter = createLinePlotter(linearGL);
     linearLinePlotter.setLogAxis(false, false);
     linearLinePlotter.initLines([
       {
@@ -198,7 +185,7 @@ function generateMultiLineTestData() {
     ]);
 
     // Log plot setup (this is where the issue should be tested)
-    logLinePlotter = createLinePlotter(logPlot);
+    logLinePlotter = createLinePlotter(logGL);
     logLinePlotter.setLogAxis(logXEnabled, logYEnabled);
     logLinePlotter.initLines([
       {
@@ -252,7 +239,7 @@ let logLinePlotter: LinePlotter | null = null;
 
 // Update both plots with current data
 function updatePlots() {
-  if (!linearPlot || !logPlot || currentData.length === 0) {
+  if (!linearGL || !logGL || currentData.length === 0) {
     return;
   }
 
@@ -264,20 +251,20 @@ function updatePlots() {
     const logData = new Float32Array(currentData);
 
     // Create line plotters based on current line type
-    const createLinePlotter = (plot: WebglPlot) => {
+    const createLinePlotter = (gl: WebGL2RenderingContext) => {
       switch (currentLineType) {
         case 'thin':
-          return plot.newThinLinePlotter(1);
+          return new WebglLinePlot(gl, 1);
         case 'thick':
-          return plot.newThickLinePlotter(1);
+          return new WebglLineThick(gl, 1);
         case 'unified':
         default:
-          return plot.newUnifiedLinePlotter(1);
+          return new UnifiedLinePlot(gl, 1);
       }
     };
 
     // Linear plot (always linear axes)
-    linearLinePlotter = createLinePlotter(linearPlot);
+    linearLinePlotter = createLinePlotter(linearGL);
     linearLinePlotter.setLogAxis(false, false);
     linearLinePlotter.initLines([{
       points: linearData,
@@ -287,7 +274,7 @@ function updatePlots() {
     }]);
 
     // Log plot (with current log settings)
-    logLinePlotter = createLinePlotter(logPlot);
+    logLinePlotter = createLinePlotter(logGL);
     logLinePlotter.setLogAxis(logXEnabled, logYEnabled);
     logLinePlotter.initLines([{
       points: logData,
@@ -313,12 +300,12 @@ function updatePlots() {
 
 // Animation loop
 function renderLoop() {
-  if (!linearPlot || !logPlot || !linearLinePlotter || !logLinePlotter) return;
+  if (!linearGL || !logGL || !linearLinePlotter || !logLinePlotter) return;
 
   try {
     // Clear and update both plots
-    linearPlot.update();
-    logPlot.update();
+    clearCanvas(linearGL);
+    clearCanvas(logGL);
     
     // Draw the line plotters
     linearLinePlotter.draw();
@@ -343,9 +330,7 @@ function toggleLogX() {
     // Re-auto-scale with the new log settings (the auto-scaling logic now handles log transformation)
     if (logLinePlotter) {
       logLinePlotter.autoScaleEnabledLines();
-      if (logPlot.debug) {
-        console.log('Re-auto-scaled for new log axis settings');
-      }
+      console.log('Re-auto-scaled for new log axis settings');
     }
   }
   updateLogStatus();
@@ -363,9 +348,7 @@ function toggleLogY() {
     // Re-auto-scale with the new log settings (the auto-scaling logic now handles log transformation)
     if (logLinePlotter) {
       logLinePlotter.autoScaleEnabledLines();
-      if (logPlot.debug) {
-        console.log('Re-auto-scaled for new log axis settings');
-      }
+      console.log('Re-auto-scaled for new log axis settings');
     }
   }
   updateLogStatus();
@@ -380,7 +363,7 @@ function autoScale() {
 function testViewboundsFix() {
   console.log('=== Testing Viewbounds Fix ===');
   
-  if (!logPlot || !logLinePlotter) {
+  if (!logGL || !logLinePlotter) {
     console.error('Log plot not initialized');
     return;
   }
@@ -426,22 +409,16 @@ function smartAutoScale() {
   console.log('=== Testing Smart Auto Scale ===');
   
   if (linearLinePlotter) {
-    if (linearPlot.debug) {
-      console.log('Linear plot: calling regular autoScaleEnabledLines()');
-    }
+    console.log('Linear plot: calling regular autoScaleEnabledLines()');
     linearLinePlotter.autoScaleEnabledLines();
   }
   
-  if (logPlot && logLinePlotter) {
-    if (logPlot.debug) {
-      console.log('Log plot: First ensuring proper scaling, then testing smart log space scaling');
-    }
+  if (logGL && logLinePlotter) {
+    console.log('Log plot: First ensuring proper scaling, then testing smart log space scaling');
     
     // First ensure the plot is properly scaled with current settings
     logLinePlotter.autoScaleEnabledLines();
-    if (logPlot.debug) {
-      console.log('Initial auto-scaling complete');
-    }
+    console.log('Initial auto-scaling complete');
     
     // Get actual data bounds from the plotter (this is the fix!)
     const dataBounds = logLinePlotter.getDataBounds();
@@ -537,22 +514,22 @@ function measurePerformance() {
   const iterations = 100;
   
   // Create plotter function for current line type
-  const createTestPlotter = (plot: WebglPlot) => {
+  const createTestPlotter = (gl: WebGL2RenderingContext) => {
     switch (currentLineType) {
       case 'thin':
-        return plot.newThinLinePlotter(1);
+        return new WebglLinePlot(gl, 1);
       case 'thick':
-        return plot.newThickLinePlotter(1);
+        return new WebglLineThick(gl, 1);
       case 'unified':
       default:
-        return plot.newUnifiedLinePlotter(1);
+        return new UnifiedLinePlot(gl, 1);
     }
   };
 
   // Measure linear plot performance
   const linearStart = performance.now();
   for (let i = 0; i < iterations; i++) {
-    const linePlotter = createTestPlotter(linearPlot);
+    const linePlotter = createTestPlotter(linearGL);
     linePlotter.setLogAxis(false, false);
     linePlotter.initLines([{
       points: currentData,
@@ -566,7 +543,7 @@ function measurePerformance() {
   // Measure log plot performance
   const logStart = performance.now();
   for (let i = 0; i < iterations; i++) {
-    const linePlotter = createTestPlotter(logPlot);
+    const linePlotter = createTestPlotter(logGL);
     linePlotter.setLogAxis(logXEnabled, logYEnabled);
     linePlotter.initLines([{
       points: currentData,
