@@ -269,13 +269,7 @@ export class WebglPlot {
     this._backgroundColor = bgColor;
   }
 
-  /**
-   * Draw and clear the canvas
-   */
-  public update(): void {
-    this.clear();
-    //this.draw();
-  }
+
 
   /**
    * Clear the canvas
@@ -317,7 +311,7 @@ export class WebglPlot {
     } else {
       throw new Error('Invalid arguments. Use either CSS color string, color array, or individual RGBA values.');
     }
-    
+
     this.gl.clearColor(this._backgroundColor[0], this._backgroundColor[1], this._backgroundColor[2], this._backgroundColor[3]);
     this.gl.clear(this.gl.COLOR_BUFFER_BIT);
   }
@@ -333,6 +327,8 @@ export class WebglPlot {
    * - No graph reinitialization required - changes apply immediately
    * - Auto-scaling will automatically account for log transformation
    * - Use `autoScaleToLogSpace()` for smooth transitions from linear to log space
+   * - Individual plotters (WebglLineThick, etc.) also have their own `setLogAxis()` method
+   *   for independent control. This method only affects the main WebglPlot instance.
    * 
    * **Example Usage:**
    * ```typescript
@@ -390,16 +386,16 @@ export class WebglPlot {
       }
       return true;
     }
-    
+
     let viewLeft: number, viewRight: number, viewBottom: number, viewTop: number;
-    
+
     if (dataBounds) {
       // Use actual data bounds (recommended approach)
       viewLeft = dataBounds.minX;
       viewRight = dataBounds.maxX;
       viewBottom = dataBounds.minY;
       viewTop = dataBounds.maxY;
-      
+
       if (this.debug) {
         DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
       }
@@ -409,25 +405,25 @@ export class WebglPlot {
       const currentScaleY = this.gScaleY;
       const currentOffsetX = this.gOffsetX;
       const currentOffsetY = this.gOffsetY;
-      
+
       // This reverses the current global transform to find what data range is visible
       viewLeft = (-1 - currentOffsetX) / currentScaleX;
       viewRight = (1 - currentOffsetX) / currentScaleX;
       viewBottom = (-1 - currentOffsetY) / currentScaleY;
       viewTop = (1 - currentOffsetY) / currentScaleY;
-      
+
       if (this.debug) {
         DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
       }
     }
-    
+
     // Try to preserve the current view in log space
     let newMinX = viewLeft;
     let newMaxX = viewRight;
     let newMinY = viewBottom;
     let newMaxY = viewTop;
     let transformationApplied = false;
-    
+
     // For log X: if current view has positive bounds, transform them
     if (this.logX) {
       if (viewLeft > 0 && viewRight > 0) {
@@ -445,7 +441,7 @@ export class WebglPlot {
         return false;
       }
     }
-    
+
     // For log Y: if current view has positive bounds, transform them
     if (this.logY) {
       if (viewBottom > 0 && viewTop > 0) {
@@ -463,46 +459,46 @@ export class WebglPlot {
         return false;
       }
     }
-    
+
     // If no transformation was needed, we're done
     if (!transformationApplied) {
       return true;
     }
-    
+
     // Calculate new global transform for the preserved view in log space
     const rangeX = newMaxX - newMinX;
     const rangeY = newMaxY - newMinY;
     const ndcWidth = 2.0;
     const ndcHeight = 2.0;
     const epsilon = 1e-9;
-    
+
     let newGlobalScaleX = 1.0;
     let newGlobalScaleY = 1.0;
     let newGlobalOffsetX = 0.0;
     let newGlobalOffsetY = 0.0;
-    
+
     if (rangeX > epsilon) {
       newGlobalScaleX = ndcWidth / rangeX;
       const centerX = newMinX + rangeX / 2.0;
       newGlobalOffsetX = 0.0 - centerX * newGlobalScaleX;
     }
-    
+
     if (rangeY > epsilon) {
       newGlobalScaleY = ndcHeight / rangeY;
       const centerY = newMinY + rangeY / 2.0;
       newGlobalOffsetY = 0.0 - centerY * newGlobalScaleY;
     }
-    
+
     // Apply the new transform
     this.gScaleX = newGlobalScaleX;
     this.gScaleY = newGlobalScaleY;
     this.gOffsetX = newGlobalOffsetX;
     this.gOffsetY = newGlobalOffsetY;
-    
+
     if (this.debug) {
       DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${newGlobalScaleX.toFixed(4)}, ${newGlobalScaleY.toFixed(4)}], Offset[${newGlobalOffsetX.toFixed(4)}, ${newGlobalOffsetY.toFixed(4)}]`);
     }
-    
+
     return true;
   }
 

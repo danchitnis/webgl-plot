@@ -151,6 +151,10 @@ export class WebglLineThick {
   private globalScale: [number, number] = [1.0, 1.0];
   private globalOffset: [number, number] = [0.0, 0.0];
 
+  // Log axis flags
+  public logX: boolean = false;
+  public logY: boolean = false;
+
   /**
    * Creates an instance of WebglLineThick.
    * @param wglp Context wrapper object or WebglPlot instance.
@@ -688,62 +692,54 @@ export class WebglLineThick {
         const startIndex = this.lineStartIndexCache[lineId];
         const numPoints = this.lineOriginalNumPointsCache[lineId];
         if (numPoints > 0) {
-          
+
           // Pre-check: if log axes are enabled, verify this line has enough positive values
           // to be meaningful for auto-scaling
-          if (('logX' in this.wglp && this.wglp.logX) || ('logY' in this.wglp && this.wglp.logY)) {
+          if (this.logX || this.logY) {
             let validPointCount = 0;
             const endPointIndex = startIndex + numPoints;
-            
+
             for (let ptIdx = startIndex; ptIdx < endPointIndex; ptIdx++) {
               const dataIdx = ptIdx * 2;
               if (dataIdx + 1 < this.pointsData.length) {
                 const x = this.pointsData[dataIdx];
                 const y = this.pointsData[dataIdx + 1];
-                
+
                 // Check if this point would be visible on log axes
-                const xValid = !('logX' in this.wglp && this.wglp.logX) || x > 0;
-                const yValid = !('logY' in this.wglp && this.wglp.logY) || y > 0;
-                
+                const xValid = !this.logX || x > 0;
+                const yValid = !this.logY || y > 0;
+
                 if (xValid && yValid) {
                   validPointCount++;
                 }
               }
             }
-            
+
             // Skip lines that have less than 10% positive values or fewer than 2 valid points
             // This prevents lines with mostly negative data from affecting auto-scaling
             const validRatio = validPointCount / numPoints;
             if (validPointCount < 2 || validRatio < 0.1) {
-              DebugLogger.log(`_computeBoundsCPU: Skipping line ${lineId} - only ${validPointCount}/${numPoints} (${(validRatio*100).toFixed(1)}%) points valid for log axes`);
+              DebugLogger.log(`_computeBoundsCPU: Skipping line ${lineId} - only ${validPointCount}/${numPoints} (${(validRatio * 100).toFixed(1)}%) points valid for log axes`);
               continue;
             }
           }
-          
+
           foundEnabledData = true;
           const endPointIndex = startIndex + numPoints;
           for (let ptIdx = startIndex; ptIdx < endPointIndex; ptIdx++) {
             const dataIdx = ptIdx * 2;
             if (dataIdx + 1 < this.pointsData.length) {
-              let x = this.pointsData[dataIdx];
-              let y = this.pointsData[dataIdx + 1];
-              
-              // Apply log transformation if enabled (same as GPU)
-              if ('logX' in this.wglp && this.wglp.logX) {
-                if (x > 0) {
-                  x = Math.log10(x);
-                } else {
-                  continue; // Skip negative/zero values for log X axis
-                }
+              const x = this.pointsData[dataIdx];
+              const y = this.pointsData[dataIdx + 1];
+
+              // Skip invalid values for log axes (GPU will handle the actual log transformation)
+              if (this.logX && x <= 0) {
+                continue; // Skip negative/zero values for log X axis
               }
-              if ('logY' in this.wglp && this.wglp.logY) {
-                if (y > 0) {
-                  y = Math.log10(y);
-                } else {
-                  continue; // Skip negative/zero values for log Y axis
-                }
+              if (this.logY && y <= 0) {
+                continue; // Skip negative/zero values for log Y axis
               }
-              
+
               if (x < minX) minX = x;
               if (x > maxX) maxX = x;
               if (y < minY) minY = y;
@@ -855,7 +851,7 @@ export class WebglLineThick {
    */
   private computeSharpTurns(lineId: number, pointsArray: Float32Array, numPts: number): boolean[] {
     // Use a faster hash based on array length and first/last points for change detection
-    const quickHash = `${numPts}_${pointsArray[0]}_${pointsArray[1]}_${pointsArray[numPts*2-2]}_${pointsArray[numPts*2-1]}`;
+    const quickHash = `${numPts}_${pointsArray[0]}_${pointsArray[1]}_${pointsArray[numPts * 2 - 2]}_${pointsArray[numPts * 2 - 1]}`;
 
     // Check if we have cached results for this line and points haven't changed
     if (this.sharpTurnCache.has(lineId) && this.pointsHashCache.get(lineId) === quickHash) {
@@ -867,7 +863,7 @@ export class WebglLineThick {
     if (numPts >= 3) { // Need at least 3 points for an interior point
       // Pre-calculate threshold for fewer comparisons
       const sharpThreshold = VERY_SHARP_TURN_DOT_THRESHOLD;
-      
+
       for (let i = 1; i < numPts - 1; i++) {
         const p0x = pointsArray[(i - 1) * 2];
         const p0y = pointsArray[(i - 1) * 2 + 1];
@@ -887,8 +883,8 @@ export class WebglLineThick {
         const len_d1_sq = d1x * d1x + d1y * d1y;
 
         // Skip normalization if either segment is too short
-        if (len_d0_sq < COINCIDENT_POINT_EPSILON * COINCIDENT_POINT_EPSILON || 
-            len_d1_sq < COINCIDENT_POINT_EPSILON * COINCIDENT_POINT_EPSILON) {
+        if (len_d0_sq < COINCIDENT_POINT_EPSILON * COINCIDENT_POINT_EPSILON ||
+          len_d1_sq < COINCIDENT_POINT_EPSILON * COINCIDENT_POINT_EPSILON) {
           continue;
         }
 
@@ -1112,6 +1108,173 @@ export class WebglLineThick {
   }
 
   /**
+   * Enable or disable logarithmic scaling for X and/or Y axes.
+   * 
+   * When enabled, coordinates are transformed using log₁₀ on the GPU in real-time.
+   * Negative and zero values are automatically filtered out (moved off-screen).
+   * 
+   * **Important Notes:**
+   * - Transformation happens on GPU for optimal performance
+   * - No graph reinitialization required - changes apply immediately
+   * - Auto-scaling will automatically account for log transformation
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * // Enable log Y-axis for exponential data
+   * thickPlotter.setLogAxis(false, true);
+   * 
+   * // Enable both axes for power-law data
+   * thickPlotter.setLogAxis(true, true);
+   * 
+   * // Disable all log scaling
+   * thickPlotter.setLogAxis(false, false);
+   * ```
+   * 
+   * @param x Enable logarithmic base-10 scaling for X-axis
+   * @param y Enable logarithmic base-10 scaling for Y-axis
+   */
+  public setLogAxis(x: boolean, y: boolean): void {
+    this.logX = x;
+    this.logY = y;
+  }
+
+  /**
+   * Auto-scale the plotter to fit log-transformed data, using either actual data bounds
+   * or converting existing transform-based viewport bounds to log space.
+   * 
+   * This function intelligently handles the transition from linear to log space by
+   * using actual data bounds when provided, or falling back to transforming the 
+   * current viewport bounds from linear to log space.
+   * 
+   * **Use Cases:**
+   * - After toggling log axes to maintain current view
+   * - For smooth transitions between linear and log representations  
+   * - When you want to preserve user's current zoom/pan state
+   * - For accurate scaling based on actual data bounds
+   * 
+   * **Example Usage:**
+   * ```typescript
+   * // Using actual data bounds (recommended)
+   * const bounds = thickPlotter.getDataBounds();
+   * thickPlotter.autoScaleToLogSpace(bounds);
+   * 
+   * // Using current viewport bounds (legacy)
+   * thickPlotter.autoScaleToLogSpace();
+   * ```
+   * 
+   * @param dataBounds Optional actual data bounds {minX, maxX, minY, maxY}. 
+   *                   If provided, uses actual data bounds instead of transform-based bounds.
+   * @returns True if smart scaling was applied, false if transformation not feasible
+   */
+  public autoScaleToLogSpace(dataBounds?: { minX: number; maxX: number; minY: number; maxY: number } | null): boolean {
+    // If no log axes are enabled, nothing to do
+    if (!this.logX && !this.logY) {
+      DebugLogger.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
+      return true;
+    }
+
+    let viewLeft: number, viewRight: number, viewBottom: number, viewTop: number;
+
+    if (dataBounds) {
+      // Use actual data bounds (recommended approach)
+      viewLeft = dataBounds.minX;
+      viewRight = dataBounds.maxX;
+      viewBottom = dataBounds.minY;
+      viewTop = dataBounds.maxY;
+
+      DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+    } else {
+      // Fallback: Calculate bounds from current transform (legacy approach)
+      const currentScaleX = this.globalScale[0];
+      const currentScaleY = this.globalScale[1];
+      const currentOffsetX = this.globalOffset[0];
+      const currentOffsetY = this.globalOffset[1];
+
+      // This reverses the current global transform to find what data range is visible
+      viewLeft = (-1 - currentOffsetX) / currentScaleX;
+      viewRight = (1 - currentOffsetX) / currentScaleX;
+      viewBottom = (-1 - currentOffsetY) / currentScaleY;
+      viewTop = (1 - currentOffsetY) / currentScaleY;
+
+      DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewLeft.toFixed(3)}, ${viewRight.toFixed(3)}], Y[${viewBottom.toFixed(3)}, ${viewTop.toFixed(3)}]`);
+    }
+
+    // Try to preserve the current view in log space
+    let newMinX = viewLeft;
+    let newMaxX = viewRight;
+    let newMinY = viewBottom;
+    let newMaxY = viewTop;
+    let transformationApplied = false;
+
+    // For log X: if current view has positive bounds, transform them
+    if (this.logX) {
+      if (viewLeft > 0 && viewRight > 0) {
+        newMinX = Math.log10(viewLeft);
+        newMaxX = Math.log10(viewRight);
+        transformationApplied = true;
+        DebugLogger.log(`autoScaleToLogSpace: Transformed X bounds to log space - [${newMinX.toFixed(3)}, ${newMaxX.toFixed(3)}]`);
+      } else {
+        // Current view includes negative/zero X, can't preserve view
+        DebugLogger.log("autoScaleToLogSpace: Current X view includes non-positive values, cannot preserve view");
+        return false;
+      }
+    }
+
+    // For log Y: if current view has positive bounds, transform them
+    if (this.logY) {
+      if (viewBottom > 0 && viewTop > 0) {
+        newMinY = Math.log10(viewBottom);
+        newMaxY = Math.log10(viewTop);
+        transformationApplied = true;
+        DebugLogger.log(`autoScaleToLogSpace: Transformed Y bounds to log space - [${newMinY.toFixed(3)}, ${newMaxY.toFixed(3)}]`);
+      } else {
+        // Current view includes negative/zero Y, can't preserve view
+        DebugLogger.log("autoScaleToLogSpace: Current Y view includes non-positive values, cannot preserve view");
+        return false;
+      }
+    }
+
+    // If no transformation was needed, we're done
+    if (!transformationApplied) {
+      return true;
+    }
+
+    // Calculate new global transform for the preserved view in log space
+    const rangeX = newMaxX - newMinX;
+    const rangeY = newMaxY - newMinY;
+    const ndcWidth = 2.0;
+    const ndcHeight = 2.0;
+    const epsilon = 1e-9;
+
+    let newGlobalScaleX = 1.0;
+    let newGlobalScaleY = 1.0;
+    let newGlobalOffsetX = 0.0;
+    let newGlobalOffsetY = 0.0;
+
+    if (rangeX > epsilon) {
+      newGlobalScaleX = ndcWidth / rangeX;
+      const centerX = newMinX + rangeX / 2.0;
+      newGlobalOffsetX = 0.0 - centerX * newGlobalScaleX;
+    }
+
+    if (rangeY > epsilon) {
+      newGlobalScaleY = ndcHeight / rangeY;
+      const centerY = newMinY + rangeY / 2.0;
+      newGlobalOffsetY = 0.0 - centerY * newGlobalScaleY;
+    }
+
+    // Apply the new transform to the local globalScale and globalOffset
+    this.globalScale[0] = newGlobalScaleX;
+    this.globalScale[1] = newGlobalScaleY;
+    this.globalOffset[0] = newGlobalOffsetX;
+    this.globalOffset[1] = newGlobalOffsetY;
+
+    DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${newGlobalScaleX.toFixed(4)}, ${newGlobalScaleY.toFixed(4)}], Offset[${newGlobalOffsetX.toFixed(4)}, ${newGlobalOffsetY.toFixed(4)}]`);
+
+    return true;
+  }
+
+  /**
    * Updates only the Y coordinates of the points for a given line.
    */
   public updateLineY(lineId: number, newY: Float32Array): void {
@@ -1242,13 +1405,13 @@ export class WebglLineThick {
     if (this.locations.uViewportSize) {
       gl.uniform2f(this.locations.uViewportSize, gl.canvas.width, gl.canvas.height);
     }
-    
-    // Set log axis uniforms - access parent WebglPlot instance through wglp
-    if (this.locations.uLogAxis && 'logX' in this.wglp && 'logY' in this.wglp) {
+
+    // Set log axis uniforms - use local log axis properties
+    if (this.locations.uLogAxis) {
       gl.uniform2f(
         this.locations.uLogAxis,
-        this.wglp.logX ? 1.0 : 0.0,
-        this.wglp.logY ? 1.0 : 0.0
+        this.logX ? 1.0 : 0.0,
+        this.logY ? 1.0 : 0.0
       );
     }
 
