@@ -84,26 +84,20 @@
   </head>
   <body>
     <div class="container">
-      <h1>WebGL Plot - Logarithmic Axis Test</h1>
+      <h1>WebGL Plot - Logarithmic Axis Demo</h1>
       
       <div class="controls">
-        <button onclick="generateExponentialData()">Generate Exponential Data</button>
-        <button onclick="generatePowerLawData()">Generate Power Law Data</button>
-        <button onclick="generateMixedData()">Generate Mixed Scale Data</button>
-        <button onclick="generateMultiLineTestData()">Multi-Line Test (disabled lines with negative values)</button>
+        <strong>Data Types:</strong>
+        <button onclick="generateExponentialData()">Exponential Data (y = e^(0.5x))</button>
+        <button onclick="generatePowerLawData()">Power Law Data (y = x^2.5)</button>
+        <br><br>
+        <strong>Log Axis Controls:</strong>
         <button onclick="toggleLogX()">Toggle Log X-axis</button>
         <button onclick="toggleLogY()">Toggle Log Y-axis</button>
-        <button onclick="autoScale()">Auto Scale</button>
-        <button onclick="smartAutoScale()">Smart Auto Scale to Log Space</button>
-        <button onclick="testViewboundsFix()">Test Viewbounds Fix</button>
         <br><br>
-        <strong>Line Type:</strong>
-        <button onclick="setLineType('thin')">Thin Lines (thickness = 1)</button>
-        <button onclick="setLineType('thick')">Thick Lines (thickness = 3)</button>
-        <button onclick="setLineType('unified')">Unified Lines (auto-choose)</button>
-        <span id="currentLineType" style="margin-left: 10px; color: #ffcc00;">Current: Unified (thick)</span>
-        <br><br>
-        <button onclick="measurePerformance()">Measure Performance</button>
+        <div style="color: #ffcc00; font-size: 14px; margin-top: 10px;">
+          💡 <strong>Tip:</strong> Try exponential data with Log Y enabled to see how exponential curves become linear!
+        </div>
       </div>
 
       <div class="canvas-container">
