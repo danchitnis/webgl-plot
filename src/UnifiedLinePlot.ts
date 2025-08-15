@@ -58,10 +58,7 @@ export class UnifiedLinePlot {
           this.internalPlotter.cleanup();
         }
         // WebglLineThick constructor now expects WebGL2RenderingContext
-        this.internalPlotter = new WebglLineThick(
-          this.gl,
-          this.maxLines
-        );
+        this.internalPlotter = new WebglLineThick(this.gl, this.maxLines);
       }
       // WebglLineThick can handle varied thicknesses, pass original (or default-adjusted) configs
       // No, it should also use the primaryThickness to decide if all lines are thick.
@@ -96,8 +93,8 @@ export class UnifiedLinePlot {
       // updateLineY can update Y values if X values are presumed constant or managed elsewhere.
       DebugLogger.warn(
         "updateLinePoints(xy) is not directly supported when WebglLineThick is active. " +
-          "Consider re-initializing the line with initLines() for full XY updates, " +
-          "or use updateLineY() if only Y values need changing and X values are stable."
+        "Consider re-initializing the line with initLines() for full XY updates, " +
+        "or use updateLineY() if only Y values need changing and X values are stable."
       );
     } else {
       DebugLogger.warn("updateLinePoints: plotter not initialized.");
@@ -166,8 +163,21 @@ export class UnifiedLinePlot {
     }
   }
 
+  /**
+   * Auto-scale to fit all enabled lines and apply linear space.
+   *
+   * **IMPORTANT**: This method resets to linear scaling before calculating bounds.
+   * Choose the right method based on your current state:
+   *
+   * **Use autoScaleEnabledLines() when:**
+   * - Scaling linear spaces
+   * - Switching from log back to linear space
+   *
+   *
+   * @returns DataBounds object with calculated bounds, null if no valid data, or void for some internal plotters
+   *
+   */
   public autoScaleEnabledLines(): DataBounds | null | void {
-    // void because WebglLinePlot returns void
     if (this.internalPlotter) {
       return this.internalPlotter.autoScaleEnabledLines();
     }
@@ -184,10 +194,35 @@ export class UnifiedLinePlot {
   }
 
   /**
-   * Get the data bounds of all enabled lines.
+   * Get the data bounds of all enabled lines without changing current scaling state.
+   *
+   * **IMPORTANT**: This method preserves your current scaling state (linear or log).
+   * Choose the right method based on your current state:
+   *
+   * **Use getDataBounds() when:**
+   * - Data changes and you're already in log space
+   * - You want bounds without changing current scaling
+   * - Followed by autoScaleToLogSpace() to rescale in log space
+   *
+   *
    * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
+   *
+   * @example
+   * ```typescript
+   * // Data update when already in log space - PRESERVES current state
+   * const bounds = plotter.getDataBounds(); // No state change
+   * if (bounds) plotter.autoScaleToLogSpace(bounds); // Stay in log space
+   *
+   * // Compare with autoScaleEnabledLines() which would cause visual jumps:
+   * // plotter.autoScaleEnabledLines(); // ❌ Resets to linear first - causes jumps!
+   * ```
    */
-  public getDataBounds(): { minX: number; maxX: number; minY: number; maxY: number } | null {
+  public getDataBounds(): {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  } | null {
     if (!this.internalPlotter) {
       return null;
     }
@@ -196,9 +231,26 @@ export class UnifiedLinePlot {
 
   /**
    * Enable or disable logarithmic scaling for X and/or Y axes.
-   * Forwards the call to the active internal plotter.
+   *
+   * **After calling setLogAxis(), you typically need to rescale:**
+   * - **Enabling log axes**: Use getDataBounds() → autoScaleToLogSpace()
+   * - **Disabling log axes**: Use autoScaleEnabledLines() (resets to linear)
+   *
    * @param x Enable logarithmic base-10 scaling for X-axis
    * @param y Enable logarithmic base-10 scaling for Y-axis
+   *
+   * @example
+   * ```typescript
+   * // Enabling log Y axis
+   * plotter.setLogAxis(false, true);
+   * const bounds = plotter.getDataBounds(); // Get bounds with smart filtering
+   * if (bounds) plotter.autoScaleToLogSpace(bounds);
+   *
+   * // Disabling log axes (back to linear)
+   * plotter.setLogAxis(false, false);
+   * plotter.autoScaleEnabledLines(); // Resets to linear - perfect!
+   *
+   * ```
    */
   public setLogAxis(x: boolean, y: boolean): void {
     if (this.internalPlotter) {
@@ -207,10 +259,36 @@ export class UnifiedLinePlot {
   }
 
   /**
-   * Auto-scale the plotter to fit log-transformed data.
-   * Forwards the call to the active internal plotter.
-   * @param dataBounds Optional actual data bounds {minX, maxX, minY, maxY}
-   * @returns True if smart scaling was applied, false if transformation not feasible
+   * Transform data bounds to logarithmic space and apply appropriate scaling.
+   *
+   * **IMPORTANT**: Only call this when log axes are enabled via setLogAxis().
+   * This method should be paired with bounds from the correct source:
+   *
+   * **Typical usage patterns:**
+   * - **Initial setup**: getDataBounds() → autoScaleToLogSpace()
+   * - **Data updates in log space**: getDataBounds() → autoScaleToLogSpace()
+   * - **Switching to linear**: Don't call this - use autoScaleEnabledLines() only
+   *
+   * @param dataBounds Optional data bounds {minX, maxX, minY, maxY}.
+   *                   If not provided, will attempt to get bounds from internal plotter.
+   * @returns True if log space transformation was applied successfully,
+   *          false if transformation not feasible (e.g., no positive data for log axes)
+   *
+   * @example
+   * ```typescript
+   * // Initial setup with log Y axis
+   * plotter.setLogAxis(false, true);
+   * const bounds = plotter.getDataBounds(); // Preserve current state
+   * const success = plotter.autoScaleToLogSpace(bounds); // Transform to log space
+   * if (!success) console.log("Failed to transform to log space - check for positive data");
+   *
+   * // Data update when already in log space
+   * const bounds = plotter.getDataBounds(); // Preserve current state
+   * if (bounds) plotter.autoScaleToLogSpace(bounds); // Rescale in log space
+   *
+   * // Without explicit bounds (uses internal bounds)
+   * plotter.autoScaleToLogSpace(); // Uses internal plotter's bounds
+   * ```
    */
   public autoScaleToLogSpace(dataBounds?: DataBounds | null): boolean {
     if (this.internalPlotter) {

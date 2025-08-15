@@ -7,8 +7,8 @@ if (!canvas) {
 }
 
 const gl = setupCanvasAndWebGL(canvas, {
-  backgroundColor: [0, 0, 0, 1], // Black background
-  antialias: true
+    backgroundColor: [0, 0, 0, 1], // Black background
+    antialias: true
 });
 
 console.log("Canvas dimensions:", canvas.width, "x", canvas.height);
@@ -44,6 +44,9 @@ console.log("Line configuration:", straightLine);
 plotLine.initLines([straightLine]);
 
 plotLine.setLogAxis(false, true); // Enable log axis for both x and y
+
+const bounds = plotLine.getDataBounds();
+plotLine.autoScaleToLogSpace(bounds);
 
 // Clear the canvas and draw the line
 clearCanvas(gl);

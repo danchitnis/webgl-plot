@@ -24,17 +24,19 @@ plotter.initLines([
   },
 ]);
 
-// Enable logarithmic Y-axis
+// Enable logarithmic Y-axis and scale appropriately
 plotter.setLogAxis(false, true);
-
-// Proper scaling for log axes
-const bounds = plotter.autoScaleEnabledLines();
+const bounds = plotter.autoScaleEnabledLines(); // Smart filtering for log compatibility
 if (bounds && bounds !== undefined) {
   plotter.autoScaleToLogSpace(bounds);
 }
 
 // Render loop
 function animate() {
+  // When data changes during animation, use getDataBounds() instead:
+  // const bounds = plotter.getDataBounds();
+  // if (bounds) plotter.autoScaleToLogSpace(bounds);
+  
   clearCanvas(gl);
   plotter.draw();
   requestAnimationFrame(animate);
@@ -46,105 +48,110 @@ animate();
 
 ### `setLogAxis(x: boolean, y: boolean)`
 
-Enable or disable logarithmic base-10 scaling for each axis on individual plotters.
+Enable or disable logarithmic base-10 scaling for each axis.
 
 ```typescript
-// Set log axes on plotter instances
 plotter.setLogAxis(false, true); // Enable log Y only
 plotter.setLogAxis(true, true); // Enable both axes
 plotter.setLogAxis(false, false); // Disable log scaling
 ```
 
 **Key Features:**
-
 - ✅ **GPU-accelerated**: Transformation happens on GPU for real-time performance
 - ✅ **No reinitialization**: Changes apply immediately without data reprocessing
 - ✅ **Smart filtering**: Negative/zero values automatically moved off-screen
 - ✅ **Zoom-independent**: Works correctly at any zoom level
 
-### `autoScaleToLogSpace()`
+### Scaling Methods: Two Different Use Cases
 
-Properly scales the view for logarithmic axes by transforming data bounds to log space.
+**CRITICAL**: The choice between `autoScaleEnabledLines()` and `getDataBounds()` depends on your current state:
 
-**Correct usage pattern for log axes:**
-
-```typescript
-plotter.setLogAxis(false, true); // Enable log Y axis
-
-// Step 1: Get data bounds in linear space
-const bounds = plotter.autoScaleEnabledLines();
-
-// Step 2: Transform and apply scaling for log space
-if (bounds && bounds !== undefined) {
-  const success = plotter.autoScaleToLogSpace(bounds);
-  if (!success) {
-    console.log("Log space transformation failed");
-  }
-}
-```
-
-**Alternative using getDataBounds():**
+#### 1. Initial Setup or Axis Mode Changes
+Use `autoScaleEnabledLines()` → `autoScaleToLogSpace()` when:
+- First enabling log axes
+- Switching between linear/log modes
+- Initializing the plotter
 
 ```typescript
+// Initial setup
 plotter.setLogAxis(false, true);
-const bounds = plotter.getDataBounds();
-const success = plotter.autoScaleToLogSpace(bounds);
-```
-
-### Smart Auto-Scaling for Log Axes
-
-When log axes are enabled, use the two-step pattern for proper scaling:
-
-```typescript
-// Smart filtering: Lines with insufficient positive data are excluded from bounds calculation
-const plotter = new UnifiedLinePlot(gl, 3);
-plotter.initLines([
-  { points: exponentialData, color: [1, 0, 0, 1], enabled: true }, // 100% positive → included
-  { points: sineWaveData, color: [0, 1, 0, 1], enabled: true }, // ~50% positive → may be skipped
-  { points: negativeData, color: [0, 0, 1, 1], enabled: true }, // 0% positive → skipped
-]);
-
-plotter.setLogAxis(false, true); // Enable log Y axis
-
-// Step 1: Calculate bounds (automatically excludes problematic lines)
-const bounds = plotter.autoScaleEnabledLines();
-
-// Step 2: Apply log space transformation
+const bounds = plotter.autoScaleEnabledLines(); // Smart filtering for log compatibility
 if (bounds && bounds !== undefined) {
   plotter.autoScaleToLogSpace(bounds);
 }
+```
 
-// Console output will show: "Skipping line 1 - only 45/100 (45.0%) points valid for log axes"
+#### 2. Data Updates When Already in Log Space
+Use `getDataBounds()` → `autoScaleToLogSpace()` when:
+- Data changes during runtime
+- Already in log space and want to rescale
+
+```typescript
+// When data changes and you're already in log space
+const bounds = plotter.getDataBounds(); // Gets bounds without state changes
+if (bounds) {
+  plotter.autoScaleToLogSpace(bounds);
+}
+```
+
+#### 3. Switching from Log Space Back to Linear Space
+Use `setLogAxis()` → `autoScaleEnabledLines()` when:
+- Switching from log axes back to linear axes
+- Want to rescale to linear space with proper bounds
+
+```typescript
+// When switching from log back to linear space
+plotter.setLogAxis(false, false); // Disable log axes (back to linear)
+const bounds = plotter.autoScaleEnabledLines(); // Calculates bounds and applies linear scaling
+// No need to call autoScaleToLogSpace() since we're now in linear mode
+```
+
+**Why this distinction matters:**
+- `autoScaleEnabledLines()` resets to linear scaling before calculating bounds
+- Using it when already in log space causes: log → linear → log transitions with visual jumps
+- `getDataBounds()` preserves current scaling state while getting bounds
+
+### Smart Auto-Scaling for Log Axes
+
+When using `autoScaleEnabledLines()` with log axes, lines are automatically filtered:
+
+```typescript
+const plotter = new UnifiedLinePlot(gl, 3);
+plotter.initLines([
+  { points: exponentialData, color: [1, 0, 0, 1], enabled: true }, // 100% positive → included
+  { points: sineWaveData, color: [0, 1, 0, 1], enabled: true }, // ~50% positive → may be excluded
+  { points: negativeData, color: [0, 0, 1, 1], enabled: true }, // 0% positive → excluded
+]);
+
+plotter.setLogAxis(false, true);
+const bounds = plotter.autoScaleEnabledLines(); // Excludes problematic lines
+if (bounds && bounds !== undefined) {
+  plotter.autoScaleToLogSpace(bounds);
+}
+// Console may show: "Skipping line 1 - only 45/100 (45.0%) points valid for log axes"
 ```
 
 **Smart Filtering Rules:**
-
 - ✅ **Included**: Lines with ≥10% positive values AND ≥2 valid points
 - ⚠️ **Excluded**: Lines with <10% positive values OR <2 valid points
 - 🔍 **Visibility**: Excluded lines may still render (positive portions visible), but don't affect scaling
 
 ## 🔍 Troubleshooting
 
-### Common Issues
+### Lines disappear when enabling log axes
 
-**Lines disappear when enabling log axes:**
+**Problem**: Data contains negative or zero values  
+**Solution**: Log transformation automatically filters these out
 
 ```typescript
-// Problem: Data contains negative or zero values
-// Solution: Log transformation automatically filters these out
-// Check: Ensure your data has positive values for log-scaled axes
-
-// Debug: Check data range
+// Debug data range
 function analyzeData(data: Float32Array) {
-  let minX = Infinity,
-    maxX = -Infinity;
-  let minY = Infinity,
-    maxY = -Infinity;
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
   let negativeCount = 0;
 
   for (let i = 0; i < data.length; i += 2) {
-    const x = data[i],
-      y = data[i + 1];
+    const x = data[i], y = data[i + 1];
     if (x <= 0 || y <= 0) negativeCount++;
     minX = Math.min(minX, x);
     maxX = Math.max(maxX, x);
@@ -157,66 +164,46 @@ function analyzeData(data: Float32Array) {
 }
 ```
 
-**Scaling looks wrong after toggling:**
+### Visual jumps when rescaling
+
+**Problem**: Using wrong scaling method for current state  
+**Solution**: Follow the two-pattern approach
 
 ```typescript
-// Problem: Auto-scaling calculated in wrong space
-// Solution: Always re-auto-scale after changing log axis settings
+// ❌ WRONG: Causes visual jumps when already in log space
+// const bounds = plotter.autoScaleEnabledLines(); // Resets to linear first!
+// plotter.autoScaleToLogSpace(bounds);
+
+// ✅ CORRECT: For initial setup
 plotter.setLogAxis(false, true);
+const initialBounds = plotter.autoScaleEnabledLines();
+if (initialBounds && initialBounds !== undefined) {
+  plotter.autoScaleToLogSpace(initialBounds);
+}
 
-// Proper scaling for log axes
-const bounds = plotter.autoScaleEnabledLines();
-if (bounds && bounds !== undefined) {
-  plotter.autoScaleToLogSpace(bounds);
+// ✅ CORRECT: For data updates when already in log space
+const updateBounds = plotter.getDataBounds();
+if (updateBounds) {
+  plotter.autoScaleToLogSpace(updateBounds);
 }
 ```
 
-**Auto-scaling ignores some lines with log axes:**
+### Auto-scaling excludes some lines
+
+**This is expected behavior** when log axes are enabled. Lines with mostly negative/zero values are automatically excluded from bounds calculation.
+
+To include mixed data:
+1. Pre-filter your data to remove negative values, OR
+2. Use separate plotters for positive and negative data, OR  
+3. Use linear axes for mixed data visualization
 
 ```typescript
-// This is EXPECTED behavior: Smart auto-scaling for log axes
-// Lines with mostly negative/zero values are automatically excluded from
-// auto-scaling bounds calculation when log axes are enabled
-
-// Example: Mixed data scenario
-const plotter = new UnifiedLinePlot(gl, 3);
-plotter.initLines([
-  { points: positiveData, color: [1, 0, 0, 1], enabled: true }, // ✅ Used for log auto-scaling
-  { points: mixedData, color: [0, 1, 0, 1], enabled: true }, // ⚠️ Skipped if <10% positive values
-  { points: negativeData, color: [0, 0, 1, 1], enabled: true }, // ⚠️ Skipped for log Y auto-scaling
-]);
-
-plotter.setLogAxis(false, true); // Enable log Y
-
-// Proper scaling for log axes
-const bounds = plotter.autoScaleEnabledLines(); // Only considers lines with sufficient positive data
-if (bounds && bounds !== undefined) {
-  plotter.autoScaleToLogSpace(bounds);
-}
-
-// Check console output for "Skipping line X" messages to see which lines were excluded
-```
-
-**Mixed positive/negative data with log axes:**
-
-```typescript
-// For data that oscillates between positive and negative (e.g., sine waves):
-// - Positive portions will be visible on log scale
-// - Negative portions will be filtered out (moved off-screen)
-// - Auto-scaling will exclude the line if <10% of points are positive
-
-// To force inclusion of mixed data in auto-scaling:
-// 1. Pre-filter your data to remove negative values, OR
-// 2. Use separate plotters for positive and negative data, OR
-// 3. Use linear axes for mixed data visualization
-
 function preprocessForLogY(data: Float32Array): Float32Array {
   const filtered: number[] = [];
   for (let i = 0; i < data.length; i += 2) {
     const x = data[i];
     const y = data[i + 1];
     if (y > 0) {
-      // Keep only positive Y values for log Y axis
       filtered.push(x, y);
     }
   }
@@ -224,15 +211,25 @@ function preprocessForLogY(data: Float32Array): Float32Array {
 }
 ```
 
+## Usage Summary
+
+| Scenario | Method | Reason |
+|----------|--------|--------|
+| Initial setup | `autoScaleEnabledLines()` | Smart filtering for log compatibility |
+| Switching to log axes | `autoScaleEnabledLines()` → `autoScaleToLogSpace()` | Applies log transformation |
+| Switching to linear axes | `setLogAxis()` → `autoScaleEnabledLines()` | Resets to linear scaling |
+| Data updates in log space | `getDataBounds()` → `autoScaleToLogSpace()` | Preserves current scaling state |
+| Data updates in linear space | `autoScaleEnabledLines()` | Standard linear autoscaling |
+
 ## 🔗 See Also
 
 - **Interactive demo**: `/benchmark/bench-log-axis.html`
 - **API reference**: Check JSDoc comments in source files
-- **Test the smart filtering**: Open browser console when running benchmarks to see auto-scaling decisions
+- **Test smart filtering**: Open browser console when running benchmarks
 
 ## How Log Scaling Works
 
-The logarithmic scaling in webgl-plot uses GPU-accelerated transformations:
+The logarithmic scaling uses GPU-accelerated transformations:
 
 1. **GPU Transform**: `log10(value)` computed in vertex shaders for real-time performance
 2. **Smart Filtering**: Negative/zero values automatically moved off-screen (log(x ≤ 0) undefined)
