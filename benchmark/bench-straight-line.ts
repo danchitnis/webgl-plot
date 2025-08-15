@@ -46,7 +46,7 @@ plotLine.initLines([straightLine]);
 plotLine.setLogAxis(false, true); // Enable log axis for both x and y
 
 const bounds = plotLine.getDataBounds();
-plotLine.autoScaleToLogSpace(bounds);
+plotLine.transformToLogSpace(bounds);
 
 // Clear the canvas and draw the line
 clearCanvas(gl);

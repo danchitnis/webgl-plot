@@ -665,7 +665,7 @@ export class WebglLineThick {
   }
 
   /**
-   * Get the data bounds of all enabled lines.
+   * Get the data bounds of all enabled lines without changing current coordinate space.
    * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
    */
   public getDataBounds(): DataBounds | null {
@@ -733,9 +733,9 @@ export class WebglLineThick {
    * @returns The computed data bounds {minX, maxX, minY, maxY} of the enabled lines,
    *          or null if no valid bounds could be determined.
    */
-  public autoScaleEnabledLines(): DataBounds | null {
+  public autoScale(): DataBounds | null {
     if (this.numLines === 0) {
-      DebugLogger.warn("autoScaleEnabledLines: No lines initialized.");
+      DebugLogger.warn("autoScale: No lines initialized.");
       return null;
     }
 
@@ -747,7 +747,7 @@ export class WebglLineThick {
 
     if (!bounds) {
       DebugLogger.warn(
-        "autoScaleEnabledLines: No valid data bounds found. Setting global transform to default."
+        "autoScale: No valid data bounds found. Setting global transform to default."
       );
       this.setGlobalTransform([1.0, 1.0], [0.0, 0.0]);
       return null;
@@ -1085,20 +1085,20 @@ export class WebglLineThick {
    * ```typescript
    * // Using actual data bounds (recommended)
    * const bounds = thickPlotter.getDataBounds();
-   * thickPlotter.autoScaleToLogSpace(bounds);
+   * thickPlotter.transformToLogSpace(bounds);
    * 
    * // Using current viewport bounds (legacy)
-   * thickPlotter.autoScaleToLogSpace();
+   * thickPlotter.transformToLogSpace();
    * ```
    * 
    * @param dataBounds Optional actual data bounds {minX, maxX, minY, maxY}. 
    *                   If provided, uses actual data bounds instead of transform-based bounds.
    * @returns True if smart scaling was applied, false if transformation not feasible
    */
-  public autoScaleToLogSpace(dataBounds?: DataBounds | null): boolean {
+  public transformToLogSpace(dataBounds?: DataBounds | null): boolean {
     // If no log axes are enabled, nothing to do
     if (!this.logX && !this.logY) {
-      DebugLogger.log("autoScaleToLogSpace: No log axes enabled, no scaling needed");
+      DebugLogger.log("transformToLogSpace: No log axes enabled, no scaling needed");
       return true;
     }
 
@@ -1107,17 +1107,17 @@ export class WebglLineThick {
     if (dataBounds) {
       // Use actual data bounds (recommended approach)
       viewBounds = dataBounds;
-      DebugLogger.log(`autoScaleToLogSpace: Using actual data bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+      DebugLogger.log(`transformToLogSpace: Using actual data bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
     } else {
       // Fallback: Calculate bounds from current transform (legacy approach)
       viewBounds = reverseGlobalTransform(this.globalScale, this.globalOffset);
-      DebugLogger.log(`autoScaleToLogSpace: Using transform-based bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+      DebugLogger.log(`transformToLogSpace: Using transform-based bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
     }
 
     // Transform bounds to log space
     const logBounds = transformBoundsToLogSpace(viewBounds, this.logX, this.logY);
     if (!logBounds) {
-      DebugLogger.log("autoScaleToLogSpace: Cannot transform bounds to log space");
+      DebugLogger.log("transformToLogSpace: Cannot transform bounds to log space");
       return false;
     }
 
@@ -1125,7 +1125,7 @@ export class WebglLineThick {
     const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(logBounds);
     this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
 
-    DebugLogger.log(`autoScaleToLogSpace: Applied new transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
+    DebugLogger.log(`transformToLogSpace: Applied new transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
     return true;
   }
 

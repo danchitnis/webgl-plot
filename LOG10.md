@@ -26,16 +26,16 @@ plotter.initLines([
 
 // Enable logarithmic Y-axis and scale appropriately
 plotter.setLogAxis(false, true);
-const bounds = plotter.autoScaleEnabledLines(); // Smart filtering for log compatibility
+const bounds = plotter.autoScale(); // Smart filtering for log compatibility
 if (bounds && bounds !== undefined) {
-  plotter.autoScaleToLogSpace(bounds);
+  plotter.transformToLogSpace(bounds);
 }
 
 // Render loop
 function animate() {
   // When data changes during animation, use getDataBounds() instead:
   // const bounds = plotter.getDataBounds();
-  // if (bounds) plotter.autoScaleToLogSpace(bounds);
+  // if (bounds) plotter.transformToLogSpace(bounds);
   
   clearCanvas(gl);
   plotter.draw();
@@ -64,10 +64,10 @@ plotter.setLogAxis(false, false); // Disable log scaling
 
 ### Scaling Methods: Two Different Use Cases
 
-**CRITICAL**: The choice between `autoScaleEnabledLines()` and `getDataBounds()` depends on your current state:
+**CRITICAL**: The choice between `autoScale()` and `getDataBounds()` depends on your current coordinate space:
 
 #### 1. Initial Setup or Axis Mode Changes
-Use `autoScaleEnabledLines()` → `autoScaleToLogSpace()` when:
+Use `autoScale()` → `transformToLogSpace()` when:
 - First enabling log axes
 - Switching between linear/log modes
 - Initializing the plotter
@@ -75,14 +75,14 @@ Use `autoScaleEnabledLines()` → `autoScaleToLogSpace()` when:
 ```typescript
 // Initial setup
 plotter.setLogAxis(false, true);
-const bounds = plotter.autoScaleEnabledLines(); // Smart filtering for log compatibility
+const bounds = plotter.autoScale(); // Smart filtering for log compatibility
 if (bounds && bounds !== undefined) {
-  plotter.autoScaleToLogSpace(bounds);
+  plotter.transformToLogSpace(bounds);
 }
 ```
 
 #### 2. Data Updates When Already in Log Space
-Use `getDataBounds()` → `autoScaleToLogSpace()` when:
+Use `getDataBounds()` → `transformToLogSpace()` when:
 - Data changes during runtime
 - Already in log space and want to rescale
 
@@ -90,30 +90,30 @@ Use `getDataBounds()` → `autoScaleToLogSpace()` when:
 // When data changes and you're already in log space
 const bounds = plotter.getDataBounds(); // Gets bounds without state changes
 if (bounds) {
-  plotter.autoScaleToLogSpace(bounds);
+  plotter.transformToLogSpace(bounds);
 }
 ```
 
 #### 3. Switching from Log Space Back to Linear Space
-Use `setLogAxis()` → `autoScaleEnabledLines()` when:
+Use `setLogAxis()` → `autoScale()` when:
 - Switching from log axes back to linear axes
 - Want to rescale to linear space with proper bounds
 
 ```typescript
 // When switching from log back to linear space
 plotter.setLogAxis(false, false); // Disable log axes (back to linear)
-const bounds = plotter.autoScaleEnabledLines(); // Calculates bounds and applies linear scaling
-// No need to call autoScaleToLogSpace() since we're now in linear mode
+const bounds = plotter.autoScale(); // Calculates bounds and applies linear scaling
+// No need to call transformToLogSpace() since we're now in linear mode
 ```
 
 **Why this distinction matters:**
-- `autoScaleEnabledLines()` resets to linear scaling before calculating bounds
+- `autoScale()` resets to linear coordinate space before calculating bounds
 - Using it when already in log space causes: log → linear → log transitions with visual jumps
-- `getDataBounds()` preserves current scaling state while getting bounds
+- `getDataBounds()` preserves current coordinate space while getting bounds
 
 ### Smart Auto-Scaling for Log Axes
 
-When using `autoScaleEnabledLines()` with log axes, lines are automatically filtered:
+When using `autoScale()` with log axes, lines are automatically filtered:
 
 ```typescript
 const plotter = new UnifiedLinePlot(gl, 3);
@@ -124,9 +124,9 @@ plotter.initLines([
 ]);
 
 plotter.setLogAxis(false, true);
-const bounds = plotter.autoScaleEnabledLines(); // Excludes problematic lines
+const bounds = plotter.autoScale(); // Excludes problematic lines
 if (bounds && bounds !== undefined) {
-  plotter.autoScaleToLogSpace(bounds);
+  plotter.transformToLogSpace(bounds);
 }
 // Console may show: "Skipping line 1 - only 45/100 (45.0%) points valid for log axes"
 ```
@@ -166,25 +166,25 @@ function analyzeData(data: Float32Array) {
 
 ### Visual jumps when rescaling
 
-**Problem**: Using wrong scaling method for current state  
+**Problem**: Using wrong scaling method for current coordinate space  
 **Solution**: Follow the two-pattern approach
 
 ```typescript
 // ❌ WRONG: Causes visual jumps when already in log space
-// const bounds = plotter.autoScaleEnabledLines(); // Resets to linear first!
-// plotter.autoScaleToLogSpace(bounds);
+// const bounds = plotter.autoScale(); // Resets to linear first!
+// plotter.transformToLogSpace(bounds);
 
 // ✅ CORRECT: For initial setup
 plotter.setLogAxis(false, true);
-const initialBounds = plotter.autoScaleEnabledLines();
+const initialBounds = plotter.autoScale();
 if (initialBounds && initialBounds !== undefined) {
-  plotter.autoScaleToLogSpace(initialBounds);
+  plotter.transformToLogSpace(initialBounds);
 }
 
 // ✅ CORRECT: For data updates when already in log space
 const updateBounds = plotter.getDataBounds();
 if (updateBounds) {
-  plotter.autoScaleToLogSpace(updateBounds);
+  plotter.transformToLogSpace(updateBounds);
 }
 ```
 
@@ -215,11 +215,11 @@ function preprocessForLogY(data: Float32Array): Float32Array {
 
 | Scenario | Method | Reason |
 |----------|--------|--------|
-| Initial setup | `autoScaleEnabledLines()` | Smart filtering for log compatibility |
-| Switching to log axes | `autoScaleEnabledLines()` → `autoScaleToLogSpace()` | Applies log transformation |
-| Switching to linear axes | `setLogAxis()` → `autoScaleEnabledLines()` | Resets to linear scaling |
-| Data updates in log space | `getDataBounds()` → `autoScaleToLogSpace()` | Preserves current scaling state |
-| Data updates in linear space | `autoScaleEnabledLines()` | Standard linear autoscaling |
+| Initial setup | `autoScale()` | Smart filtering for log compatibility |
+| Switching to log axes | `autoScale()` → `transformToLogSpace()` | Applies log transformation |
+| Switching to linear axes | `setLogAxis()` → `autoScale()` | Resets to linear scaling |
+| Data updates in log space | `getDataBounds()` → `transformToLogSpace()` | Preserves current coordinate space |
+| Data updates in linear space | `autoScale()` | Standard linear autoscaling |
 
 ## 🔗 See Also
 

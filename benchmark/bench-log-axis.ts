@@ -102,21 +102,21 @@ function updatePlots(data: Float32Array) {
 
     // Auto-scale both plots
     console.log("Auto-scaling plots after data update...");
-    const linearResult = linearPlotter.autoScaleEnabledLines();
+    const linearResult = linearPlotter.autoScale();
     console.log("Linear auto-scale result:", linearResult);
     
     // Log plot uses appropriate scaling method
     if (logXEnabled || logYEnabled) {
-      const bounds = logPlotter.autoScaleEnabledLines();
+      const bounds = logPlotter.autoScale();
       if (bounds && bounds !== undefined) {
-        const logResult = logPlotter.autoScaleToLogSpace(bounds);
+        const logResult = logPlotter.transformToLogSpace(bounds);
         console.log("Log plot data bounds:", bounds);
         console.log("Log space scaling success:", logResult);
       } else {
         console.log("No valid bounds for log space scaling");
       }
     } else {
-      const logResult = logPlotter.autoScaleEnabledLines();
+      const logResult = logPlotter.autoScale();
       console.log("Log auto-scale result:", logResult);
     }
 
@@ -162,10 +162,10 @@ function toggleLogX() {
     console.log("Re-auto-scaling log plot after X toggle...");
     
     if (logXEnabled || logYEnabled) {
-      // For log axes, use autoScaleToLogSpace which handles log transformation
-      const bounds = logPlotter.autoScaleEnabledLines();
+      // For log axes, use transformToLogSpace which handles log transformation
+      const bounds = logPlotter.autoScale();
       if (bounds && bounds !== undefined) {
-        const logResult = logPlotter.autoScaleToLogSpace(bounds);
+        const logResult = logPlotter.transformToLogSpace(bounds);
         console.log("Log plot data bounds:", bounds);
         console.log("Log space scaling success:", logResult);
       } else {
@@ -173,7 +173,7 @@ function toggleLogX() {
       }
     } else {
       // For linear axes, use regular auto-scaling
-      const result = logPlotter.autoScaleEnabledLines();
+      const result = logPlotter.autoScale();
       console.log("Log plot auto-scale result after X toggle:", result);
     }
   }
@@ -190,10 +190,10 @@ function toggleLogY() {
     console.log("Re-auto-scaling log plot after Y toggle...");
     
     if (logXEnabled || logYEnabled) {
-      // For log axes, use autoScaleToLogSpace which handles log transformation
-      const bounds = logPlotter.autoScaleEnabledLines();
+      // For log axes, use transformToLogSpace which handles log transformation
+      const bounds = logPlotter.autoScale();
       if (bounds && bounds !== undefined) {
-        const logResult = logPlotter.autoScaleToLogSpace(bounds);
+        const logResult = logPlotter.transformToLogSpace(bounds);
         console.log("Log plot data bounds:", bounds);
         console.log("Log space scaling success:", logResult);
       } else {
@@ -201,7 +201,7 @@ function toggleLogY() {
       }
     } else {
       // For linear axes, use regular auto-scaling
-      const result = logPlotter.autoScaleEnabledLines();
+      const result = logPlotter.autoScale();
       console.log("Log plot auto-scale result after Y toggle:", result);
     }
   }

@@ -241,7 +241,7 @@ plotter.updateLineTransform(0, [1.0, 2.0], [0.0, 0.1]); // Line-specific transfo
 plotter.setLogAxis(true, true); // logX, logY
 
 // Auto-scale to fit log data
-const success = plotter.autoScaleToLogSpace();
+const success = plotter.transformToLogSpace();
 if (success) {
   console.log('Log scaling applied successfully');
 }
@@ -255,7 +255,7 @@ console.log('Data range:', bounds); // {minX, maxX, minY, maxY}
 
 ```typescript
 // Auto-scale to fit all enabled lines
-plotter.autoScaleEnabledLines();
+plotter.autoScale();
 
 // Get current line configuration
 const config = plotter.getLineConfig(0);

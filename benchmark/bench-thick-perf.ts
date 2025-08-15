@@ -59,7 +59,7 @@ plotLine.updateLineThickness(2, 5.0);
 
 //plotLine.setGlobalTransform([1, 0.5], [0, -0.5]);
 
-//const dataBounds = plotLine.autoScaleEnabledLines();
+//const dataBounds = plotLine.autoScale();
 //console.log("dataBounds", dataBounds);
 
 let offset = 0;
