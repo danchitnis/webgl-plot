@@ -45,7 +45,7 @@ plotLine.initLines([straightLine]);
 
 plotLine.setLogAxis(false, true); // Enable log axis for both x and y
 
-const bounds = plotLine.getDataBounds();
+const bounds = plotLine.getAllDataBounds();
 plotLine.transformToLogSpace(bounds);
 
 // Clear the canvas and draw the line

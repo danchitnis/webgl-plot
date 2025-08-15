@@ -2,6 +2,8 @@
 
 The webgl-plot library provides GPU-accelerated logarithmic scaling for both X and Y axes, enabling high-performance visualization of exponential, power-law, and wide-range scientific data.
 
+**✨ Enhanced in v2**: Coordinate-space aware API eliminates confusion about linear vs log bounds.
+
 ## 🚀 Quick Start
 
 ```typescript
@@ -26,8 +28,9 @@ plotter.initLines([
 
 // Enable logarithmic Y-axis and scale appropriately
 plotter.setLogAxis(false, true);
-const bounds = plotter.autoScale(); // Smart filtering for log compatibility
-if (bounds && bounds !== undefined) {
+const bounds = plotter.getAllDataBounds(); // Smart filtering for log compatibility with coordinate space info
+if (bounds) {
+  // Enhanced API: automatically handles coordinate space conversion
   plotter.transformToLogSpace(bounds);
 }
 
@@ -46,6 +49,27 @@ animate();
 
 ## 📚 Core API
 
+### Enhanced Coordinate-Space Aware API (v2)
+
+**✨ NEW**: All bounds methods now include coordinate space information, eliminating ambiguity:
+
+```typescript
+const bounds = plotter.getDataBounds();
+// Returns: { minX, maxX, minY, maxY, coordinateSpace: { x: "linear"|"log", y: "linear"|"log" } }
+
+if (bounds) {
+  console.log(`X axis in ${bounds.coordinateSpace.x} space, Y axis in ${bounds.coordinateSpace.y} space`);
+  // transformToLogSpace automatically handles coordinate conversion based on coordinateSpace info
+  plotter.transformToLogSpace(bounds); // Always works correctly!
+}
+```
+
+**Benefits:**
+- ✅ **No more guesswork**: Always know what coordinate space bounds are in
+- ✅ **Automatic conversion**: `transformToLogSpace()` handles coordinate space conversion
+- ✅ **Works in any mode**: Linear, log, or mixed coordinate spaces
+- ✅ **Eliminates bugs**: No more manual coordinate space tracking
+
 ### `setLogAxis(x: boolean, y: boolean)`
 
 Enable or disable logarithmic base-10 scaling for each axis.
@@ -62,58 +86,77 @@ plotter.setLogAxis(false, false); // Disable log scaling
 - ✅ **Smart filtering**: Negative/zero values automatically moved off-screen
 - ✅ **Zoom-independent**: Works correctly at any zoom level
 
-### Scaling Methods: Two Different Use Cases
+### Scaling Methods: Enhanced and Simplified
 
-**CRITICAL**: The choice between `autoScale()` and `getDataBounds()` depends on your current coordinate space:
+**✨ ENHANCED**: Both methods now include coordinate space information, making usage much clearer:
 
-#### 1. Initial Setup or Axis Mode Changes
-Use `autoScale()` → `transformToLogSpace()` when:
+#### 1. Autoscaling to Fit All Data  
+Use `getAllDataBounds()` → `transformToLogSpace()` when:
 - First enabling log axes
+- Want to fit all data in view
 - Switching between linear/log modes
-- Initializing the plotter
+- Initial setup
 
 ```typescript
-// Initial setup
+// Initial setup or autoscaling to fit all data
 plotter.setLogAxis(false, true);
-const bounds = plotter.autoScale(); // Smart filtering for log compatibility
-if (bounds && bounds !== undefined) {
-  plotter.transformToLogSpace(bounds);
-}
-```
-
-#### 2. Data Updates When Already in Log Space
-Use `getDataBounds()` → `transformToLogSpace()` when:
-- Data changes during runtime
-- Already in log space and want to rescale
-
-```typescript
-// When data changes and you're already in log space
-const bounds = plotter.getDataBounds(); // Gets bounds without state changes
+const bounds = plotter.getAllDataBounds(); // Gets bounds of ALL data with coordinate space info
 if (bounds) {
+  // Enhanced API: automatically handles any coordinate space conversion needed
   plotter.transformToLogSpace(bounds);
 }
 ```
 
-#### 3. Switching from Log Space Back to Linear Space
-Use `setLogAxis()` → `autoScale()` when:
-- Switching from log axes back to linear axes
-- Want to rescale to linear space with proper bounds
+#### 2. Preserving Current View (Zoom/Pan State)
+Use `getDataBounds()` → `transformToLogSpace()` when:
+- Data changes during runtime but want to keep current zoom/pan
+- Already viewing a specific region and want to maintain it
+- Zoom/pan operations in any coordinate space
 
 ```typescript
-// When switching from log back to linear space
-plotter.setLogAxis(false, false); // Disable log axes (back to linear)
-const bounds = plotter.autoScale(); // Calculates bounds and applies linear scaling
-// No need to call transformToLogSpace() since we're now in linear mode
+// When data changes but you want to preserve current zoom/pan state
+const bounds = plotter.getDataBounds(); // Gets current viewport bounds with coordinate space info
+if (bounds) {
+  // Enhanced API: works seamlessly regardless of current coordinate space
+  plotter.transformToLogSpace(bounds); // Maintains current view, handles conversion automatically
+}
+```
+
+#### 3. View Preservation When Switching Coordinate Spaces ✨ ENHANCED
+The new API makes coordinate space transitions seamless:
+
+```typescript
+// Enhanced API: Switching coordinate spaces while preserving view
+const currentBounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
+// No manual conversion needed! The bounds include coordinate space information
+
+plotter.setLogAxis(true, false); // Switch to log X axis
+if (currentBounds) {
+  // Enhanced transformToLogSpace automatically handles the coordinate conversion
+  plotter.transformToLogSpace(currentBounds); // View preserved automatically!
+}
+
+// Switching back to linear
+plotter.setLogAxis(false, false); // Switch to linear axes
+if (currentBounds) {
+  // For linear mode, you may want to use autoScale() or manual transform
+  plotter.autoScale(); // Auto-scale to fit all data
+  // OR preserve specific bounds with manual linear transform
+}
+
+// The old manual approach is no longer needed:
+// ❌ No more: transformBoundsToLinearSpace(bounds, wasLogX, wasLogY)
+// ✅ Enhanced API handles this automatically based on coordinateSpace info
 ```
 
 **Why this distinction matters:**
-- `autoScale()` resets to linear coordinate space before calculating bounds
-- Using it when already in log space causes: log → linear → log transitions with visual jumps
-- `getDataBounds()` preserves current coordinate space while getting bounds
+- `getAllDataBounds()` returns complete data extent → autoscales to fit all data
+- `getDataBounds()` returns current viewport bounds → preserves zoom/pan state
+- Choose based on whether you want to autoscale or maintain current view
 
 ### Smart Auto-Scaling for Log Axes
 
-When using `autoScale()` with log axes, lines are automatically filtered:
+When using `getAllDataBounds()` with log axes, lines are automatically filtered:
 
 ```typescript
 const plotter = new UnifiedLinePlot(gl, 3);
@@ -124,7 +167,7 @@ plotter.initLines([
 ]);
 
 plotter.setLogAxis(false, true);
-const bounds = plotter.autoScale(); // Excludes problematic lines
+const bounds = plotter.getAllDataBounds(); // Excludes problematic lines
 if (bounds && bounds !== undefined) {
   plotter.transformToLogSpace(bounds);
 }
@@ -170,21 +213,21 @@ function analyzeData(data: Float32Array) {
 **Solution**: Follow the two-pattern approach
 
 ```typescript
-// ❌ WRONG: Causes visual jumps when already in log space
-// const bounds = plotter.autoScale(); // Resets to linear first!
+// ❌ WRONG: Uses autoscaling when you want to preserve zoom/pan
+// const bounds = plotter.getAllDataBounds(); // This will autoscale to fit all data!
 // plotter.transformToLogSpace(bounds);
 
-// ✅ CORRECT: For initial setup
+// ✅ CORRECT: For initial setup or autoscaling
 plotter.setLogAxis(false, true);
-const initialBounds = plotter.autoScale();
+const initialBounds = plotter.getAllDataBounds(); // Gets all data bounds
 if (initialBounds && initialBounds !== undefined) {
   plotter.transformToLogSpace(initialBounds);
 }
 
-// ✅ CORRECT: For data updates when already in log space
-const updateBounds = plotter.getDataBounds();
+// ✅ CORRECT: For preserving current zoom/pan when data updates
+const updateBounds = plotter.getDataBounds(); // Gets current viewport bounds
 if (updateBounds) {
-  plotter.transformToLogSpace(updateBounds);
+  plotter.transformToLogSpace(updateBounds); // Maintains current view
 }
 ```
 
@@ -213,19 +256,30 @@ function preprocessForLogY(data: Float32Array): Float32Array {
 
 ## Usage Summary
 
-| Scenario | Method | Reason |
-|----------|--------|--------|
-| Initial setup | `autoScale()` | Smart filtering for log compatibility |
-| Switching to log axes | `autoScale()` → `transformToLogSpace()` | Applies log transformation |
-| Switching to linear axes | `setLogAxis()` → `autoScale()` | Resets to linear scaling |
-| Data updates in log space | `getDataBounds()` → `transformToLogSpace()` | Preserves current coordinate space |
+| Scenario | Enhanced Method (v2) | Reason |
+|----------|---------------------|--------|
+| Initial setup (autoscale to fit all data) | `getAllDataBounds()` → `transformToLogSpace()` | Smart filtering for log compatibility with coordinate space info |
+| Switching to log axes (autoscale) | `getAllDataBounds()` → `transformToLogSpace()` | Enhanced API handles coordinate conversion automatically |
+| Switching to linear axes (simple) | `setLogAxis()` → `autoScale()` | Resets to linear scaling |
+| **Switching with view preservation** ✨ | `getDataBounds()` → `transformToLogSpace()` | **Enhanced API maintains zoom/pan automatically** |
+| Data updates (preserve zoom/pan) | `getDataBounds()` → `transformToLogSpace()` | Preserves current viewport with automatic coordinate handling |
+| Data updates (autoscale to fit all) | `getAllDataBounds()` → `transformToLogSpace()` | Rescales to fit all data with coordinate space info |
+| Zoom/pan operations | `getDataBounds()` → `transformToLogSpace()` | **Works in any coordinate mode!** |
 | Data updates in linear space | `autoScale()` | Standard linear autoscaling |
+
+**✨ Enhanced Benefits:**
+- No more manual coordinate space tracking
+- `transformToLogSpace()` works with any bounds format
+- Coordinate space information always included
+- Eliminates common bugs from coordinate space confusion
 
 ## 🔗 See Also
 
 - **Interactive demo**: `/benchmark/bench-log-axis.html`
+- **Coordinate space demo**: `/benchmark/bench-coordinate-space.html` - Shows view preservation when toggling between coordinate spaces
 - **API reference**: Check JSDoc comments in source files
 - **Test smart filtering**: Open browser console when running benchmarks
+- **Coordinate transformation utilities**: `transformBoundsToLogSpace()` and `transformBoundsToLinearSpace()`
 
 ## How Log Scaling Works
 

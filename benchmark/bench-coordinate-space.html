@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WebGL Plot - Coordinate Space & Global Transform Demo</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+        line-height: 1.6;
+      }
+      
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      
+      h1 {
+        color: #ffffff;
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 2.2em;
+        font-weight: 300;
+      }
+      
+      .subtitle {
+        text-align: center;
+        color: #b0b0b0;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+      }
+      
+      .main-content {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 20px;
+        height: 80vh;
+      }
+      
+      .canvas-section {
+        background-color: #2d2d2d;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border: 1px solid #404040;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .canvas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      
+      .canvas-title {
+        font-size: 1.4em;
+        font-weight: 500;
+        color: #ffffff;
+        margin: 0;
+      }
+      
+      .coordinate-indicator {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9em;
+        transition: all 0.3s ease;
+      }
+      
+      .coordinate-indicator.linear {
+        background-color: #0066cc;
+        color: white;
+      }
+      
+      .coordinate-indicator.log {
+        background-color: #ff6b35;
+        color: white;
+      }
+      
+      canvas {
+        border: 2px solid #555;
+        border-radius: 5px;
+        width: 100%;
+        height: 500px;
+        background-color: #000;
+        flex-grow: 1;
+      }
+      
+      .controls-section {
+        background-color: #2d2d2d;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        border: 1px solid #404040;
+        overflow-y: auto;
+      }
+      
+      .control-group {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #404040;
+      }
+      
+      .control-group:last-child {
+        border-bottom: none;
+      }
+      
+      .control-group h3 {
+        margin: 0 0 15px 0;
+        color: #ffffff;
+        font-size: 1.2em;
+        font-weight: 500;
+      }
+      
+      .button-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      
+      button {
+        padding: 12px 18px;
+        border: none;
+        border-radius: 6px;
+        background-color: #0066cc;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        flex: 1;
+        min-width: 120px;
+      }
+      
+      button:hover {
+        background-color: #0052a3;
+        transform: translateY(-1px);
+      }
+      
+      button:active {
+        background-color: #004080;
+        transform: translateY(0);
+      }
+      
+      button.primary {
+        background-color: #ff6b35;
+      }
+      
+      button.primary:hover {
+        background-color: #e55a2b;
+      }
+      
+      button.primary:active {
+        background-color: #cc4a1f;
+      }
+      
+      button.secondary {
+        background-color: #28a745;
+      }
+      
+      button.secondary:hover {
+        background-color: #218838;
+      }
+      
+      button.secondary:active {
+        background-color: #1e7e34;
+      }
+      
+      .status-panel {
+        background-color: #1e1e1e;
+        border-radius: 5px;
+        padding: 15px;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 13px;
+        color: #b0b0b0;
+        border: 1px solid #404040;
+        line-height: 1.5;
+      }
+      
+      .status-panel h4 {
+        margin: 0 0 10px 0;
+        color: #ffffff;
+        font-family: 'Segoe UI', sans-serif;
+        font-size: 14px;
+      }
+      
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        padding: 2px 0;
+      }
+      
+      .status-label {
+        color: #888;
+      }
+      
+      .status-value {
+        color: #00ff88;
+        font-weight: bold;
+      }
+      
+      .explanation {
+        background-color: rgba(0, 102, 204, 0.1);
+        border-left: 4px solid #0066cc;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 0 5px 5px 0;
+        font-size: 14px;
+      }
+      
+      .explanation h4 {
+        margin: 0 0 10px 0;
+        color: #0066cc;
+        font-size: 16px;
+      }
+      
+      .highlight {
+        background-color: rgba(255, 107, 53, 0.2);
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: #ff6b35;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Coordinate Space & Global Transform Demo</h1>
+      <p class="subtitle">Interactive demonstration of view preservation and global transform behavior in linear vs log space</p>
+      
+      <div class="main-content">
+        <div class="canvas-section">
+          <div class="canvas-header">
+            <h3 class="canvas-title">y = log₁₀(x) Function Plot</h3>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <div class="coordinate-indicator linear" id="xAxisIndicator">
+                X: LINEAR
+              </div>
+              <div class="coordinate-indicator linear" id="yAxisIndicator">
+                Y: LINEAR
+              </div>
+            </div>
+          </div>
+          <canvas id="plotCanvas" width="800" height="500"></canvas>
+        </div>
+        
+        <div class="controls-section">
+          <div class="explanation">
+            <h4>📊 What This Demo Shows</h4>
+            <p>This plots <span class="highlight">y = log₁₀(x)</span> from x=0.1 to x=1000:</p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+              <li><strong>Linear X, Linear Y:</strong> Exponential-looking curve</li>
+              <li><strong>Log X, Linear Y:</strong> Logarithmic-looking curve</li>
+              <li><strong>Linear X, Log Y:</strong> Exponential-looking curve</li>
+              <li><strong>Log X, Log Y:</strong> Straight diagonal line</li>
+            </ul>
+            <p>Toggle each axis independently and see how <strong>view preservation</strong> maintains your current zoom/pan!</p>
+          </div>
+          
+          <div class="control-group">
+            <h3>🔄 Coordinate Space</h3>
+            <div class="button-row">
+              <button class="primary" id="toggleXAxis" onclick="toggleXAxis()">
+                X: Switch to Log
+              </button>
+              <button class="primary" id="toggleYAxis" onclick="toggleYAxis()">
+                Y: Switch to Log
+              </button>
+            </div>
+            <div class="button-row">
+              <button class="secondary" onclick="resetView()">
+                Reset View
+              </button>
+            </div>
+          </div>
+          
+          <div class="control-group">
+            <h3>🔍 Zoom Controls</h3>
+            <div class="button-row">
+              <button onclick="zoomIn()">Zoom In (2×)</button>
+              <button onclick="zoomOut()">Zoom Out (0.5×)</button>
+            </div>
+          </div>
+          
+          <div class="control-group">
+            <h3>↔️ Pan Controls</h3>
+            <div class="button-row">
+              <button onclick="panLeft()">← Pan Left</button>
+              <button onclick="panRight()">Pan Right →</button>
+            </div>
+          </div>
+          
+          <div class="control-group">
+            <h3>📊 Current State</h3>
+            <div class="status-panel" id="statusPanel">
+              <h4>Transform Status</h4>
+              <div class="status-row">
+                <span class="status-label">X-Axis:</span>
+                <span class="status-value" id="xAxisSpace">Linear</span>
+              </div>
+              <div class="status-row">
+                <span class="status-label">Y-Axis:</span>
+                <span class="status-value" id="yAxisSpace">Linear</span>
+              </div>
+              <div class="status-row">
+                <span class="status-label">Global Scale:</span>
+                <span class="status-value" id="globalScale">[1.000, 1.000]</span>
+              </div>
+              <div class="status-row">
+                <span class="status-label">Global Offset:</span>
+                <span class="status-value" id="globalOffset">[0.000, 0.000]</span>
+              </div>
+              <div class="status-row">
+                <span class="status-label">View Bounds X:</span>
+                <span class="status-value" id="boundsX">[0.0, 1.0]</span>
+              </div>
+              <div class="status-row">
+                <span class="status-label">View Bounds Y:</span>
+                <span class="status-value" id="boundsY">[0.0, 1.0]</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="control-group">
+            <h3>💡 Instructions</h3>
+            <div style="font-size: 13px; color: #b0b0b0; line-height: 1.6;">
+              <p><strong>1.</strong> Use zoom/pan controls to explore the function</p>
+              <p><strong>2.</strong> Toggle X and/or Y axis coordinate spaces independently - notice the view is preserved!</p>
+              <p><strong>3.</strong> Watch the status panel to see how transforms work differently in each space</p>
+              <p><strong>4.</strong> Open console (F12) for detailed explanations</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./bench-coordinate-space.ts"></script>
+  </body>
+</html>

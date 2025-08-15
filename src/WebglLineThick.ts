@@ -31,6 +31,7 @@ import {
   calculateAutoScaleTransform,
   transformBoundsToLogSpace,
   reverseGlobalTransform,
+  transformBoundsToLinearSpace,
   type DataBounds 
 } from "./LogAxisUtils";
 
@@ -665,11 +666,23 @@ export class WebglLineThick {
   }
 
   /**
-   * Get the data bounds of all enabled lines without changing current coordinate space.
-   * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
+   * Get the data bounds of all enabled lines (for autoscaling purposes).
+   * This returns the complete extent of all data and should be used with autoScale().
+   * For preserving current coordinate space, use getDataBounds() instead.
+   * @returns Object with minX, maxX, minY, maxY of all the data, or null if no valid data
+   */
+  public getAllDataBounds(): DataBounds | null {
+    return this._computeBoundsCPU();
+  }
+
+  /**
+   * Get the data bounds of the current coordinate space (viewport).
+   * This preserves the current zoom/pan when transforming to log space.
+   * Use this with transformToLogSpace() to maintain user's coordinate space.
+   * @returns Object with minX, maxX, minY, maxY of the current view with coordinate space information, or null if invalid transform
    */
   public getDataBounds(): DataBounds | null {
-    return this._computeBoundsCPU();
+    return reverseGlobalTransform(this.globalScale, this.globalOffset, this.logX, this.logY);
   }
 
   /**
@@ -724,7 +737,16 @@ export class WebglLineThick {
       DebugLogger.warn("_computeBoundsCPU: Resulting bounds NaN/Infinity.");
       return null;
     }
-    return { minX, maxX, minY, maxY };
+    return { 
+      minX, 
+      maxX, 
+      minY, 
+      maxY,
+      coordinateSpace: {
+        x: this.logX ? "log" : "linear",
+        y: this.logY ? "log" : "linear",
+      },
+    };
   }
 
   /**
@@ -1083,11 +1105,11 @@ export class WebglLineThick {
    * 
    * **Example Usage:**
    * ```typescript
-   * // Using actual data bounds (recommended)
+   * // Preserve current coordinate space (recommended for maintaining zoom/pan)
    * const bounds = thickPlotter.getDataBounds();
    * thickPlotter.transformToLogSpace(bounds);
    * 
-   * // Using current viewport bounds (legacy)
+   * // Alternative: same result, preserves current coordinate space
    * thickPlotter.transformToLogSpace();
    * ```
    * 
@@ -1110,12 +1132,31 @@ export class WebglLineThick {
       DebugLogger.log(`transformToLogSpace: Using actual data bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
     } else {
       // Fallback: Calculate bounds from current transform (legacy approach)
-      viewBounds = reverseGlobalTransform(this.globalScale, this.globalOffset);
+      viewBounds = reverseGlobalTransform(this.globalScale, this.globalOffset, this.logX, this.logY);
       DebugLogger.log(`transformToLogSpace: Using transform-based bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
     }
 
-    // Transform bounds to log space
-    const logBounds = transformBoundsToLogSpace(viewBounds, this.logX, this.logY);
+    // Check if bounds need coordinate space conversion
+    let linearBounds = viewBounds;
+    
+    // If bounds are in log space but we need linear bounds for transformation
+    if (viewBounds.coordinateSpace) {
+      const needsConversion = (this.logX && viewBounds.coordinateSpace.x === "log") || 
+                             (this.logY && viewBounds.coordinateSpace.y === "log");
+      
+      if (needsConversion) {
+        DebugLogger.log(`transformToLogSpace: Converting bounds from coordinate space X:${viewBounds.coordinateSpace.x}, Y:${viewBounds.coordinateSpace.y} to linear`);
+        linearBounds = transformBoundsToLinearSpace(
+          viewBounds, 
+          viewBounds.coordinateSpace.x === "log", 
+          viewBounds.coordinateSpace.y === "log"
+        );
+        DebugLogger.log(`transformToLogSpace: Linear bounds - X[${linearBounds.minX.toFixed(3)}, ${linearBounds.maxX.toFixed(3)}], Y[${linearBounds.minY.toFixed(3)}, ${linearBounds.maxY.toFixed(3)}]`);
+      }
+    }
+
+    // Transform linear bounds to log space
+    const logBounds = transformBoundsToLogSpace(linearBounds, this.logX, this.logY);
     if (!logBounds) {
       DebugLogger.log("transformToLogSpace: Cannot transform bounds to log space");
       return false;
@@ -1406,5 +1447,21 @@ export class WebglLineThick {
     config.enabled = numPoints > 0;
 
     return config;
+  }
+
+  /**
+   * Get the current global transform scale values.
+   * @returns [scaleX, scaleY] array
+   */
+  public getGlobalScale(): [number, number] {
+    return [this.globalScale[0], this.globalScale[1]];
+  }
+
+  /**
+   * Get the current global transform offset values.
+   * @returns [offsetX, offsetY] array
+   */
+  public getGlobalOffset(): [number, number] {
+    return [this.globalOffset[0], this.globalOffset[1]];
   }
 }

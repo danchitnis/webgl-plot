@@ -5,6 +5,10 @@ export type DataBounds = {
   maxX: number;
   minY: number;
   maxY: number;
+  coordinateSpace: {
+    x: "linear" | "log";
+    y: "linear" | "log";
+  };
 };
 
 const BOUNDS_CALCULATION_EPSILON = 1e-9;
@@ -86,7 +90,16 @@ export function calculateLogAwareBounds(
     return null;
   }
 
-  return { minX, maxX, minY, maxY };
+  return { 
+    minX, 
+    maxX, 
+    minY, 
+    maxY,
+    coordinateSpace: {
+      x: logX ? "log" : "linear",
+      y: logY ? "log" : "linear",
+    },
+  };
 }
 
 /**
@@ -133,10 +146,21 @@ export function calculateAutoScaleTransform(bounds: DataBounds): [number, number
 /**
  * Transforms data bounds from linear space to log space.
  * 
- * @param bounds Linear space bounds
- * @param logX Whether to transform X bounds
- * @param logY Whether to transform Y bounds
- * @returns Transformed bounds or null if transformation not possible
+ * **Usage**: Convert linear coordinate bounds to logarithmic coordinate bounds.
+ * This is used when switching from linear to log axes or when preparing bounds
+ * for log-space calculations.
+ * 
+ * @param bounds Linear space bounds (values in original data units)
+ * @param logX Whether to transform X bounds to log₁₀ space
+ * @param logY Whether to transform Y bounds to log₁₀ space
+ * @returns Log space bounds (log₁₀ values) or null if transformation not possible
+ * 
+ * @example
+ * ```typescript
+ * const linearBounds = { minX: 1, maxX: 1000, minY: 0.1, maxY: 100 };
+ * const logBounds = transformBoundsToLogSpace(linearBounds, true, true);
+ * // Result: { minX: 0, maxX: 3, minY: -1, maxY: 2 }
+ * ```
  */
 export function transformBoundsToLogSpace(
   bounds: DataBounds,
@@ -160,6 +184,48 @@ export function transformBoundsToLogSpace(
     maxX: logX ? Math.log10(maxX) : maxX,
     minY: logY ? Math.log10(minY) : minY,
     maxY: logY ? Math.log10(maxY) : maxY,
+    coordinateSpace: {
+      x: logX ? "log" : bounds.coordinateSpace.x,
+      y: logY ? "log" : bounds.coordinateSpace.y,
+    },
+  };
+}
+
+/**
+ * Transforms data bounds from log space back to linear space.
+ * 
+ * **Usage**: Convert logarithmic coordinate bounds back to linear coordinate bounds.
+ * This is the inverse operation of transformBoundsToLogSpace() and is used when
+ * switching from log back to linear axes while preserving the current view.
+ * 
+ * @param bounds Log space bounds (log₁₀ values)
+ * @param logX Whether X bounds are currently in log₁₀ space and need conversion
+ * @param logY Whether Y bounds are currently in log₁₀ space and need conversion
+ * @returns Linear space bounds (values in original data units)
+ * 
+ * @example
+ * ```typescript
+ * const logBounds = { minX: 0, maxX: 3, minY: -1, maxY: 2 };
+ * const linearBounds = transformBoundsToLinearSpace(logBounds, true, true);
+ * // Result: { minX: 1, maxX: 1000, minY: 0.1, maxY: 100 }
+ * ```
+ */
+export function transformBoundsToLinearSpace(
+  bounds: DataBounds,
+  logX: boolean,
+  logY: boolean
+): DataBounds {
+  const { minX, maxX, minY, maxY } = bounds;
+
+  return {
+    minX: logX ? Math.pow(10, minX) : minX,
+    maxX: logX ? Math.pow(10, maxX) : maxX,
+    minY: logY ? Math.pow(10, minY) : minY,
+    maxY: logY ? Math.pow(10, maxY) : maxY,
+    coordinateSpace: {
+      x: logX ? "linear" : bounds.coordinateSpace.x,
+      y: logY ? "linear" : bounds.coordinateSpace.y,
+    },
   };
 }
 
@@ -168,11 +234,15 @@ export function transformBoundsToLogSpace(
  * 
  * @param globalScale Global scale [scaleX, scaleY]
  * @param globalOffset Global offset [offsetX, offsetY]
- * @returns Data space bounds that map to NDC [-1, 1]
+ * @param logX Whether X axis is in log space
+ * @param logY Whether Y axis is in log space
+ * @returns Data space bounds that map to NDC [-1, 1] with coordinate space information
  */
 export function reverseGlobalTransform(
   globalScale: [number, number],
-  globalOffset: [number, number]
+  globalOffset: [number, number],
+  logX: boolean,
+  logY: boolean
 ): DataBounds {
   const [scaleX, scaleY] = globalScale;
   const [offsetX, offsetY] = globalOffset;
@@ -183,5 +253,14 @@ export function reverseGlobalTransform(
   const minY = (-1 - offsetY) / scaleY;
   const maxY = (1 - offsetY) / scaleY;
 
-  return { minX, maxX, minY, maxY };
+  return { 
+    minX, 
+    maxX, 
+    minY, 
+    maxY,
+    coordinateSpace: {
+      x: logX ? "log" : "linear",
+      y: logY ? "log" : "linear",
+    },
+  };
 }

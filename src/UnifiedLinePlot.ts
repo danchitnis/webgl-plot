@@ -194,35 +194,32 @@ export class UnifiedLinePlot {
   }
 
   /**
-   * Get the data bounds of all enabled lines without changing current coordinate space.
+   * Get the data bounds of the current coordinate space (viewport) with coordinate space information.
+   * This preserves the current zoom/pan when transforming to log space.
    *
-   * **IMPORTANT**: This method preserves your current coordinate space (linear or log).
-   * Choose the right method based on your current coordinate system:
+   * **ENHANCED**: This method now includes coordinate space information for each axis,
+   * eliminating ambiguity about whether bounds are in linear or log space.
    *
    * **Use getDataBounds() when:**
-   * - Data changes and you're already in log coordinate space
-   * - You want bounds without changing current coordinate transformation
-   * - Followed by transformToLogSpace() to rescale in log coordinate space
+   * - You want to preserve current zoom/pan state
+   * - You need to know the coordinate space of the returned bounds
+   * - Followed by transformToLogSpace() which automatically handles coordinate conversion
    *
-   *
-   * @returns Object with minX, maxX, minY, maxY of the actual data, or null if no valid data
+   * @returns Object with minX, maxX, minY, maxY of the current view and coordinateSpace info, or null if no valid data
    *
    * @example
    * ```typescript
-   * // Data update when already in log coordinate space - PRESERVES current coordinate system
-   * const bounds = plotter.getDataBounds(); // No coordinate transformation change
-   * if (bounds) plotter.transformToLogSpace(bounds); // Stay in log coordinate space
+   * // Enhanced API automatically handles coordinate spaces
+   * const bounds = plotter.getDataBounds(); // Returns bounds with coordinate space info
+   * if (bounds) {
+   *   console.log(`X axis in ${bounds.coordinateSpace.x} space, Y axis in ${bounds.coordinateSpace.y} space`);
+   *   plotter.transformToLogSpace(bounds); // Automatically converts coordinate spaces as needed
+   * }
    *
-   * // Compare with autoScale() which would cause visual jumps:
-   * // plotter.autoScale(); // ❌ Resets to linear coordinate space first - causes jumps!
+   * // Works seamlessly in any coordinate mode - no manual conversion needed!
    * ```
    */
-  public getDataBounds(): {
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-  } | null {
+  public getDataBounds(): DataBounds | null {
     if (!this.internalPlotter) {
       return null;
     }
@@ -230,26 +227,48 @@ export class UnifiedLinePlot {
   }
 
   /**
+   * Get the data bounds of all enabled lines (for autoscaling purposes) with coordinate space information.
+   * This returns the complete extent of all data and should be used with autoScale().
+   * For preserving current coordinate space, use getDataBounds() instead.
+   * 
+   * @returns Object with minX, maxX, minY, maxY of all the data and coordinateSpace info, or null if no valid data
+   */
+  public getAllDataBounds(): DataBounds | null {
+    if (!this.internalPlotter) {
+      return null;
+    }
+    return this.internalPlotter.getAllDataBounds();
+  }
+
+  /**
    * Enable or disable logarithmic scaling for X and/or Y axes.
    *
-   * **After calling setLogAxis(), you typically need to rescale:**
-   * - **Enabling log axes**: Use getDataBounds() → transformToLogSpace()
-   * - **Disabling log axes**: Use autoScale() (resets to linear)
+   * **After calling setLogAxis(), you need to apply appropriate scaling:**
+   * 
+   * **For view preservation (recommended):**
+   * 1. Get current bounds: `const bounds = plotter.getDataBounds()`
+   * 2. Convert to linear space if needed: `transformBoundsToLinearSpace(bounds, oldLogX, oldLogY)`
+   * 3. Apply new coordinate space: `transformToLogSpace(linearBounds)` or linear transform
+   * 
+   * **For simple auto-scaling:**
+   * - **Enabling log axes**: Use `getAllDataBounds()` → `transformToLogSpace()`
+   * - **Disabling log axes**: Use `autoScale()` (resets to linear)
    *
    * @param x Enable logarithmic base-10 scaling for X-axis
    * @param y Enable logarithmic base-10 scaling for Y-axis
    *
    * @example
    * ```typescript
-   * // Enabling log Y axis
-   * plotter.setLogAxis(false, true);
-   * const bounds = plotter.getDataBounds(); // Get bounds with smart filtering
+   * // View preservation when toggling axes
+   * const currentBounds = plotter.getDataBounds(); // Current coordinate space
+   * const linearBounds = transformBoundsToLinearSpace(currentBounds, wasLogX, wasLogY);
+   * plotter.setLogAxis(true, false); // Toggle to log X
+   * plotter.transformToLogSpace(linearBounds); // Preserve view
+   *
+   * // Simple auto-scaling approach
+   * plotter.setLogAxis(false, true); // Enable log Y
+   * const bounds = plotter.getAllDataBounds();
    * if (bounds) plotter.transformToLogSpace(bounds);
-   *
-   * // Disabling log axes (back to linear)
-   * plotter.setLogAxis(false, false);
-   * plotter.autoScale(); // Resets to linear - perfect!
-   *
    * ```
    */
   public setLogAxis(x: boolean, y: boolean): void {
@@ -261,33 +280,31 @@ export class UnifiedLinePlot {
   /**
    * Transform data bounds to logarithmic space and apply appropriate scaling.
    *
-   * **IMPORTANT**: Only call this when log axes are enabled via setLogAxis().
-   * This method should be paired with bounds from the correct source:
+   * **ENHANCED**: This method now automatically handles coordinate space conversion.
+   * It detects the coordinate space of input bounds and converts as needed.
    *
    * **Typical usage patterns:**
-   * - **Initial setup**: getDataBounds() → transformToLogSpace()
-   * - **Data updates in log space**: getDataBounds() → transformToLogSpace()
-   * - **Switching to linear**: Don't call this - use autoScale() only
+   * - **Any coordinate mode**: getDataBounds() → transformToLogSpace() (always works!)
+   * - **Initial setup**: getAllDataBounds() → transformToLogSpace()
+   * - **Zoom/pan operations**: getDataBounds() → transformToLogSpace()
    *
-   * @param dataBounds Optional data bounds {minX, maxX, minY, maxY}.
+   * @param dataBounds Optional data bounds with coordinate space information.
    *                   If not provided, will attempt to get bounds from internal plotter.
    * @returns True if log space transformation was applied successfully,
    *          false if transformation not feasible (e.g., no positive data for log axes)
    *
    * @example
    * ```typescript
-   * // Initial setup with log Y axis
-   * plotter.setLogAxis(false, true);
-   * const bounds = plotter.getDataBounds(); // Preserve current coordinate space
-   * const success = plotter.transformToLogSpace(bounds); // Transform to log coordinate space
-   * if (!success) console.log("Failed to transform to log coordinate space - check for positive data");
+   * // Works seamlessly in any coordinate mode
+   * plotter.setLogAxis(false, true); // Enable log Y
+   * const bounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
+   * const success = plotter.transformToLogSpace(bounds); // Automatically handles conversion
+   * if (!success) console.log("Failed to transform - check for positive data");
    *
-   * // Data update when already in log coordinate space
-   * const bounds = plotter.getDataBounds(); // Preserve current coordinate space
-   * if (bounds) plotter.transformToLogSpace(bounds); // Rescale in log coordinate space
-   *
-   * // Without explicit bounds (uses internal bounds)
-   * plotter.transformToLogSpace(); // Uses internal plotter's bounds
+   * // Even works when switching between coordinate spaces
+   * // (bounds might be in log space, but transformToLogSpace handles this automatically)
+   * const currentBounds = plotter.getDataBounds(); 
+   * plotter.transformToLogSpace(currentBounds); // Always works correctly!
    * ```
    */
   public transformToLogSpace(dataBounds?: DataBounds | null): boolean {
@@ -310,5 +327,27 @@ export class UnifiedLinePlot {
       return "WebglLineThick";
     }
     return "null";
+  }
+
+  /**
+   * Get the current global transform scale values.
+   * @returns [scaleX, scaleY] array or [1, 1] if no plotter is initialized
+   */
+  public getGlobalScale(): [number, number] {
+    if (this.internalPlotter) {
+      return this.internalPlotter.getGlobalScale();
+    }
+    return [1, 1];
+  }
+
+  /**
+   * Get the current global transform offset values.
+   * @returns [offsetX, offsetY] array or [0, 0] if no plotter is initialized
+   */
+  public getGlobalOffset(): [number, number] {
+    if (this.internalPlotter) {
+      return this.internalPlotter.getGlobalOffset();
+    }
+    return [0, 0];
   }
 }

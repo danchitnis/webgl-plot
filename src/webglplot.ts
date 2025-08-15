@@ -59,6 +59,13 @@ export {
   DebugLogger,
 };
 
+// Export coordinate transformation utilities
+export {
+  transformBoundsToLogSpace,
+  transformBoundsToLinearSpace,
+  type DataBounds,
+} from "./LogAxisUtils";
+
 // Default export is WebGLHelpers for convenience
 export default WebGLHelpers;
 
