@@ -210,6 +210,10 @@ export class UnifiedLinePlot {
    * - Need simple auto-scaling without changing coordinate spaces
    * - Don't need to preserve current zoom/pan state
    *
+   * **⚠️ WARNING: Do NOT combine autoScale() with coordinate transforms!**
+   * - autoScale() already works in the current coordinate space
+   * - Calling transformToLogSpace() after autoScale() causes double-conversion
+   *
    * **For coordinate space changes, use:**
    * - `transformToLogSpace()` - Switch to or operate in log space
    * - `transformToLinearSpace()` - Switch to or operate in linear space
@@ -218,13 +222,18 @@ export class UnifiedLinePlot {
    *
    * @example
    * ```typescript
-   * // Auto-scale in current coordinate space (doesn't change coordinate system)
-   * plotter.autoScale(); // Works in linear, log, or mixed coordinate spaces
-   * 
-   * // To change coordinate spaces, use transform methods instead:
+   * // ✅ CORRECT: Simple auto-scaling in current coordinate space
    * plotter.setLogAxis(false, true); // Enable log Y
-   * const bounds = plotter.getAllDataBounds();
-   * if (bounds) plotter.transformToLogSpace(bounds); // Proper coordinate space change
+   * plotter.autoScale(); // Auto-scales in log Y space - NO conversion needed!
+   * 
+   * // ❌ WRONG: Don't combine autoScale() with coordinate transforms
+   * // const bounds = plotter.autoScale();
+   * // plotter.transformToLogSpace(bounds); // This causes double-conversion!
+   * 
+   * // ✅ CORRECT: For coordinate space conversion, use getAllDataBounds():
+   * // plotter.setLogAxis(false, true); // Enable log Y
+   * // const bounds = plotter.getAllDataBounds(); // Gets linear data bounds
+   * // if (bounds) plotter.transformToLogSpace(bounds); // Converts to log space
    * ```
    */
   public autoScale(): DataBounds | null {

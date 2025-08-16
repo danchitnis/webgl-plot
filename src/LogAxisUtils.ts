@@ -53,12 +53,13 @@ export function validateLineForLogAxes(
 }
 
 /**
- * Calculates data bounds from points array, filtering invalid values for log axes.
+ * Calculates data bounds from points array in the appropriate coordinate space.
+ * Filters invalid values for log axes and applies log transformation when enabled.
  * 
  * @param points Array of points in [x1,y1,x2,y2,...] format
- * @param logX Whether log X axis is enabled
- * @param logY Whether log Y axis is enabled
- * @returns DataBounds object or null if no valid points found
+ * @param logX Whether log X axis is enabled - returns log10(x) values if true
+ * @param logY Whether log Y axis is enabled - returns log10(y) values if true
+ * @returns DataBounds object in the requested coordinate space, or null if no valid points found
  */
 export function calculateLogAwareBounds(
   points: Float32Array,
@@ -72,12 +73,20 @@ export function calculateLogAwareBounds(
   let foundValidData = false;
 
   for (let i = 0; i < points.length; i += 2) {
-    const x = points[i];
-    const y = points[i + 1];
+    let x = points[i];
+    let y = points[i + 1];
 
     // Skip invalid values for log axes
     if (logX && x <= 0) continue;
     if (logY && y <= 0) continue;
+
+    // Apply log transformation if enabled (to match coordinate space)
+    if (logX && x > 0) {
+      x = Math.log10(x);
+    }
+    if (logY && y > 0) {
+      y = Math.log10(y);
+    }
 
     foundValidData = true;
     if (x < minX) minX = x;
