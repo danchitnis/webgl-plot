@@ -1,14 +1,14 @@
 //import { ColorRGBA } from "./ColorRGBA";
 import type { LineConfig } from "./LineConfig";
 import { DebugLogger } from "./DebugLogger";
-import { 
-  validateLineForLogAxes, 
-  calculateLogAwareBounds, 
+import {
+  validateLineForLogAxes,
+  calculateLogAwareBounds,
   calculateAutoScaleTransform,
   transformBoundsToLogSpace,
   reverseGlobalTransform,
   transformBoundsToLinearSpace,
-  type DataBounds 
+  type DataBounds
 } from "./LogAxisUtils";
 export type { LineConfig }; // Re-export LineConfig
 
@@ -248,7 +248,7 @@ export class WebglLinePlot {
     let colorOffset = 0;
     for (let i = 0; i < this.numLines; i++) {
       const line = this.linesConfig[i];
-      
+
       // Use original points - log transformation now happens on GPU
       allVertexData.set(line.points, vertexOffset);
 
@@ -328,8 +328,8 @@ export class WebglLinePlot {
     if (points.length / 2 !== numPointsInLine) {
       DebugLogger.warn(
         `Number of points in provided data (${points.length / 2}) ` +
-          `does not match existing points in line ${lineId} (${numPointsInLine}). ` +
-          `Cannot change number of points with this method.`
+        `does not match existing points in line ${lineId} (${numPointsInLine}). ` +
+        `Cannot change number of points with this method.`
       );
       return;
     }
@@ -361,7 +361,7 @@ export class WebglLinePlot {
     if (newY.length !== numPointsInLine) {
       DebugLogger.warn(
         `Length of newY array (${newY.length}) does not match ` +
-          `number of points in line ${lineId} (${numPointsInLine}).`
+        `number of points in line ${lineId} (${numPointsInLine}).`
       );
       return;
     }
@@ -428,6 +428,11 @@ export class WebglLinePlot {
     this.linesConfig[lineId].offset = offset;
   }
 
+  /**
+   * Update the thickness for a specific line.
+   * @param lineId ID of the line to update
+   * @param thickness New thickness value for the line
+   */
   public updateLineThickness(lineId: number, thickness: number): void {
     if (lineId < 0 || lineId >= this.numLines) {
       DebugLogger.warn(`Invalid lineId ${lineId} for updateLineThickness`);
@@ -436,6 +441,11 @@ export class WebglLinePlot {
     this.linesConfig[lineId].thickness = thickness;
   }
 
+  /**
+   * Enable or disable rendering for a specific line.
+   * @param lineId ID of the line to enable/disable
+   * @param enabled True to enable rendering, false to disable
+   */
   public setLineEnabled(lineId: number, enabled: boolean): void {
     if (lineId < 0 || lineId >= this.numLines) {
       DebugLogger.warn(`Invalid lineId ${lineId} for setLineEnabled`);
@@ -444,6 +454,47 @@ export class WebglLinePlot {
     this.linesConfig[lineId].enabled = enabled;
   }
 
+  /**
+   * Enable or disable rendering for multiple lines at once.
+   * @param lineIds Array of line IDs to enable/disable
+   * @param enabled True to enable rendering, false to disable
+   */
+  public setMultipleLinesEnabled(lineIds: number[], enabled: boolean): void {
+    for (const lineId of lineIds) {
+      if (lineId >= 0 && lineId < this.numLines) {
+        this.linesConfig[lineId].enabled = enabled;
+      } else {
+        DebugLogger.warn(`Invalid lineId ${lineId} in setMultipleLinesEnabled`);
+      }
+    }
+  }
+
+  /**
+   * Update transform parameters for multiple lines at once.
+   * @param lineIds Array of line IDs to update
+   * @param scale Scale factors [scaleX, scaleY]
+   * @param offset Offset values [offsetX, offsetY]
+   */
+  public updateMultipleLinesTransform(
+    lineIds: number[],
+    scale: [number, number],
+    offset: [number, number]
+  ): void {
+    for (const lineId of lineIds) {
+      if (lineId >= 0 && lineId < this.numLines) {
+        this.linesConfig[lineId].scale = [scale[0], scale[1]];
+        this.linesConfig[lineId].offset = [offset[0], offset[1]];
+      } else {
+        DebugLogger.warn(`Invalid lineId ${lineId} in updateMultipleLinesTransform`);
+      }
+    }
+  }
+
+  /**
+   * Set the global transformation matrix for the plot.
+   * @param scale Global scale factors [scaleX, scaleY] 
+   * @param offset Global offset values [offsetX, offsetY]
+   */
   public setGlobalTransform(
     scale: [number, number],
     offset: [number, number]
@@ -551,17 +602,17 @@ export class WebglLinePlot {
 
     // Check if bounds need coordinate space conversion
     let linearBounds = viewBounds;
-    
+
     // If bounds are in log space but we need linear bounds for transformation
     if (viewBounds.coordinateSpace) {
-      const needsConversion = (this.logX && viewBounds.coordinateSpace.x === "log") || 
-                             (this.logY && viewBounds.coordinateSpace.y === "log");
-      
+      const needsConversion = (this.logX && viewBounds.coordinateSpace.x === "log") ||
+        (this.logY && viewBounds.coordinateSpace.y === "log");
+
       if (needsConversion) {
         DebugLogger.log(`transformToLogSpace: Converting bounds from coordinate space X:${viewBounds.coordinateSpace.x}, Y:${viewBounds.coordinateSpace.y} to linear`);
         linearBounds = transformBoundsToLinearSpace(
-          viewBounds, 
-          viewBounds.coordinateSpace.x === "log", 
+          viewBounds,
+          viewBounds.coordinateSpace.x === "log",
           viewBounds.coordinateSpace.y === "log"
         );
         DebugLogger.log(`transformToLogSpace: Linear bounds - X[${linearBounds.minX.toFixed(3)}, ${linearBounds.maxX.toFixed(3)}], Y[${linearBounds.minY.toFixed(3)}, ${linearBounds.maxY.toFixed(3)}]`);
@@ -580,6 +631,80 @@ export class WebglLinePlot {
     this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
 
     DebugLogger.log(`transformToLogSpace: Applied new transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
+    return true;
+  }
+
+  /**
+   * Transform data bounds to linear space and apply appropriate scaling.
+   *
+   * **ENHANCED**: This method automatically handles coordinate space conversion.
+   * It detects the coordinate space of input bounds and converts as needed.
+   *
+   * **Typical usage patterns:**
+   * - **Switching to linear axes**: `getDataBounds()` → `transformToLinearSpace()` (preserves view)
+   * - **Zoom/pan in linear space**: `getDataBounds()` → `transformToLinearSpace()`
+   * - **Initial linear setup**: `getAllDataBounds()` → `transformToLinearSpace()`
+   *
+   * @param dataBounds Optional data bounds with coordinate space information.
+   *                   If not provided, will attempt to get bounds from current transform.
+   * @returns True if linear space transformation was applied successfully,
+   *          false if transformation not feasible
+   *
+   * @example
+   * ```typescript
+   * // Switching from log to linear axes while preserving view
+   * const bounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
+   * plotter.setLogAxis(false, false); // Switch to linear axes
+   * const success = plotter.transformToLinearSpace(bounds); // Preserves current view
+   * 
+   * // Works seamlessly from any coordinate mode
+   * const currentBounds = plotter.getDataBounds(); 
+   * plotter.transformToLinearSpace(currentBounds); // Always handles conversion correctly!
+   * ```
+   */
+  public transformToLinearSpace(dataBounds?: DataBounds | null): boolean {
+    let viewBounds: DataBounds;
+
+    if (dataBounds) {
+      // Use actual data bounds (recommended approach)
+      viewBounds = dataBounds;
+      DebugLogger.log(`transformToLinearSpace: Using actual data bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+    } else {
+      // Fallback: Calculate bounds from current transform
+      viewBounds = reverseGlobalTransform(this.globalScale, this.globalOffset, this.logX, this.logY);
+      DebugLogger.log(`transformToLinearSpace: Using transform-based bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+    }
+
+    // Check if bounds need coordinate space conversion
+    let linearBounds = viewBounds;
+
+    // If bounds are in log space, convert them to linear space first
+    if (viewBounds.coordinateSpace) {
+      const needsConversion = (viewBounds.coordinateSpace.x === "log") ||
+        (viewBounds.coordinateSpace.y === "log");
+
+      if (needsConversion) {
+        DebugLogger.log(`transformToLinearSpace: Converting bounds from coordinate space X:${viewBounds.coordinateSpace.x}, Y:${viewBounds.coordinateSpace.y} to linear`);
+        linearBounds = transformBoundsToLinearSpace(
+          viewBounds,
+          viewBounds.coordinateSpace.x === "log",
+          viewBounds.coordinateSpace.y === "log"
+        );
+        DebugLogger.log(`transformToLinearSpace: Converted bounds - X[${linearBounds.minX.toFixed(3)}, ${linearBounds.maxX.toFixed(3)}], Y[${linearBounds.minY.toFixed(3)}, ${linearBounds.maxY.toFixed(3)}]`);
+      }
+    }
+
+    // Ensure coordinate space is set to linear
+    linearBounds.coordinateSpace = {
+      x: "linear",
+      y: "linear",
+    };
+
+    // Calculate and apply linear transform
+    const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(linearBounds);
+    this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
+
+    DebugLogger.log(`transformToLinearSpace: Applied linear transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
     return true;
   }
 
@@ -606,16 +731,16 @@ export class WebglLinePlot {
       if (!line.enabled || line.points.length === 0) {
         continue;
       }
-      
+
       const points = line.points;
-      
+
       // Use shared utility for validation
       const validation = validateLineForLogAxes(points, this.logX, this.logY);
       if (!validation.isValid) {
         DebugLogger.log(`getAllDataBounds: Skipping line ${i} - only ${validation.validPointCount}/${validation.totalPoints} (${(validation.validRatio * 100).toFixed(1)}%) points valid for log axes`);
         continue;
       }
-      
+
       foundEnabledData = true;
 
       // Use shared utility for bounds calculation
@@ -638,10 +763,10 @@ export class WebglLinePlot {
       return null;
     }
 
-    return { 
-      minX, 
-      maxX, 
-      minY, 
+    return {
+      minX,
+      maxX,
+      minY,
       maxY,
       coordinateSpace: {
         x: this.logX ? "log" as const : "linear" as const,
@@ -660,6 +785,35 @@ export class WebglLinePlot {
     return reverseGlobalTransform(this.globalScale, this.globalOffset, this.logX, this.logY);
   }
 
+  /**
+   * Auto-scale to fit all enabled lines in the current coordinate space.
+   *
+   * **IMPORTANT**: This method operates within the current coordinate space (linear or log)
+   * and does NOT change coordinate spaces. It calculates bounds appropriate for the current
+   * axis configuration and applies the transform.
+   *
+   * **Use autoScale() when:**
+   * - Want to fit all data in the current coordinate space
+   * - Need simple auto-scaling without changing coordinate spaces
+   * - Don't need to preserve current zoom/pan state
+   *
+   * **For coordinate space changes, use:**
+   * - `transformToLogSpace()` - Switch to or operate in log space
+   * - `transformToLinearSpace()` - Switch to or operate in linear space
+   *
+   * @returns DataBounds object with calculated bounds in current coordinate space, or null if no valid data
+   *
+   * @example
+   * ```typescript
+   * // Auto-scale in current coordinate space (doesn't change coordinate system)
+   * plotter.autoScale(); // Works in linear, log, or mixed coordinate spaces
+   * 
+   * // To change coordinate spaces, use transform methods instead:
+   * plotter.setLogAxis(false, true); // Enable log Y
+   * const bounds = plotter.getAllDataBounds();
+   * if (bounds) plotter.transformToLogSpace(bounds); // Proper coordinate space change
+   * ```
+   */
   public autoScale(): DataBounds | null {
     if (this.numLines === 0) {
       DebugLogger.warn("No lines to auto-scale.");
@@ -680,22 +834,22 @@ export class WebglLinePlot {
       if (!line.enabled || line.points.length === 0) {
         continue;
       }
-      
+
       const points = line.points;
-      
+
       // Use shared utility for validation
       const validation = validateLineForLogAxes(points, this.logX, this.logY);
       if (!validation.isValid) {
-        DebugLogger.log(`autoScale: Skipping line ${i} - only ${validation.validPointCount}/${validation.totalPoints} (${(validation.validRatio*100).toFixed(1)}%) points valid for log axes`);
+        DebugLogger.log(`autoScale: Skipping line ${i} - only ${validation.validPointCount}/${validation.totalPoints} (${(validation.validRatio * 100).toFixed(1)}%) points valid for log axes`);
         continue;
       }
-      
+
       foundEnabledData = true;
 
       for (let j = 0; j < points.length; j += 2) {
         let x = points[j];
         let y = points[j + 1];
-        
+
         // Apply log transformation if enabled (same as GPU)
         if (this.logX) {
           if (x > 0) {
@@ -711,11 +865,11 @@ export class WebglLinePlot {
             continue; // Skip negative/zero values for log Y axis
           }
         }
-        
+
         // Apply line transforms
         x = x * scale[0] + offset[0];
         y = y * scale[1] + offset[1];
-        
+
         if (x < minX) minX = x;
         if (x > maxX) maxX = x;
         if (y < minY) minY = y;
@@ -737,10 +891,10 @@ export class WebglLinePlot {
       return null;
     }
 
-    const bounds = { 
-      minX, 
-      maxX, 
-      minY, 
+    const bounds = {
+      minX,
+      maxX,
+      minY,
       maxY,
       coordinateSpace: {
         x: this.logX ? "log" as const : "linear" as const,
@@ -748,7 +902,7 @@ export class WebglLinePlot {
       },
     };
     const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(bounds);
-    
+
     DebugLogger.log(
       `AutoScale Results: Bounds [${minX.toFixed(3)}, ${maxX.toFixed(
         3
@@ -796,7 +950,7 @@ export class WebglLinePlot {
       this.globalOffset[0],
       this.globalOffset[1]
     );
-    
+
     // Set log axis uniforms - use local log axis properties
     gl.uniform2f(
       this.locations.u_log_axis,

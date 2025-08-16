@@ -7,13 +7,13 @@ A high-performance 2D WebGL plotting library for real-time data visualization.
 ### Basic Setup
 
 ```typescript
-import { setupCanvasAndWebGL, UnifiedLinePlot, clearCanvas } from 'webgl-plot';
+import { setupCanvasAndWebGL, UnifiedLinePlot, clearCanvas } from "webgl-plot";
 
 // Setup canvas and WebGL context
-const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+const canvas = document.getElementById("canvas") as HTMLCanvasElement;
 const gl = setupCanvasAndWebGL(canvas, {
   backgroundColor: [0, 0, 0, 1], // Black background
-  antialias: true
+  antialias: true,
 });
 
 // Create a unified line plotter (automatically chooses thin/thick rendering)
@@ -25,8 +25,8 @@ plotter.initLines([
     points: new Float32Array([0, 0, 1, 1, 2, 0.5]), // x1,y1, x2,y2, x3,y3...
     color: [1, 0, 0, 1], // Red
     thickness: 2.0,
-    enabled: true
-  }
+    enabled: true,
+  },
 ]);
 
 // Render loop
@@ -45,10 +45,11 @@ render();
 Unlike many WebGL libraries, webgl-plot v2 requires you to manage the WebGL2 context directly:
 
 - **You create the context**: `canvas.getContext('webgl2')` or use helpers
-- **You handle canvas clearing**: `gl.clear()` or use `clearCanvas()`  
+- **You handle canvas clearing**: `gl.clear()` or use `clearCanvas()`
 - **You manage the render loop**: `requestAnimationFrame()` with your draw calls
 
 This approach gives you:
+
 - Full control over WebGL state
 - Better integration with React/Vue/other frameworks
 - Ability to mix multiple plotter types on same canvas
@@ -57,29 +58,29 @@ This approach gives you:
 ### Canvas Setup
 
 ```typescript
-import { setupCanvas, createWebGL2Context } from 'webgl-plot';
+import { setupCanvas, createWebGL2Context } from "webgl-plot";
 
-const canvas = document.getElementById('canvas');
+const canvas = document.getElementById("canvas");
 
 // Method 1: Manual setup
 setupCanvas(canvas); // Handles device pixel ratio
 const gl = createWebGL2Context(canvas, {
   antialias: true,
-  powerPerformance: 'high-performance'
+  powerPerformance: "high-performance",
 });
 
 // Method 2: Combined setup (recommended)
 const gl = setupCanvasAndWebGL(canvas, {
   backgroundColor: [0.1, 0.1, 0.2, 1],
   antialias: true,
-  devicePixelRatio: window.devicePixelRatio
+  devicePixelRatio: window.devicePixelRatio,
 });
 ```
 
 ### Canvas Clearing and Background
 
 ```typescript
-import { setBackgroundColor, clearCanvas } from 'webgl-plot';
+import { setBackgroundColor, clearCanvas } from "webgl-plot";
 
 // Set background color
 setBackgroundColor(gl, [0.1, 0.1, 0.2, 1]); // Dark blue
@@ -97,23 +98,23 @@ clearCanvas(gl, [1, 1, 1, 1]); // Clear with white background
 Automatically chooses between thin and thick line rendering based on line thickness.
 
 ```typescript
-import { UnifiedLinePlot } from 'webgl-plot';
+import { UnifiedLinePlot } from "webgl-plot";
 
 const plotter = new UnifiedLinePlot(gl, 20); // Max 20 lines
 
 plotter.initLines([
   {
     points: new Float32Array([0, 0, 1, 1, 2, 0]),
-    color: [1, 0, 0, 1], 
+    color: [1, 0, 0, 1],
     thickness: 1.0, // → Uses thin renderer (high performance)
-    enabled: true
+    enabled: true,
   },
   {
     points: new Float32Array([0, 0.5, 1, 1.5, 2, 0.5]),
     color: [0, 1, 0, 1],
     thickness: 3.0, // → Uses thick renderer (all lines in this plotter)
-    enabled: true
-  }
+    enabled: true,
+  },
 ]);
 
 // Update individual lines
@@ -129,7 +130,7 @@ plotter.draw();
 High-performance thin lines (1 pixel width) using native WebGL lines.
 
 ```typescript
-import { WebglLinePlot } from 'webgl-plot';
+import { WebglLinePlot } from "webgl-plot";
 
 const thinPlotter = new WebglLinePlot(gl, 50);
 
@@ -138,8 +139,8 @@ thinPlotter.initLines([
     points: new Float32Array([0, 0, 1, 1, 2, 0.5]),
     color: [1, 0, 0, 1],
     thickness: 1.0, // Always 1.0 for thin lines
-    enabled: true
-  }
+    enabled: true,
+  },
 ]);
 
 thinPlotter.draw();
@@ -150,7 +151,7 @@ thinPlotter.draw();
 Feature-rich thick lines with proper joins and end caps.
 
 ```typescript
-import { WebglLineThick } from 'webgl-plot';
+import { WebglLineThick } from "webgl-plot";
 
 const thickPlotter = new WebglLineThick(gl, 10);
 
@@ -159,8 +160,8 @@ thickPlotter.initLines([
     points: new Float32Array([0, 0, 1, 1, 2, 0.5]),
     color: [0, 1, 0, 1],
     thickness: 5.0, // Any thickness > 1.0
-    enabled: true
-  }
+    enabled: true,
+  },
 ]);
 
 thickPlotter.draw();
@@ -171,7 +172,7 @@ thickPlotter.draw();
 High-performance scatter plots with color-coded points.
 
 ```typescript
-import { WebglScatterAcc } from 'webgl-plot';
+import { WebglScatterAcc } from "webgl-plot";
 
 const scatterPlotter = new WebglScatterAcc(gl, 100000); // Max 100k points
 
@@ -180,14 +181,23 @@ scatterPlotter.setColor([1, 1, 0, 1]); // Yellow base color
 
 // Add scattered points
 const positions = new Float32Array([
-  -0.5, -0.5,  // x1, y1
-   0.5, -0.5,  // x2, y2
-   0.0,  0.5   // x3, y3
+  -0.5,
+  -0.5, // x1, y1
+  0.5,
+  -0.5, // x2, y2
+  0.0,
+  0.5, // x3, y3
 ]);
 const colors = new Uint8Array([
-  255, 0, 0,   // Red
-  0, 255, 0,   // Green
-  0, 0, 255    // Blue
+  255,
+  0,
+  0, // Red
+  0,
+  255,
+  0, // Green
+  0,
+  0,
+  255, // Blue
 ]);
 
 scatterPlotter.addSquare(positions, colors);
@@ -199,24 +209,27 @@ scatterPlotter.draw();
 Filled and stroked polygon rendering.
 
 ```typescript
-import { WebglPolygonPlot } from 'webgl-plot';
+import { WebglPolygonPlot } from "webgl-plot";
 
 const polyPlotter = new WebglPolygonPlot(gl);
 
 polyPlotter.initPolygons([
   {
     points: new Float32Array([
-      -0.5, -0.5,  // Triangle vertices
-       0.5, -0.5,
-       0.0,  0.5
+      -0.5,
+      -0.5, // Triangle vertices
+      0.5,
+      -0.5,
+      0.0,
+      0.5,
     ]),
     fillColor: [1, 0, 0, 0.5], // Semi-transparent red
     strokeColor: [1, 1, 1, 1], // White outline
     strokeWeight: 2.0,
     isFilled: true,
     isStroked: true,
-    enabled: true
-  }
+    enabled: true,
+  },
 ]);
 
 polyPlotter.draw();
@@ -240,15 +253,46 @@ plotter.updateLineTransform(0, [1.0, 2.0], [0.0, 0.1]); // Line-specific transfo
 // Enable log scaling
 plotter.setLogAxis(true, true); // logX, logY
 
-// Auto-scale to fit log data
-const success = plotter.transformToLogSpace();
-if (success) {
-  console.log('Log scaling applied successfully');
+// Symmetric transform API - works in both directions
+plotter.setLogAxis(false, true); // Enable log Y only
+const bounds = plotter.getAllDataBounds(); // Gets all data bounds
+if (bounds) {
+  const success = plotter.transformToLogSpace(bounds); // Transform to log space
+  if (success) {
+    console.log("Log scaling applied successfully");
+  }
 }
 
-// Get data bounds for manual scaling
+// Switch back to linear while preserving view
+const currentBounds = plotter.getDataBounds(); // Get current viewport
+plotter.setLogAxis(false, false); // Disable log axes
+if (currentBounds) {
+  const success = plotter.transformToLinearSpace(currentBounds); // New symmetric API!
+  if (success) {
+    console.log("Linear scaling applied successfully");
+  }
+}
+
+// Data bounds now include coordinate space information
 const bounds = plotter.getDataBounds();
-console.log('Data range:', bounds); // {minX, maxX, minY, maxY}
+console.log("Data range:", bounds);
+// Returns: {minX, maxX, minY, maxY, coordinateSpace: {x: "linear"|"log", y: "linear"|"log"}}
+```
+
+### Bulk Operations
+
+For performance when updating many lines at once:
+
+```typescript
+// Enable/disable multiple lines efficiently
+plotter.setMultipleLinesEnabled([0, 1, 2, 3], false); // Disable lines 0-3
+
+// Update transforms for multiple lines
+plotter.updateMultipleLinesTransform(
+  [0, 2, 4], // Line IDs to update
+  [2.0, 1.5], // Scale factors [scaleX, scaleY]
+  [0.1, -0.2] // Offsets [offsetX, offsetY]
+);
 ```
 
 ### Auto-scaling
@@ -259,15 +303,15 @@ plotter.autoScale();
 
 // Get current line configuration
 const config = plotter.getLineConfig(0);
-console.log('Line 0 config:', config);
+console.log("Line 0 config:", config);
 ```
 
 ## Multiple Plotters on Same Canvas
 
 ```typescript
-import { clearCanvas, UnifiedLinePlot, WebglScatterAcc } from 'webgl-plot';
+import { clearCanvas, UnifiedLinePlot, WebglScatterAcc } from "webgl-plot";
 
-const canvas = document.getElementById('canvas');
+const canvas = document.getElementById("canvas");
 const gl = setupCanvasAndWebGL(canvas, { backgroundColor: [0, 0, 0, 1] });
 
 // Create multiple plotters sharing the same WebGL context
@@ -275,17 +319,19 @@ const linePlotter = new UnifiedLinePlot(gl, 10);
 const scatterPlotter = new WebglScatterAcc(gl, 1000);
 
 // Initialize data for each plotter
-linePlotter.initLines([/* line data */]);
+linePlotter.initLines([
+  /* line data */
+]);
 scatterPlotter.addSquare(positions, colors);
 
 // Render all plotters
 function render() {
   clearCanvas(gl); // Clear once
-  
+
   // Draw all plotters in desired order
   scatterPlotter.draw(); // Background layer
-  linePlotter.draw();    // Foreground layer
-  
+  linePlotter.draw(); // Foreground layer
+
   requestAnimationFrame(render);
 }
 render();
@@ -296,8 +342,8 @@ render();
 ### React Usage
 
 ```typescript
-import React, { useEffect, useRef } from 'react';
-import { setupCanvasAndWebGL, UnifiedLinePlot, clearCanvas } from 'webgl-plot';
+import React, { useEffect, useRef } from "react";
+import { setupCanvasAndWebGL, UnifiedLinePlot, clearCanvas } from "webgl-plot";
 
 const PlotComponent: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -309,7 +355,7 @@ const PlotComponent: React.FC = () => {
 
     // Setup once
     const gl = setupCanvasAndWebGL(canvasRef.current, {
-      backgroundColor: [0.1, 0.1, 0.2, 1]
+      backgroundColor: [0.1, 0.1, 0.2, 1],
     });
     glRef.current = gl;
 
@@ -321,8 +367,8 @@ const PlotComponent: React.FC = () => {
         points: new Float32Array([0, 0, 1, 1, 2, 0.5]),
         color: [1, 0, 0, 1],
         thickness: 2.0,
-        enabled: true
-      }
+        enabled: true,
+      },
     ]);
 
     // Render loop
@@ -349,11 +395,11 @@ const PlotComponent: React.FC = () => {
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return <canvas ref={canvasRef} style={{ width: '100%', height: '400px' }} />;
+  return <canvas ref={canvasRef} style={{ width: "100%", height: "400px" }} />;
 };
 ```
 
@@ -405,9 +451,9 @@ onUnmounted(() => {
 ```typescript
 // Use high-performance WebGL context
 const gl = createWebGL2Context(canvas, {
-  powerPerformance: 'high-performance',
+  powerPerformance: "high-performance",
   antialias: false, // Disable for better performance
-  transparent: false // Opaque contexts perform better
+  transparent: false, // Opaque contexts perform better
 });
 
 // For thin lines, use WebglLinePlot directly
@@ -447,11 +493,14 @@ function generateData() {
 function render() {
   // Update data at 60fps
   const newData = generateData();
-  plotter.updateLineY(0, newData.filter((_, i) => i % 2 === 1)); // Y values only
+  plotter.updateLineY(
+    0,
+    newData.filter((_, i) => i % 2 === 1)
+  ); // Y values only
 
   clearCanvas(gl);
   plotter.draw();
-  
+
   frameCount++;
   requestAnimationFrame(render);
 }
@@ -462,6 +511,7 @@ function render() {
 ### Common Issues
 
 **Canvas appears black:**
+
 ```typescript
 // Ensure canvas is sized properly
 setupCanvas(canvas);
@@ -470,6 +520,7 @@ setBackgroundColor(gl, [1, 1, 1, 1]); // White background
 ```
 
 **Lines not appearing:**
+
 ```typescript
 // Check if lines are enabled
 plotter.setLineEnabled(0, true);
@@ -478,6 +529,7 @@ plotter.setGlobalTransform([1, 1], [0, 0]);
 ```
 
 **Performance issues:**
+
 ```typescript
 // Use appropriate plotter type
 const thinPlotter = new WebglLinePlot(gl, maxLines); // For thin lines only
@@ -486,14 +538,15 @@ const gl = createWebGL2Context(canvas, { antialias: false });
 ```
 
 **WebGL context lost:**
+
 ```typescript
-canvas.addEventListener('webglcontextlost', (e) => {
+canvas.addEventListener("webglcontextlost", (e) => {
   e.preventDefault();
-  console.log('WebGL context lost');
+  console.log("WebGL context lost");
 });
 
-canvas.addEventListener('webglcontextrestored', () => {
-  console.log('WebGL context restored');
+canvas.addEventListener("webglcontextrestored", () => {
+  console.log("WebGL context restored");
   // Recreate plotters and reload data
 });
 ```
@@ -501,7 +554,7 @@ canvas.addEventListener('webglcontextrestored', () => {
 ### Debug Mode
 
 ```typescript
-import { DebugLogger } from 'webgl-plot';
+import { DebugLogger } from "webgl-plot";
 
 // Enable debug logging
 DebugLogger.setDebugMode(true);
@@ -509,7 +562,7 @@ DebugLogger.setDebugMode(true);
 // Check for WebGL errors
 const error = gl.getError();
 if (error !== gl.NO_ERROR) {
-  console.error('WebGL Error:', error);
+  console.error("WebGL Error:", error);
 }
 ```
 
@@ -518,13 +571,15 @@ if (error !== gl.NO_ERROR) {
 See individual class documentation and TypeScript definitions for complete API details.
 
 ### Core Classes
+
 - `UnifiedLinePlot` - Smart line plotter (recommended)
 - `WebglLinePlot` - Thin lines only
-- `WebglLineThick` - Thick lines only  
+- `WebglLineThick` - Thick lines only
 - `WebglScatterAcc` - Scatter plots
 - `WebglPolygonPlot` - Polygon rendering
 
 ### Helper Functions
+
 - `setupCanvas()` - Canvas dimension setup
 - `createWebGL2Context()` - WebGL context creation
 - `setupCanvasAndWebGL()` - Combined setup
@@ -533,6 +588,7 @@ See individual class documentation and TypeScript definitions for complete API d
 - `handleCanvasResize()` - Resize handling
 
 ### Types
+
 - `LineConfig` - Line configuration interface
 - `PolygonConfig` - Polygon configuration interface
 - `WebGL2ContextOptions` - WebGL context options

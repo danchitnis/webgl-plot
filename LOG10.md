@@ -2,8 +2,6 @@
 
 The webgl-plot library provides GPU-accelerated logarithmic scaling for both X and Y axes, enabling high-performance visualization of exponential, power-law, and wide-range scientific data.
 
-**✨ Enhanced in v2**: Coordinate-space aware API eliminates confusion about linear vs log bounds.
-
 ## 🚀 Quick Start
 
 ```typescript
@@ -36,10 +34,14 @@ if (bounds) {
 
 // Render loop
 function animate() {
-  // When data changes during animation, use getDataBounds() instead:
+  // When data changes during animation, preserve current zoom/pan with getDataBounds():
   // const bounds = plotter.getDataBounds();
   // if (bounds) plotter.transformToLogSpace(bounds);
-  
+  //
+  // Or to auto-scale to fit all data when data changes:
+  // const bounds = plotter.getAllDataBounds();
+  // if (bounds) plotter.transformToLogSpace(bounds);
+
   clearCanvas(gl);
   plotter.draw();
   requestAnimationFrame(animate);
@@ -51,20 +53,23 @@ animate();
 
 ### Enhanced Coordinate-Space Aware API (v2)
 
-**✨ NEW**: All bounds methods now include coordinate space information, eliminating ambiguity:
+All bounds methods now include coordinate space information, eliminating ambiguity:
 
 ```typescript
 const bounds = plotter.getDataBounds();
 // Returns: { minX, maxX, minY, maxY, coordinateSpace: { x: "linear"|"log", y: "linear"|"log" } }
 
 if (bounds) {
-  console.log(`X axis in ${bounds.coordinateSpace.x} space, Y axis in ${bounds.coordinateSpace.y} space`);
+  console.log(
+    `X axis in ${bounds.coordinateSpace.x} space, Y axis in ${bounds.coordinateSpace.y} space`
+  );
   // transformToLogSpace automatically handles coordinate conversion based on coordinateSpace info
   plotter.transformToLogSpace(bounds); // Always works correctly!
 }
 ```
 
 **Benefits:**
+
 - ✅ **No more guesswork**: Always know what coordinate space bounds are in
 - ✅ **Automatic conversion**: `transformToLogSpace()` handles coordinate space conversion
 - ✅ **Works in any mode**: Linear, log, or mixed coordinate spaces
@@ -81,17 +86,70 @@ plotter.setLogAxis(false, false); // Disable log scaling
 ```
 
 **Key Features:**
+
 - ✅ **GPU-accelerated**: Transformation happens on GPU for real-time performance
 - ✅ **No reinitialization**: Changes apply immediately without data reprocessing
 - ✅ **Smart filtering**: Negative/zero values automatically moved off-screen
 - ✅ **Zoom-independent**: Works correctly at any zoom level
 
+### Transform Methods: Symmetric API
+
+The library now provides symmetric transform methods for both coordinate spaces:
+
+#### `transformToLogSpace(dataBounds?: DataBounds | null)`
+
+Transform data bounds to logarithmic space and apply appropriate scaling.
+
+```typescript
+// Enable log axes and transform
+plotter.setLogAxis(false, true); // Enable log Y
+const bounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
+const success = plotter.transformToLogSpace(bounds); // Preserves current view
+```
+
+#### `transformToLinearSpace(dataBounds?: DataBounds | null)`
+
+Transform data bounds to linear space and apply appropriate scaling.
+
+```typescript
+// Switch to linear axes while preserving view
+const bounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
+plotter.setLogAxis(false, false); // Switch to linear axes
+const success = plotter.transformToLinearSpace(bounds); // Preserves current view
+```
+
+**Key Benefits of Symmetric API:**
+
+- ✅ **View preservation**: Both methods preserve zoom/pan when switching coordinate spaces
+- ✅ **Automatic conversion**: Handles coordinate space conversion seamlessly
+- ✅ **Consistent interface**: Same usage pattern for both log and linear transforms
+- ✅ **Error handling**: Both return boolean success indicators
+- ✅ **Bulk operations**: Both plotters support bulk line updates for performance
+
+### Bulk Operations API
+
+For performance optimization when updating many lines at once:
+
+```typescript
+// Enable/disable multiple lines at once
+plotter.setMultipleLinesEnabled([0, 1, 2], false); // Disable lines 0, 1, 2
+
+// Update transform for multiple lines
+plotter.updateMultipleLinesTransform(
+  [0, 2, 4], // Line IDs
+  [2.0, 1.5], // Scale factors
+  [0.1, -0.2] // Offsets
+);
+```
+
 ### Scaling Methods: Enhanced and Simplified
 
-**✨ ENHANCED**: Both methods now include coordinate space information, making usage much clearer:
+Both methods include coordinate space information, making usage much clearer:
 
-#### 1. Autoscaling to Fit All Data  
+#### 1. Autoscaling to Fit All Data
+
 Use `getAllDataBounds()` → `transformToLogSpace()` when:
+
 - First enabling log axes
 - Want to fit all data in view
 - Switching between linear/log modes
@@ -102,13 +160,15 @@ Use `getAllDataBounds()` → `transformToLogSpace()` when:
 plotter.setLogAxis(false, true);
 const bounds = plotter.getAllDataBounds(); // Gets bounds of ALL data with coordinate space info
 if (bounds) {
-  // Enhanced API: automatically handles any coordinate space conversion needed
+  // automatically handles any coordinate space conversion needed
   plotter.transformToLogSpace(bounds);
 }
 ```
 
 #### 2. Preserving Current View (Zoom/Pan State)
+
 Use `getDataBounds()` → `transformToLogSpace()` when:
+
 - Data changes during runtime but want to keep current zoom/pan
 - Already viewing a specific region and want to maintain it
 - Zoom/pan operations in any coordinate space
@@ -122,11 +182,10 @@ if (bounds) {
 }
 ```
 
-#### 3. View Preservation When Switching Coordinate Spaces ✨ ENHANCED
-The new API makes coordinate space transitions seamless:
+#### 3. View Preservation When Switching Coordinate Spaces
 
 ```typescript
-// Enhanced API: Switching coordinate spaces while preserving view
+// Switching coordinate spaces while preserving view
 const currentBounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
 // No manual conversion needed! The bounds include coordinate space information
 
@@ -136,20 +195,18 @@ if (currentBounds) {
   plotter.transformToLogSpace(currentBounds); // View preserved automatically!
 }
 
-// Switching back to linear
+// Switching back to linear - NOW WITH SYMMETRIC API!
 plotter.setLogAxis(false, false); // Switch to linear axes
 if (currentBounds) {
-  // For linear mode, you may want to use autoScale() or manual transform
-  plotter.autoScale(); // Auto-scale to fit all data
-  // OR preserve specific bounds with manual linear transform
+  // Use the new transformToLinearSpace method to preserve view
+  plotter.transformToLinearSpace(currentBounds); // View preserved automatically!
+  // OR use autoScale() if you want to fit all data instead of preserving view
+  // plotter.autoScale(); // Auto-scale to fit all data in current coordinate space
 }
-
-// The old manual approach is no longer needed:
-// ❌ No more: transformBoundsToLinearSpace(bounds, wasLogX, wasLogY)
-// ✅ Enhanced API handles this automatically based on coordinateSpace info
 ```
 
 **Why this distinction matters:**
+
 - `getAllDataBounds()` returns complete data extent → autoscales to fit all data
 - `getDataBounds()` returns current viewport bounds → preserves zoom/pan state
 - Choose based on whether you want to autoscale or maintain current view
@@ -175,6 +232,7 @@ if (bounds && bounds !== undefined) {
 ```
 
 **Smart Filtering Rules:**
+
 - ✅ **Included**: Lines with ≥10% positive values AND ≥2 valid points
 - ⚠️ **Excluded**: Lines with <10% positive values OR <2 valid points
 - 🔍 **Visibility**: Excluded lines may still render (positive portions visible), but don't affect scaling
@@ -189,12 +247,15 @@ if (bounds && bounds !== undefined) {
 ```typescript
 // Debug data range
 function analyzeData(data: Float32Array) {
-  let minX = Infinity, maxX = -Infinity;
-  let minY = Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity;
+  let minY = Infinity,
+    maxY = -Infinity;
   let negativeCount = 0;
 
   for (let i = 0; i < data.length; i += 2) {
-    const x = data[i], y = data[i + 1];
+    const x = data[i],
+      y = data[i + 1];
     if (x <= 0 || y <= 0) negativeCount++;
     minX = Math.min(minX, x);
     maxX = Math.max(maxX, x);
@@ -236,8 +297,9 @@ if (updateBounds) {
 **This is expected behavior** when log axes are enabled. Lines with mostly negative/zero values are automatically excluded from bounds calculation.
 
 To include mixed data:
+
 1. Pre-filter your data to remove negative values, OR
-2. Use separate plotters for positive and negative data, OR  
+2. Use separate plotters for positive and negative data, OR
 3. Use linear axes for mixed data visualization
 
 ```typescript
@@ -256,22 +318,26 @@ function preprocessForLogY(data: Float32Array): Float32Array {
 
 ## Usage Summary
 
-| Scenario | Enhanced Method (v2) | Reason |
-|----------|---------------------|--------|
-| Initial setup (autoscale to fit all data) | `getAllDataBounds()` → `transformToLogSpace()` | Smart filtering for log compatibility with coordinate space info |
-| Switching to log axes (autoscale) | `getAllDataBounds()` → `transformToLogSpace()` | Enhanced API handles coordinate conversion automatically |
-| Switching to linear axes (simple) | `setLogAxis()` → `autoScale()` | Resets to linear scaling |
-| **Switching with view preservation** ✨ | `getDataBounds()` → `transformToLogSpace()` | **Enhanced API maintains zoom/pan automatically** |
-| Data updates (preserve zoom/pan) | `getDataBounds()` → `transformToLogSpace()` | Preserves current viewport with automatic coordinate handling |
-| Data updates (autoscale to fit all) | `getAllDataBounds()` → `transformToLogSpace()` | Rescales to fit all data with coordinate space info |
-| Zoom/pan operations | `getDataBounds()` → `transformToLogSpace()` | **Works in any coordinate mode!** |
-| Data updates in linear space | `autoScale()` | Standard linear autoscaling |
+| Scenario                                          | Enhanced Method (v2)                                                      | Reason                                                           |
+| ------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Initial setup (autoscale to fit all data)         | `getAllDataBounds()` → `transformToLogSpace()`                            | Smart filtering for log compatibility with coordinate space info |
+| Switching to log axes (autoscale)                 | `getAllDataBounds()` → `transformToLogSpace()`                            | Enhanced API handles coordinate conversion automatically         |
+| Switching to linear axes (autoscale)              | `setLogAxis()` → `getAllDataBounds()` → `transformToLinearSpace()`        | Symmetric API for linear coordinate space                        |
+| **Switching to log with view preservation** ✨    | `getDataBounds()` → `transformToLogSpace()`                               | **Enhanced API maintains zoom/pan automatically**                |
+| **Switching to linear with view preservation** ✨ | `getDataBounds()` → `transformToLinearSpace()`                            | **Symmetric API maintains zoom/pan automatically**               |
+| Data updates (preserve zoom/pan in log)           | `getDataBounds()` → `transformToLogSpace()`                               | Preserves current viewport with automatic coordinate handling    |
+| Data updates (preserve zoom/pan in linear)        | `getDataBounds()` → `transformToLinearSpace()`                            | Preserves current viewport with automatic coordinate handling    |
+| Data updates (autoscale in current space)         | `autoScale()`                                                             | Auto-scales within current coordinate space without changing it  |
+| Zoom/pan operations (any coordinate space)        | `getDataBounds()` → `transformToLogSpace()` OR `transformToLinearSpace()` | **Works in any coordinate mode!**                                |
 
 **✨ Enhanced Benefits:**
-- No more manual coordinate space tracking
-- `transformToLogSpace()` works with any bounds format
-- Coordinate space information always included
-- Eliminates common bugs from coordinate space confusion
+
+- ✅ **Symmetric API**: `transformToLogSpace()` and `transformToLinearSpace()` work identically
+- ✅ **View preservation**: Both transform methods preserve zoom/pan when switching coordinate spaces
+- ✅ **No more manual coordinate space tracking**: Automatic coordinate space handling
+- ✅ **Coordinate space information always included**: Bounds include coordinate space metadata
+- ✅ **Eliminates common bugs**: Consistent interface prevents coordinate space confusion
+- ✅ **Clear separation**: `autoScale()` for same-space scaling, `transform*()` methods for coordinate changes
 
 ## 🔗 See Also
 

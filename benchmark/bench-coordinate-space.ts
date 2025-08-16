@@ -1,11 +1,32 @@
 import { setupCanvasAndWebGL, UnifiedLinePlot, clearCanvas, transformBoundsToLinearSpace } from "../src/webglplot";
 
+/**
+ * Coordinate Space Toggle Demo
+ * 
+ * This demo showcases the enhanced symmetric API with both transformToLogSpace() 
+ * and transformToLinearSpace() methods. Both methods automatically handle 
+ * coordinate space conversion and preserve zoom/pan state when switching between 
+ * linear and logarithmic coordinate spaces.
+ * 
+ * Features demonstrated:
+ * - Symmetric API: transformToLogSpace() ↔ transformToLinearSpace()
+ * - View preservation when toggling coordinate spaces
+ * - Automatic coordinate space conversion
+ * - Consistent interface for both transform directions
+ */
+
 // Demo state
 let plotter: UnifiedLinePlot;
 let gl: WebGL2RenderingContext;
-let isLogX = false;
-let isLogY = false;
 let animationFrameId: number;
+
+/**
+ * Get current coordinate space from plotter bounds
+ */
+function getCoordinateSpace(): { x: "linear" | "log"; y: "linear" | "log" } {
+  const bounds = plotter.getDataBounds();
+  return bounds?.coordinateSpace || { x: "linear", y: "linear" };
+}
 
 // UI elements
 let xAxisIndicator: HTMLElement;
@@ -25,7 +46,7 @@ let statusElements: {
 function init() {
   console.log("🚀 Initializing Coordinate Space & Global Transform Demo");
   console.log("This demo shows how global transforms work differently in linear vs log space");
-  
+
   // Get canvas and setup WebGL
   const canvas = document.getElementById("plotCanvas") as HTMLCanvasElement;
   if (!canvas) {
@@ -74,7 +95,7 @@ function init() {
  */
 function generateLogFunction() {
   console.log("📊 Generating y = log₁₀(x) function data");
-  
+
   const numPoints = 200;
   const xMin = 0.1;
   const xMax = 1000;
@@ -86,7 +107,7 @@ function generateLogFunction() {
     // Logarithmic spacing: x = xMin * (xMax/xMin)^t
     const x = xMin * Math.pow(xMax / xMin, t);
     const y = Math.log10(x);
-    
+
     points[i * 2] = x;
     points[i * 2 + 1] = y;
   }
@@ -108,18 +129,16 @@ function generateLogFunction() {
  */
 function setupLinearSpace() {
   console.log("🔧 Setting up linear space view");
-  
-  isLogX = false;
-  isLogY = false;
+
   plotter.setLogAxis(false, false);
-  
+
   // Auto-scale to fit all data in linear space
   const bounds = plotter.getAllDataBounds();
   if (bounds) {
     console.log(`Linear space bounds: X[${bounds.minX.toFixed(3)}, ${bounds.maxX.toFixed(3)}], Y[${bounds.minY.toFixed(3)}, ${bounds.maxY.toFixed(3)}]`);
     plotter.autoScale();
   }
-  
+
   updateUI();
 }
 
@@ -127,10 +146,11 @@ function setupLinearSpace() {
  * Toggle X-axis between linear and log coordinate space
  */
 function toggleXAxis() {
-  const oldSpaceX = isLogX ? "log" : "linear";
-  const oldSpaceY = isLogY ? "log" : "linear";
-  const newSpaceX = isLogX ? "linear" : "log";
-  
+  const currentSpace = getCoordinateSpace();
+  const oldSpaceX = currentSpace.x;
+  const oldSpaceY = currentSpace.y;
+  const newSpaceX = oldSpaceX === "log" ? "linear" : "log";
+
   console.log(`\n🔄 Toggling X-axis from ${oldSpaceX} to ${newSpaceX} space`);
   console.log(`Current coordinate space: X:${oldSpaceX}, Y:${oldSpaceY}`);
   console.log("Using view preservation to maintain current zoom/pan...");
@@ -139,13 +159,13 @@ function toggleXAxis() {
   const currentBounds = plotter.getDataBounds();
   if (currentBounds) {
     console.log(`Current view bounds (in ${oldSpaceX}/${oldSpaceY} space): X[${currentBounds.minX.toFixed(3)}, ${currentBounds.maxX.toFixed(3)}], Y[${currentBounds.minY.toFixed(3)}, ${currentBounds.maxY.toFixed(3)}]`);
-    
+
     // Convert current bounds to linear space first (if needed)
     let linearBounds = currentBounds;
-    if (isLogX || isLogY) {
-      linearBounds = transformBoundsToLinearSpace(currentBounds, isLogX, isLogY);
+    if (oldSpaceX === "log" || oldSpaceY === "log") {
+      linearBounds = transformBoundsToLinearSpace(currentBounds, oldSpaceX === "log", oldSpaceY === "log");
       console.log(`Converted to linear space: X[${linearBounds.minX.toFixed(3)}, ${linearBounds.maxX.toFixed(3)}], Y[${linearBounds.minY.toFixed(3)}, ${linearBounds.maxY.toFixed(3)}]`);
-      
+
       // Check for extreme bounds and fall back to data bounds if needed
       const dataRange = 1000 - 0.1; // Our data range
       const convertedRangeX = linearBounds.maxX - linearBounds.minX;
@@ -157,27 +177,28 @@ function toggleXAxis() {
         }
       }
     }
-    
-    // Toggle X-axis state
-    isLogX = !isLogX;
-    
-    console.log(`Setting log axes: X=${isLogX}, Y=${isLogY}`);
-    plotter.setLogAxis(isLogX, isLogY);
-    
-    if (isLogX || isLogY) {
+
+    // Set new log axis state
+    const newLogX = newSpaceX === "log";
+    const newLogY = oldSpaceY === "log";
+
+    console.log(`Setting log axes: X=${newLogX}, Y=${newLogY}`);
+    plotter.setLogAxis(newLogX, newLogY);
+
+    if (newLogX || newLogY) {
       // At least one axis is log, validate bounds are compatible with log space
       console.log("Transforming linear bounds to new log coordinate space");
-      
+
       // Check if bounds are compatible with log axes
       let boundsToUse = linearBounds;
-      if (isLogX && (linearBounds.minX <= 0 || linearBounds.maxX <= 0)) {
+      if (newLogX && (linearBounds.minX <= 0 || linearBounds.maxX <= 0)) {
         console.log("⚠️ X bounds contain non-positive values, incompatible with log X axis");
         console.log("Falling back to data bounds for log compatibility");
         const dataBounds = plotter.getAllDataBounds();
         if (dataBounds) {
           boundsToUse = dataBounds;
         }
-      } else if (isLogY && (linearBounds.minY <= 0 || linearBounds.maxY <= 0)) {
+      } else if (newLogY && (linearBounds.minY <= 0 || linearBounds.maxY <= 0)) {
         console.log("⚠️ Y bounds contain non-positive values, incompatible with log Y axis");
         console.log("Falling back to data bounds for log compatibility");
         const dataBounds = plotter.getAllDataBounds();
@@ -185,7 +206,7 @@ function toggleXAxis() {
           boundsToUse = dataBounds;
         }
       }
-      
+
       const success = plotter.transformToLogSpace(boundsToUse);
       if (!success) {
         console.log("Could not transform to new space, using auto-scale");
@@ -195,9 +216,13 @@ function toggleXAxis() {
         }
       }
     } else {
-      // Both axes are linear, apply linear transform directly
+      // Both axes are linear, use the new transformToLinearSpace API
       console.log("Both axes are linear, applying linear space transform");
-      applyLinearSpaceTransform(linearBounds);
+      const success = plotter.transformToLinearSpace(linearBounds);
+      if (!success) {
+        console.log("Could not transform to linear space, using auto-scale");
+        plotter.autoScale();
+      }
     }
   }
 
@@ -209,10 +234,11 @@ function toggleXAxis() {
  * Toggle Y-axis between linear and log coordinate space
  */
 function toggleYAxis() {
-  const oldSpaceX = isLogX ? "log" : "linear";
-  const oldSpaceY = isLogY ? "log" : "linear";
-  const newSpaceY = isLogY ? "linear" : "log";
-  
+  const currentSpace = getCoordinateSpace();
+  const oldSpaceX = currentSpace.x;
+  const oldSpaceY = currentSpace.y;
+  const newSpaceY = oldSpaceY === "log" ? "linear" : "log";
+
   console.log(`\n🔄 Toggling Y-axis from ${oldSpaceY} to ${newSpaceY} space`);
   console.log(`Current coordinate space: X:${oldSpaceX}, Y:${oldSpaceY}`);
   console.log("Using view preservation to maintain current zoom/pan...");
@@ -221,19 +247,19 @@ function toggleYAxis() {
   const currentBounds = plotter.getDataBounds();
   if (currentBounds) {
     console.log(`Current view bounds (in ${oldSpaceX}/${oldSpaceY} space): X[${currentBounds.minX.toFixed(3)}, ${currentBounds.maxX.toFixed(3)}], Y[${currentBounds.minY.toFixed(3)}, ${currentBounds.maxY.toFixed(3)}]`);
-    
+
     // Convert current bounds to linear space first (if needed)
     let linearBounds = currentBounds;
-    if (isLogX || isLogY) {
-      linearBounds = transformBoundsToLinearSpace(currentBounds, isLogX, isLogY);
+    if (oldSpaceX === "log" || oldSpaceY === "log") {
+      linearBounds = transformBoundsToLinearSpace(currentBounds, oldSpaceX === "log", oldSpaceY === "log");
       console.log(`Converted to linear space: X[${linearBounds.minX.toFixed(3)}, ${linearBounds.maxX.toFixed(3)}], Y[${linearBounds.minY.toFixed(3)}, ${linearBounds.maxY.toFixed(3)}]`);
-      
+
       // Check for extreme bounds and fall back to data bounds if needed
       const dataRangeX = 1000 - 0.1; // Our X data range
       const dataRangeY = 3 - (-1); // Our Y data range  
       const convertedRangeX = linearBounds.maxX - linearBounds.minX;
       const convertedRangeY = linearBounds.maxY - linearBounds.minY;
-      
+
       if (convertedRangeX > dataRangeX * 100 || convertedRangeY > dataRangeY * 100) { // If range is 100x larger than data
         console.log("⚠️ Converted bounds are extremely wide, falling back to data bounds for better UX");
         const dataBounds = plotter.getAllDataBounds();
@@ -242,27 +268,28 @@ function toggleYAxis() {
         }
       }
     }
-    
-    // Toggle Y-axis state
-    isLogY = !isLogY;
-    
-    console.log(`Setting log axes: X=${isLogX}, Y=${isLogY}`);
-    plotter.setLogAxis(isLogX, isLogY);
-    
-    if (isLogX || isLogY) {
+
+    // Set new log axis state
+    const newLogX = oldSpaceX === "log";
+    const newLogY = newSpaceY === "log";
+
+    console.log(`Setting log axes: X=${newLogX}, Y=${newLogY}`);
+    plotter.setLogAxis(newLogX, newLogY);
+
+    if (newLogX || newLogY) {
       // At least one axis is log, validate bounds are compatible with log space
       console.log("Transforming linear bounds to new log coordinate space");
-      
+
       // Check if bounds are compatible with log axes
       let boundsToUse = linearBounds;
-      if (isLogX && (linearBounds.minX <= 0 || linearBounds.maxX <= 0)) {
+      if (newLogX && (linearBounds.minX <= 0 || linearBounds.maxX <= 0)) {
         console.log("⚠️ X bounds contain non-positive values, incompatible with log X axis");
         console.log("Falling back to data bounds for log compatibility");
         const dataBounds = plotter.getAllDataBounds();
         if (dataBounds) {
           boundsToUse = dataBounds;
         }
-      } else if (isLogY && (linearBounds.minY <= 0 || linearBounds.maxY <= 0)) {
+      } else if (newLogY && (linearBounds.minY <= 0 || linearBounds.maxY <= 0)) {
         console.log("⚠️ Y bounds contain non-positive values, incompatible with log Y axis");
         console.log("Falling back to data bounds for log compatibility");
         const dataBounds = plotter.getAllDataBounds();
@@ -270,7 +297,7 @@ function toggleYAxis() {
           boundsToUse = dataBounds;
         }
       }
-      
+
       const success = plotter.transformToLogSpace(boundsToUse);
       if (!success) {
         console.log("Could not transform to new space, using auto-scale");
@@ -280,9 +307,13 @@ function toggleYAxis() {
         }
       }
     } else {
-      // Both axes are linear, apply linear transform directly
+      // Both axes are linear, use the new transformToLinearSpace API
       console.log("Both axes are linear, applying linear space transform");
-      applyLinearSpaceTransform(linearBounds);
+      const success = plotter.transformToLinearSpace(linearBounds);
+      if (!success) {
+        console.log("Could not transform to linear space, using auto-scale");
+        plotter.autoScale();
+      }
     }
   }
 
@@ -294,10 +325,12 @@ function toggleYAxis() {
  * Zoom in by 2x in current coordinate space
  */
 function zoomIn() {
-  const xSpace = isLogX ? "log" : "linear";
-  const ySpace = isLogY ? "log" : "linear";
+  const currentSpace = getCoordinateSpace();
+  const xSpace = currentSpace.x;
+  const ySpace = currentSpace.y;
+
   console.log(`\n🔍 Zooming IN 2× in X:${xSpace}, Y:${ySpace} space`);
-  
+
   // Get current transform
   const currentBounds = plotter.getDataBounds();
   if (!currentBounds) {
@@ -321,7 +354,7 @@ function zoomIn() {
   console.log(`Current bounds: X[${minX.toFixed(3)}, ${maxX.toFixed(3)}], Y[${minY.toFixed(3)}, ${maxY.toFixed(3)}]`);
   console.log(`New bounds: X[${newBounds.minX.toFixed(3)}, ${newBounds.maxX.toFixed(3)}], Y[${newBounds.minY.toFixed(3)}, ${newBounds.maxY.toFixed(3)}]`);
 
-  console.log(`📊 Coordinate space: X:${isLogX ? "log" : "linear"}, Y:${isLogY ? "log" : "linear"}`);
+  console.log(`📊 Coordinate space: X:${xSpace}, Y:${ySpace}`);
   applyMixedSpaceTransform(newBounds);
 
   updateUI();
@@ -331,10 +364,12 @@ function zoomIn() {
  * Zoom out by 2x in current coordinate space
  */
 function zoomOut() {
-  const xSpace = isLogX ? "log" : "linear";
-  const ySpace = isLogY ? "log" : "linear";
+  const currentSpace = getCoordinateSpace();
+  const xSpace = currentSpace.x;
+  const ySpace = currentSpace.y;
+
   console.log(`\n🔍 Zooming OUT 2× in X:${xSpace}, Y:${ySpace} space`);
-  
+
   const currentBounds = plotter.getDataBounds();
   if (!currentBounds) {
     console.log("❌ Could not get current bounds for zoom");
@@ -357,7 +392,7 @@ function zoomOut() {
   console.log(`Current bounds: X[${minX.toFixed(3)}, ${maxX.toFixed(3)}], Y[${minY.toFixed(3)}, ${maxY.toFixed(3)}]`);
   console.log(`New bounds: X[${newBounds.minX.toFixed(3)}, ${newBounds.maxX.toFixed(3)}], Y[${newBounds.minY.toFixed(3)}, ${newBounds.maxY.toFixed(3)}]`);
 
-  console.log(`📊 Coordinate space: X:${isLogX ? "log" : "linear"}, Y:${isLogY ? "log" : "linear"}`);
+  console.log(`📊 Coordinate space: X:${xSpace}, Y:${ySpace}`);
   applyMixedSpaceTransform(newBounds);
 
   updateUI();
@@ -367,10 +402,12 @@ function zoomOut() {
  * Pan left in current coordinate space
  */
 function panLeft() {
-  const xSpace = isLogX ? "log" : "linear";
-  const ySpace = isLogY ? "log" : "linear";
+  const currentSpace = getCoordinateSpace();
+  const xSpace = currentSpace.x;
+  const ySpace = currentSpace.y;
+
   console.log(`\n↔️ Panning LEFT in X:${xSpace}, Y:${ySpace} space`);
-  
+
   const currentBounds = plotter.getDataBounds();
   if (!currentBounds) {
     console.log("❌ Could not get current bounds for pan");
@@ -392,7 +429,7 @@ function panLeft() {
   console.log(`Current X: [${minX.toFixed(3)}, ${maxX.toFixed(3)}]`);
   console.log(`New X: [${newBounds.minX.toFixed(3)}, ${newBounds.maxX.toFixed(3)}]`);
 
-  console.log(`📊 Coordinate space: X:${isLogX ? "log" : "linear"}, Y:${isLogY ? "log" : "linear"}`);
+  console.log(`📊 Coordinate space: X:${xSpace}, Y:${ySpace}`);
   applyMixedSpaceTransform(newBounds);
 
   updateUI();
@@ -402,10 +439,12 @@ function panLeft() {
  * Pan right in current coordinate space
  */
 function panRight() {
-  const xSpace = isLogX ? "log" : "linear";
-  const ySpace = isLogY ? "log" : "linear";
+  const currentSpace = getCoordinateSpace();
+  const xSpace = currentSpace.x;
+  const ySpace = currentSpace.y;
+
   console.log(`\n↔️ Panning RIGHT in X:${xSpace}, Y:${ySpace} space`);
-  
+
   const currentBounds = plotter.getDataBounds();
   if (!currentBounds) {
     console.log("❌ Could not get current bounds for pan");
@@ -427,7 +466,7 @@ function panRight() {
   console.log(`Current X: [${minX.toFixed(3)}, ${maxX.toFixed(3)}]`);
   console.log(`New X: [${newBounds.minX.toFixed(3)}, ${newBounds.maxX.toFixed(3)}]`);
 
-  console.log(`📊 Coordinate space: X:${isLogX ? "log" : "linear"}, Y:${isLogY ? "log" : "linear"}`);
+  console.log(`📊 Coordinate space: X:${xSpace}, Y:${ySpace}`);
   applyMixedSpaceTransform(newBounds);
 
   updateUI();
@@ -438,9 +477,10 @@ function panRight() {
  */
 function resetView() {
   console.log("\n🔄 Resetting to default view");
-  
-  if (isLogX || isLogY) {
-    console.log(`📊 At least one axis is log: X:${isLogX ? "log" : "linear"}, Y:${isLogY ? "log" : "linear"}`);
+
+  const currentSpace = getCoordinateSpace();
+  if (currentSpace.x === "log" || currentSpace.y === "log") {
+    console.log(`📊 At least one axis is log: X:${currentSpace.x}, Y:${currentSpace.y}`);
     console.log("Using getAllDataBounds() → transformToLogSpace()");
     const bounds = plotter.getAllDataBounds();
     if (bounds) {
@@ -461,20 +501,25 @@ function resetView() {
  */
 function applyMixedSpaceTransform(bounds: { minX: number; maxX: number; minY: number; maxY: number }) {
   console.log("Using enhanced API with automatic coordinate space handling");
-  
+
+  const currentSpace = getCoordinateSpace();
+
   // Create bounds with coordinate space info for the enhanced API
   const boundsWithSpace = {
     ...bounds,
     coordinateSpace: {
-      x: isLogX ? "log" as const : "linear" as const,
-      y: isLogY ? "log" as const : "linear" as const,
+      x: currentSpace.x,
+      y: currentSpace.y,
     },
   };
-  
-  if (!isLogX && !isLogY) {
-    // Both axes are linear - use standard linear transform
-    // (transformToLogSpace would do nothing when no log axes are enabled)
-    applyLinearSpaceTransform(bounds);
+
+  if (currentSpace.x === "linear" && currentSpace.y === "linear") {
+    // Both axes are linear - use the new transformToLinearSpace API
+    const success = plotter.transformToLinearSpace(boundsWithSpace);
+    if (!success) {
+      console.log("Failed to apply linear transform, falling back to auto-scale");
+      plotter.autoScale();
+    }
   } else {
     // At least one axis is log - use enhanced transformToLogSpace API
     const success = plotter.transformToLogSpace(boundsWithSpace);
@@ -489,41 +534,13 @@ function applyMixedSpaceTransform(bounds: { minX: number; maxX: number; minY: nu
 }
 
 /**
- * Apply transform for linear space (since transformToLogSpace does nothing when no log axes)
- */
-function applyLinearSpaceTransform(bounds: { minX: number; maxX: number; minY: number; maxY: number }) {
-  // Calculate transform to fit bounds into NDC [-1, 1]
-  const { minX, maxX, minY, maxY } = bounds;
-  const rangeX = maxX - minX;
-  const rangeY = maxY - minY;
-
-  let scaleX = 1.0;
-  let scaleY = 1.0;
-  let offsetX = 0.0;
-  let offsetY = 0.0;
-
-  if (rangeX > 1e-9) {
-    scaleX = 2.0 / rangeX;
-    const centerX = minX + rangeX / 2.0;
-    offsetX = 0.0 - centerX * scaleX;
-  }
-
-  if (rangeY > 1e-9) {
-    scaleY = 2.0 / rangeY;
-    const centerY = minY + rangeY / 2.0;
-    offsetY = 0.0 - centerY * scaleY;
-  }
-
-  console.log(`Calculated linear transform: Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
-  plotter.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
-}
-
-/**
  * Update UI elements with current state
  */
 function updateUI() {
+  const currentSpace = getCoordinateSpace();
+
   // Update X-axis indicator
-  if (isLogX) {
+  if (currentSpace.x === "log") {
     xAxisIndicator.textContent = "X: LOG";
     xAxisIndicator.className = "coordinate-indicator log";
     toggleXButton.textContent = "X: Switch to Linear";
@@ -536,7 +553,7 @@ function updateUI() {
   }
 
   // Update Y-axis indicator
-  if (isLogY) {
+  if (currentSpace.y === "log") {
     yAxisIndicator.textContent = "Y: LOG";
     yAxisIndicator.className = "coordinate-indicator log";
     toggleYButton.textContent = "Y: Switch to Linear";

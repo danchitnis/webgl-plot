@@ -25,14 +25,14 @@ type UniformLocationsMulti = {
 import type { LineConfig } from "./LineConfig";
 import { FRAGMENT_SHADER_SOURCE, VERTEX_SHADER_SOURCE } from "./ShadersThick";
 import { DebugLogger } from "./DebugLogger";
-import { 
-  validateLineForLogAxes, 
-  calculateLogAwareBounds, 
+import {
+  validateLineForLogAxes,
+  calculateLogAwareBounds,
   calculateAutoScaleTransform,
   transformBoundsToLogSpace,
   reverseGlobalTransform,
   transformBoundsToLinearSpace,
-  type DataBounds 
+  type DataBounds
 } from "./LogAxisUtils";
 
 // Re-export DataBounds from shared utilities
@@ -712,7 +712,7 @@ export class WebglLineThick {
           }
 
           foundEnabledData = true;
-          
+
           // Use shared utility for bounds calculation
           const lineBounds = calculateLogAwareBounds(linePointsForValidation, this.logX, this.logY);
           if (lineBounds) {
@@ -737,10 +737,10 @@ export class WebglLineThick {
       DebugLogger.warn("_computeBoundsCPU: Resulting bounds NaN/Infinity.");
       return null;
     }
-    return { 
-      minX, 
-      maxX, 
-      minY, 
+    return {
+      minX,
+      maxX,
+      minY,
       maxY,
       coordinateSpace: {
         x: this.logX ? "log" : "linear",
@@ -750,10 +750,33 @@ export class WebglLineThick {
   }
 
   /**
-   * Auto-scales enabled lines to fit NDC [-1, 1] by setting the GLOBAL transform,
-   * scaling X and Y independently to fill the space.
-   * @returns The computed data bounds {minX, maxX, minY, maxY} of the enabled lines,
-   *          or null if no valid bounds could be determined.
+   * Auto-scale to fit all enabled lines in the current coordinate space.
+   *
+   * **IMPORTANT**: This method operates within the current coordinate space (linear or log)
+   * and does NOT change coordinate spaces. It calculates bounds appropriate for the current
+   * axis configuration and applies the transform.
+   *
+   * **Use autoScale() when:**
+   * - Want to fit all data in the current coordinate space
+   * - Need simple auto-scaling without changing coordinate spaces
+   * - Don't need to preserve current zoom/pan state
+   *
+   * **For coordinate space changes, use:**
+   * - `transformToLogSpace()` - Switch to or operate in log space
+   * - `transformToLinearSpace()` - Switch to or operate in linear space
+   *
+   * @returns DataBounds object with calculated bounds in current coordinate space, or null if no valid data
+   *
+   * @example
+   * ```typescript
+   * // Auto-scale in current coordinate space (doesn't change coordinate system)
+   * plotter.autoScale(); // Works in linear, log, or mixed coordinate spaces
+   * 
+   * // To change coordinate spaces, use transform methods instead:
+   * plotter.setLogAxis(false, true); // Enable log Y
+   * const bounds = plotter.getAllDataBounds();
+   * if (bounds) plotter.transformToLogSpace(bounds); // Proper coordinate space change
+   * ```
    */
   public autoScale(): DataBounds | null {
     if (this.numLines === 0) {
@@ -1138,17 +1161,17 @@ export class WebglLineThick {
 
     // Check if bounds need coordinate space conversion
     let linearBounds = viewBounds;
-    
+
     // If bounds are in log space but we need linear bounds for transformation
     if (viewBounds.coordinateSpace) {
-      const needsConversion = (this.logX && viewBounds.coordinateSpace.x === "log") || 
-                             (this.logY && viewBounds.coordinateSpace.y === "log");
-      
+      const needsConversion = (this.logX && viewBounds.coordinateSpace.x === "log") ||
+        (this.logY && viewBounds.coordinateSpace.y === "log");
+
       if (needsConversion) {
         DebugLogger.log(`transformToLogSpace: Converting bounds from coordinate space X:${viewBounds.coordinateSpace.x}, Y:${viewBounds.coordinateSpace.y} to linear`);
         linearBounds = transformBoundsToLinearSpace(
-          viewBounds, 
-          viewBounds.coordinateSpace.x === "log", 
+          viewBounds,
+          viewBounds.coordinateSpace.x === "log",
           viewBounds.coordinateSpace.y === "log"
         );
         DebugLogger.log(`transformToLogSpace: Linear bounds - X[${linearBounds.minX.toFixed(3)}, ${linearBounds.maxX.toFixed(3)}], Y[${linearBounds.minY.toFixed(3)}, ${linearBounds.maxY.toFixed(3)}]`);
@@ -1167,6 +1190,80 @@ export class WebglLineThick {
     this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
 
     DebugLogger.log(`transformToLogSpace: Applied new transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
+    return true;
+  }
+
+  /**
+   * Transform data bounds to linear space and apply appropriate scaling.
+   *
+   * **ENHANCED**: This method automatically handles coordinate space conversion.
+   * It detects the coordinate space of input bounds and converts as needed.
+   *
+   * **Typical usage patterns:**
+   * - **Switching to linear axes**: `getDataBounds()` → `transformToLinearSpace()` (preserves view)
+   * - **Zoom/pan in linear space**: `getDataBounds()` → `transformToLinearSpace()`
+   * - **Initial linear setup**: `getAllDataBounds()` → `transformToLinearSpace()`
+   *
+   * @param dataBounds Optional data bounds with coordinate space information.
+   *                   If not provided, will attempt to get bounds from current transform.
+   * @returns True if linear space transformation was applied successfully,
+   *          false if transformation not feasible
+   *
+   * @example
+   * ```typescript
+   * // Switching from log to linear axes while preserving view
+   * const bounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
+   * plotter.setLogAxis(false, false); // Switch to linear axes
+   * const success = plotter.transformToLinearSpace(bounds); // Preserves current view
+   * 
+   * // Works seamlessly from any coordinate mode
+   * const currentBounds = plotter.getDataBounds(); 
+   * plotter.transformToLinearSpace(currentBounds); // Always handles conversion correctly!
+   * ```
+   */
+  public transformToLinearSpace(dataBounds?: DataBounds | null): boolean {
+    let viewBounds: DataBounds;
+
+    if (dataBounds) {
+      // Use actual data bounds (recommended approach)
+      viewBounds = dataBounds;
+      DebugLogger.log(`transformToLinearSpace: Using actual data bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+    } else {
+      // Fallback: Calculate bounds from current transform
+      viewBounds = reverseGlobalTransform(this.globalScale, this.globalOffset, this.logX, this.logY);
+      DebugLogger.log(`transformToLinearSpace: Using transform-based bounds - X[${viewBounds.minX.toFixed(3)}, ${viewBounds.maxX.toFixed(3)}], Y[${viewBounds.minY.toFixed(3)}, ${viewBounds.maxY.toFixed(3)}]`);
+    }
+
+    // Check if bounds need coordinate space conversion
+    let linearBounds = viewBounds;
+
+    // If bounds are in log space, convert them to linear space first
+    if (viewBounds.coordinateSpace) {
+      const needsConversion = (viewBounds.coordinateSpace.x === "log") ||
+        (viewBounds.coordinateSpace.y === "log");
+
+      if (needsConversion) {
+        DebugLogger.log(`transformToLinearSpace: Converting bounds from coordinate space X:${viewBounds.coordinateSpace.x}, Y:${viewBounds.coordinateSpace.y} to linear`);
+        linearBounds = transformBoundsToLinearSpace(
+          viewBounds,
+          viewBounds.coordinateSpace.x === "log",
+          viewBounds.coordinateSpace.y === "log"
+        );
+        DebugLogger.log(`transformToLinearSpace: Converted bounds - X[${linearBounds.minX.toFixed(3)}, ${linearBounds.maxX.toFixed(3)}], Y[${linearBounds.minY.toFixed(3)}, ${linearBounds.maxY.toFixed(3)}]`);
+      }
+    }
+
+    // Ensure coordinate space is set to linear
+    linearBounds.coordinateSpace = {
+      x: "linear",
+      y: "linear",
+    };
+
+    // Calculate and apply linear transform
+    const [scaleX, scaleY, offsetX, offsetY] = calculateAutoScaleTransform(linearBounds);
+    this.setGlobalTransform([scaleX, scaleY], [offsetX, offsetY]);
+
+    DebugLogger.log(`transformToLinearSpace: Applied linear transform - Scale[${scaleX.toFixed(4)}, ${scaleY.toFixed(4)}], Offset[${offsetX.toFixed(4)}, ${offsetY.toFixed(4)}]`);
     return true;
   }
 

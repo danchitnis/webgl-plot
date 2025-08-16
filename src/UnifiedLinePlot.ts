@@ -154,6 +154,41 @@ export class UnifiedLinePlot {
     }
   }
 
+  /**
+   * Enable or disable rendering for multiple lines at once.
+   * @param lineIds Array of line IDs to enable/disable
+   * @param enabled True to enable rendering, false to disable
+   */
+  public setMultipleLinesEnabled(lineIds: number[], enabled: boolean): void {
+    if (this.internalPlotter) {
+      if (this.internalPlotter instanceof WebglLinePlot) {
+        this.internalPlotter.setMultipleLinesEnabled(lineIds, enabled);
+      } else if (this.internalPlotter instanceof WebglLineThick) {
+        this.internalPlotter.setLinesEnabled(lineIds, enabled);
+      }
+    }
+  }
+
+  /**
+   * Update transform parameters for multiple lines at once.
+   * @param lineIds Array of line IDs to update
+   * @param scale Scale factors [scaleX, scaleY]
+   * @param offset Offset values [offsetX, offsetY]
+   */
+  public updateMultipleLinesTransform(
+    lineIds: number[],
+    scale: [number, number],
+    offset: [number, number]
+  ): void {
+    if (this.internalPlotter) {
+      if (this.internalPlotter instanceof WebglLinePlot) {
+        this.internalPlotter.updateMultipleLinesTransform(lineIds, scale, offset);
+      } else if (this.internalPlotter instanceof WebglLineThick) {
+        this.internalPlotter.updateLinesTransform(lineIds, scale, offset);
+      }
+    }
+  }
+
   public setGlobalTransform(
     scale: [number, number],
     offset: [number, number]
@@ -164,20 +199,35 @@ export class UnifiedLinePlot {
   }
 
   /**
-   * Auto-scale to fit all enabled lines and apply linear space.
+   * Auto-scale to fit all enabled lines in the current coordinate space.
    *
-   * **IMPORTANT**: This method resets to linear coordinate space before calculating bounds.
-   * Choose the right method based on your current coordinate system:
+   * **IMPORTANT**: This method operates within the current coordinate space (linear or log)
+   * and does NOT change coordinate spaces. It calculates bounds appropriate for the current
+   * axis configuration and applies the transform.
    *
    * **Use autoScale() when:**
-   * - Scaling linear spaces
-   * - Switching from log back to linear space
+   * - Want to fit all data in the current coordinate space
+   * - Need simple auto-scaling without changing coordinate spaces
+   * - Don't need to preserve current zoom/pan state
    *
+   * **For coordinate space changes, use:**
+   * - `transformToLogSpace()` - Switch to or operate in log space
+   * - `transformToLinearSpace()` - Switch to or operate in linear space
    *
-   * @returns DataBounds object with calculated bounds, null if no valid data, or void for some internal plotters
+   * @returns DataBounds object with calculated bounds in current coordinate space, or null if no valid data
    *
+   * @example
+   * ```typescript
+   * // Auto-scale in current coordinate space (doesn't change coordinate system)
+   * plotter.autoScale(); // Works in linear, log, or mixed coordinate spaces
+   * 
+   * // To change coordinate spaces, use transform methods instead:
+   * plotter.setLogAxis(false, true); // Enable log Y
+   * const bounds = plotter.getAllDataBounds();
+   * if (bounds) plotter.transformToLogSpace(bounds); // Proper coordinate space change
+   * ```
    */
-  public autoScale(): DataBounds | null | void {
+  public autoScale(): DataBounds | null {
     if (this.internalPlotter) {
       return this.internalPlotter.autoScale();
     }
@@ -310,6 +360,41 @@ export class UnifiedLinePlot {
   public transformToLogSpace(dataBounds?: DataBounds | null): boolean {
     if (this.internalPlotter) {
       return this.internalPlotter.transformToLogSpace(dataBounds);
+    }
+    return false;
+  }
+
+  /**
+   * Transform data bounds to linear space and apply appropriate scaling.
+   *
+   * **ENHANCED**: This method automatically handles coordinate space conversion.
+   * It detects the coordinate space of input bounds and converts as needed.
+   *
+   * **Typical usage patterns:**
+   * - **Switching to linear axes**: `getDataBounds()` → `transformToLinearSpace()` (preserves view)
+   * - **Zoom/pan in linear space**: `getDataBounds()` → `transformToLinearSpace()`
+   * - **Initial linear setup**: `getAllDataBounds()` → `transformToLinearSpace()`
+   *
+   * @param dataBounds Optional data bounds with coordinate space information.
+   *                   If not provided, will attempt to get bounds from internal plotter.
+   * @returns True if linear space transformation was applied successfully,
+   *          false if transformation not feasible
+   *
+   * @example
+   * ```typescript
+   * // Switching from log to linear axes while preserving view
+   * const bounds = plotter.getDataBounds(); // Gets bounds with coordinate space info
+   * plotter.setLogAxis(false, false); // Switch to linear axes
+   * const success = plotter.transformToLinearSpace(bounds); // Preserves current view
+   * 
+   * // Works seamlessly from any coordinate mode
+   * const currentBounds = plotter.getDataBounds(); 
+   * plotter.transformToLinearSpace(currentBounds); // Always handles conversion correctly!
+   * ```
+   */
+  public transformToLinearSpace(dataBounds?: DataBounds | null): boolean {
+    if (this.internalPlotter) {
+      return this.internalPlotter.transformToLinearSpace(dataBounds);
     }
     return false;
   }
