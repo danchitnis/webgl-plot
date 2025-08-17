@@ -97,25 +97,46 @@ clearCanvas(gl, [1, 1, 1, 1]); // Clear with white background
 
 Automatically chooses between thin and thick line rendering based on line thickness.
 
+**Important**: The plotter type is determined by the **first line's thickness** during `initLines()`:
+- `thickness ≤ 1.0` → Uses WebglLinePlot (all lines become thickness 1.0)
+- `thickness > 1.0` → Uses WebglLineThick (preserves individual thickness values)
+
 ```typescript
 import { UnifiedLinePlot } from "webgl-plot";
 
 const plotter = new UnifiedLinePlot(gl, 20); // Max 20 lines
 
+// Example 1: Thin lines (first line thickness <= 1.0)
 plotter.initLines([
   {
     points: new Float32Array([0, 0, 1, 1, 2, 0]),
     color: [1, 0, 0, 1],
-    thickness: 1.0, // → Uses thin renderer (high performance)
+    thickness: 1.0, // ← First line determines plotter type
     enabled: true,
   },
   {
     points: new Float32Array([0, 0.5, 1, 1.5, 2, 0.5]),
     color: [0, 1, 0, 1],
-    thickness: 3.0, // → Uses thick renderer (all lines in this plotter)
+    thickness: 3.0, // ← Forced to 1.0 because first line was thin!
     enabled: true,
   },
-]);
+]); // Uses WebglLinePlot - both lines rendered as thickness 1.0
+
+// Example 2: Thick lines (first line thickness > 1.0)
+plotter.initLines([
+  {
+    points: new Float32Array([0, 0, 1, 1, 2, 0]),
+    color: [1, 0, 0, 1],
+    thickness: 3.0, // ← First line determines plotter type
+    enabled: true,
+  },
+  {
+    points: new Float32Array([0, 0.5, 1, 1.5, 2, 0.5]),
+    color: [0, 1, 0, 1],
+    thickness: 1.0, // ← Preserved as 1.0
+    enabled: true,
+  },
+]); // Uses WebglLineThick - thickness values preserved
 
 // Update individual lines
 plotter.updateLineY(0, new Float32Array([0, 0.2, 0.4])); // Update Y values
@@ -123,6 +144,111 @@ plotter.updateLineColor(1, [0, 0, 1, 1]); // Change to blue
 plotter.setLineEnabled(0, false); // Hide line
 
 plotter.draw();
+```
+
+### Initialization Order Dependency
+
+**Critical**: The order of lines in the `initLines()` array matters because only the first line's thickness determines the plotter type for ALL lines:
+
+```typescript
+// Scenario A: Thin first → All lines become thin (thickness 1.0)
+plotter.initLines([
+  {points: data1, thickness: 1.0, color: [1,0,0,1]}, // ← Determines WebglLinePlot
+  {points: data2, thickness: 5.0, color: [0,1,0,1]}  // Forced to 1.0!
+]);
+console.log(plotter.getInternalPlotterType()); // "WebglLinePlot"
+
+// Scenario B: Thick first → All lines can be thick
+plotter.initLines([
+  {points: data1, thickness: 5.0, color: [1,0,0,1]}, // ← Determines WebglLineThick  
+  {points: data2, thickness: 1.0, color: [0,1,0,1]}  // Preserved as 1.0
+]);
+console.log(plotter.getInternalPlotterType()); // "WebglLineThick"
+
+// To change plotter type, you must re-initialize:
+// Current: thin plotter, want thick lines
+const currentConfigs = [
+  plotter.getLineConfig(0),
+  plotter.getLineConfig(1)
+];
+
+// Re-initialize with thick line first
+if (currentConfigs[0] && currentConfigs[1]) {
+  plotter.initLines([
+    {...currentConfigs[0], thickness: 3.0}, // Now thick first
+    {...currentConfigs[1], thickness: 2.0}
+  ]); // Now uses WebglLineThick
+}
+```
+
+### Error Handling and Method Behavior
+
+Some UnifiedLinePlot methods behave differently based on the internal plotter type. Always check the plotter type when using methods that may have limitations:
+
+```typescript
+// Check which internal plotter is being used
+const plotterType = plotter.getInternalPlotterType();
+console.log(`Using: ${plotterType}`); // "WebglLinePlot" or "WebglLineThick"
+
+// Update line thickness with proper error handling
+if (plotterType === 'WebglLineThick') {
+  plotter.updateLineThickness(0, 5.0); // ✅ Works normally
+} else {
+  // WebglLinePlot: logs warning and forces thickness to 1.0
+  plotter.updateLineThickness(0, 5.0); // ⚠️ Warning: forced to 1.0
+  console.log("Thickness forced to 1.0 for thin line plotter");
+}
+
+// Update line points (XY coordinate pairs) with error handling
+const newPoints = new Float32Array([0,0, 1,2, 2,1, 3,3]);
+if (plotterType === 'WebglLinePlot') {
+  plotter.updateLinePoints(0, newPoints); // ✅ Works for thin lines
+} else {
+  // WebglLineThick: logs warning, points NOT updated
+  console.log("updateLinePoints not supported for thick lines, use initLines() instead");
+  
+  // Alternative: re-initialize the line with new points
+  const currentConfig = plotter.getLineConfig(0);
+  if (currentConfig && 'color' in currentConfig && 'thickness' in currentConfig) {
+    plotter.initLines([{
+      points: newPoints,
+      color: currentConfig.color,
+      thickness: currentConfig.thickness,
+      enabled: currentConfig.enabled
+    }]);
+  }
+}
+
+// Get line configuration (return type varies by plotter)
+const config = plotter.getLineConfig(0);
+if (config) {
+  if ('points' in config) {
+    // WebglLinePlot: full LineConfig with points data
+    console.log("Full config available, points length:", config.points?.length);
+    console.log("Color:", config.color);
+    console.log("Thickness:", config.thickness);
+  } else {
+    // WebglLineThick: Partial<LineConfig> without points
+    console.log("Partial config (no points data available from GPU storage)");
+    console.log("Color:", config.color);
+    console.log("Thickness:", config.thickness);
+    // config.points is undefined - data stored in GPU buffers for performance
+  }
+}
+
+// Architectural reason for return type differences:
+// - WebglLinePlot: Stores complete LineConfig objects in CPU memory
+// - WebglLineThick: Stores data in GPU buffers/textures for performance
+//   Points data remains in GPU and is not accessible from CPU
+
+// Bulk operations with delegation method differences
+const lineIds = [0, 1, 2];
+
+// Enable/disable multiple lines (calls different methods internally)
+plotter.setMultipleLinesEnabled(lineIds, false); // WebglLinePlot: setMultipleLinesEnabled, WebglLineThick: setLinesEnabled
+
+// Update transforms for multiple lines (calls different methods internally)
+plotter.updateMultipleLinesTransform(lineIds, [2.0, 1.5], [0.1, -0.2]); // WebglLinePlot: updateMultipleLinesTransform, WebglLineThick: updateLinesTransform
 ```
 
 ### WebglLinePlot (Thin Lines)
@@ -427,7 +553,14 @@ onMounted(() => {
   });
 
   plotter = new UnifiedLinePlot(gl, 10);
-  plotter.initLines([/* your data */]);
+  plotter.initLines([
+    {
+      points: new Float32Array([0, 0, 1, 1, 2, 0.5]),
+      color: [1, 0, 0, 1],
+      thickness: 2.0,
+      enabled: true,
+    },
+  ]);
 
   const render = () => {
     clearCanvas(gl);
@@ -493,10 +626,14 @@ function generateData() {
 function render() {
   // Update data at 60fps
   const newData = generateData();
-  plotter.updateLineY(
-    0,
-    newData.filter((_, i) => i % 2 === 1)
-  ); // Y values only
+  
+  // Extract Y values only (every odd index from XY pairs)
+  const yValues = new Float32Array(50);
+  for (let i = 0; i < 50; i++) {
+    yValues[i] = newData[i * 2 + 1]; // Get Y values from XY pairs
+  }
+  
+  plotter.updateLineY(0, yValues); // Update Y values only
 
   clearCanvas(gl);
   plotter.draw();
@@ -526,6 +663,8 @@ setBackgroundColor(gl, [1, 1, 1, 1]); // White background
 plotter.setLineEnabled(0, true);
 // Verify data range is within [-1, 1] or use transforms
 plotter.setGlobalTransform([1, 1], [0, 0]);
+// For UnifiedLinePlot, check if plotter was initialized
+console.log("Plotter type:", plotter.getInternalPlotterType());
 ```
 
 **Performance issues:**
@@ -533,8 +672,42 @@ plotter.setGlobalTransform([1, 1], [0, 0]);
 ```typescript
 // Use appropriate plotter type
 const thinPlotter = new WebglLinePlot(gl, maxLines); // For thin lines only
+// For UnifiedLinePlot, ensure first line has correct thickness for desired plotter
+// Thin lines (better performance): first line thickness <= 1.0
+// Thick lines (more features): first line thickness > 1.0
 // Reduce antialias
 const gl = createWebGL2Context(canvas, { antialias: false });
+```
+
+**UnifiedLinePlot specific issues:**
+
+```typescript
+// Issue: updateLinePoints not working
+// Solution: Check plotter type and use appropriate method
+const plotterType = plotter.getInternalPlotterType();
+if (plotterType === 'WebglLineThick') {
+  // Use initLines() instead of updateLinePoints() for thick lines
+  const config = plotter.getLineConfig(0);
+  if (config) {
+    plotter.initLines([{...config, points: newPoints}]);
+  }
+}
+
+// Issue: Thickness not updating as expected
+// Solution: Check if plotter supports thickness changes
+if (plotterType === 'WebglLinePlot') {
+  console.log("Thickness forced to 1.0 for thin line plotter");
+  // To use thick lines, re-initialize with thick first line
+  plotter.initLines([{points: data, thickness: 2.0, color: [1,0,0,1]}]);
+}
+
+// Issue: Wrong plotter type selected
+// Solution: Ensure first line has desired thickness
+// For thick lines capability:
+plotter.initLines([
+  {points: data1, thickness: 2.0, color: [1,0,0,1]}, // ← Must be first!
+  {points: data2, thickness: 1.0, color: [0,1,0,1]}
+]);
 ```
 
 **WebGL context lost:**
