@@ -62,28 +62,31 @@ vec2 getPoint(int globalPointIndex) {
   return texture(uPointsTex, vec2(u, v)).xy;
 }
 
-// --- Helper: Calculate Screen-Space Thickness Offset ---
-vec2 calculateThicknessOffset(vec2 normalDir, float desiredHalfPixelThickness, float side, vec2 globalScale) {
-  if (length(normalDir) < 0.0001 || uViewportSize.x < 0.001 || uViewportSize.y < 0.001) {
+// --- Helpers: screen/clip conversions and normals ---
+vec2 clipToPixel(vec2 deltaClip) {
+  // clip coordinates are -1..1; converting a delta to pixel space needs half viewport scale
+  return deltaClip * vec2(0.5 * uViewportSize.x, 0.5 * uViewportSize.y);
+}
+
+vec2 pixelToClip(vec2 deltaPixels) {
+  return deltaPixels * vec2(2.0 / uViewportSize.x, 2.0 / uViewportSize.y);
+}
+
+vec2 screenNormalFromDir(vec2 dirClip) {
+  // Convert direction to pixel space before computing a perpendicular so aspect ratio and zoom are respected
+  vec2 dirPixels = clipToPixel(dirClip);
+  float len = length(dirPixels);
+  if (len < 0.0001) {
     return vec2(0.0, 0.0);
   }
-  
-  // Key insight: Calculate thickness in final screen space, independent of zoom
-  // The normal direction needs to be transformed by the global scale to get the 
-  // correct screen-space direction after global transform is applied
-  
-  vec2 transformedNormal = normalDir * globalScale;
-  float transformedNormalLength = length(transformedNormal);
-  transformedNormalLength = max(transformedNormalLength, 0.001);
-  
-  // Normalize the transformed normal
-  vec2 screenSpaceNormal = transformedNormal / transformedNormalLength;
-  
-  // Convert thickness to NDC space
-  float avgViewportScale = (uViewportSize.x + uViewportSize.y) * 0.25;
-  float offsetScaleNDC = desiredHalfPixelThickness / avgViewportScale;
-  
-  return screenSpaceNormal * offsetScaleNDC * side;
+  return vec2(-dirPixels.y, dirPixels.x) / len;
+}
+
+vec2 thicknessOffsetFromNormal(vec2 normalPixels, float desiredHalfPixelThickness, float side) {
+  if (desiredHalfPixelThickness < 0.0001 || length(normalPixels) < 0.0001 || uViewportSize.x < 0.001 || uViewportSize.y < 0.001) {
+    return vec2(0.0, 0.0);
+  }
+  return pixelToClip(normalPixels * (desiredHalfPixelThickness * side));
 }
 
 // --- Main ---
@@ -130,55 +133,83 @@ void main() {
   }
   
   vec2 p_transformed = p_log * lineScale + lineOffset; // Apply per-line transform after log
+  vec2 p_globally_transformed = p_transformed * uGlobalScale + uGlobalOffset;
+
+  // Precompute neighbor points (with log + transforms) for consistent normal calculation
+  vec2 pPrev_original = (localIndex == 0) ? p_original : getPoint(globalStartIndex + max(0, localIndex - 1));
+  vec2 pNext_original = (localIndex == numPoints - 1) ? p_original : getPoint(globalStartIndex + min(numPoints - 1, localIndex + 1));
+
+  vec2 pPrev_log = pPrev_original;
+  if (uLogAxis.x > 0.5) {
+    if (pPrev_log.x > 0.0) {
+      pPrev_log.x = log(pPrev_log.x) / log(10.0);
+    } else {
+      pPrev_log.x = -1000.0;
+    }
+  }
+  if (uLogAxis.y > 0.5) {
+    if (pPrev_log.y > 0.0) {
+      pPrev_log.y = log(pPrev_log.y) / log(10.0);
+    } else {
+      pPrev_log.y = -1000.0;
+    }
+  }
+
+  vec2 pNext_log = pNext_original;
+  if (uLogAxis.x > 0.5) {
+    if (pNext_log.x > 0.0) {
+      pNext_log.x = log(pNext_log.x) / log(10.0);
+    } else {
+      pNext_log.x = -1000.0;
+    }
+  }
+  if (uLogAxis.y > 0.5) {
+    if (pNext_log.y > 0.0) {
+      pNext_log.y = log(pNext_log.y) / log(10.0);
+    } else {
+      pNext_log.y = -1000.0;
+    }
+  }
+
+  vec2 pPrev_transformed = pPrev_log * lineScale + lineOffset;
+  vec2 pNext_transformed = pNext_log * lineScale + lineOffset;
+  vec2 pPrev_globally = pPrev_transformed * uGlobalScale + uGlobalOffset;
+  vec2 pNext_globally = pNext_transformed * uGlobalScale + uGlobalOffset;
+
+  vec2 dirFromPrev = p_globally_transformed - pPrev_globally;
+  vec2 dirToNext = pNext_globally - p_globally_transformed;
 
   vec2 finalOffsetVector; // This will hold (normal * scale * side)
 
   if (aIsBevel > 0.5) {
-      // --- Path for CPU-generated Bevels ---
-      // aBevelNormal is provided by CPU (N_in or N_out for the specific vertex of the bevel quad)
-      finalOffsetVector = calculateThicknessOffset(aBevelNormal, desiredHalfPixelThickness, aSide, uGlobalScale);
+        // --- Path for CPU-generated Bevels ---
+        // Build screen-space normals for incoming and outgoing segments
+        vec2 normalPrevScreen = screenNormalFromDir(dirFromPrev);
+        vec2 normalNextScreen = screenNormalFromDir(dirToNext);
+
+        // Match the provided bevel normal to the correct segment (incoming or outgoing)
+        vec2 normalPrevData = vec2(0.0);
+        vec2 normalNextData = vec2(0.0);
+
+        vec2 dirPrevData = p_original - pPrev_original;
+        float lenPrevData = length(dirPrevData);
+        if (lenPrevData > 0.000001) {
+          normalPrevData = vec2(-dirPrevData.y, dirPrevData.x) / lenPrevData;
+        }
+
+        vec2 dirNextData = pNext_original - p_original;
+        float lenNextData = length(dirNextData);
+        if (lenNextData > 0.000001) {
+          normalNextData = vec2(-dirNextData.y, dirNextData.x) / lenNextData;
+        }
+
+        float matchPrev = dot(normalPrevData, aBevelNormal);
+        float matchNext = dot(normalNextData, aBevelNormal);
+        vec2 bevelNormalPixels = (matchPrev >= matchNext) ? normalPrevScreen : normalNextScreen;
+
+        finalOffsetVector = thicknessOffsetFromNormal(bevelNormalPixels, desiredHalfPixelThickness, aSide);
   } else {
       // --- Path for Shader-calculated Normals (Miters and Line Ends) ---
-      vec2 pPrev_original = (localIndex == 0) ? p_original : getPoint(globalStartIndex + max(0, localIndex - 1));
-      vec2 pNext_original = (localIndex == numPoints - 1) ? p_original : getPoint(globalStartIndex + min(numPoints - 1, localIndex + 1));
-
-      // Apply log transformation to neighbors
-      vec2 pPrev_log = pPrev_original;
-      if (uLogAxis.x > 0.5) {
-        if (pPrev_log.x > 0.0) {
-          pPrev_log.x = log(pPrev_log.x) / log(10.0);
-        } else {
-          pPrev_log.x = -1000.0;
-        }
-      }
-      if (uLogAxis.y > 0.5) {
-        if (pPrev_log.y > 0.0) {
-          pPrev_log.y = log(pPrev_log.y) / log(10.0);
-        } else {
-          pPrev_log.y = -1000.0;
-        }
-      }
-      
-      vec2 pNext_log = pNext_original;
-      if (uLogAxis.x > 0.5) {
-        if (pNext_log.x > 0.0) {
-          pNext_log.x = log(pNext_log.x) / log(10.0);
-        } else {
-          pNext_log.x = -1000.0;
-        }
-      }
-      if (uLogAxis.y > 0.5) {
-        if (pNext_log.y > 0.0) {
-          pNext_log.y = log(pNext_log.y) / log(10.0);
-        } else {
-          pNext_log.y = -1000.0;
-        }
-      }
-
-      // Apply per-line transform to neighbors for normal calculation
-      vec2 pPrev_transformed = pPrev_log * lineScale + lineOffset;
-      vec2 pNext_transformed = pNext_log * lineScale + lineOffset;
-
       vec2 offsetNormalDir; // To be calculated by miter/end logic
 
       bool isFirstPoint = (localIndex == 0);
@@ -190,54 +221,25 @@ void main() {
           offsetNormalDir = vec2(0.0, 1.0);
       } else if (isFirstPoint) {
           // Start of line - use next point direction
-          vec2 dirToNext = pNext_transformed - p_transformed;
-          if (length(dirToNext) > 0.00001) {
-              dirToNext = normalize(dirToNext);
-              offsetNormalDir = vec2(-dirToNext.y, dirToNext.x);
-          } else {
-              offsetNormalDir = vec2(0.0, 1.0);
-          }
+            offsetNormalDir = screenNormalFromDir(dirToNext);
       } else if (isLastPoint) {
-          // End of line - use previous point direction  
-          vec2 dirFromPrev = p_transformed - pPrev_transformed;
-          if (length(dirFromPrev) > 0.00001) {
-              dirFromPrev = normalize(dirFromPrev);
-              offsetNormalDir = vec2(-dirFromPrev.y, dirFromPrev.x);
-          } else {
-              offsetNormalDir = vec2(0.0, 1.0);
-          }
+            // End of line - use previous point direction  
+            offsetNormalDir = screenNormalFromDir(dirFromPrev);
       } else {
           // Interior point - use simplified miter
-          vec2 dirFromPrev = p_transformed - pPrev_transformed;
-          vec2 dirToNext = pNext_transformed - p_transformed;
-          
-          float lenPrev = length(dirFromPrev);
-          float lenNext = length(dirToNext);
-          
-          if (lenPrev > 0.00001 && lenNext > 0.00001) {
-              dirFromPrev /= lenPrev;
-              dirToNext /= lenNext;
-              
-              vec2 n0 = vec2(-dirFromPrev.y, dirFromPrev.x);
-              vec2 n1 = vec2(-dirToNext.y, dirToNext.x);
-              vec2 miterSum = n0 + n1;
-              
-              if (length(miterSum) > 0.00001) {
-                  offsetNormalDir = normalize(miterSum);
-              } else {
-                  offsetNormalDir = n0; // Fallback to first normal
-              }
-          } else {
-              offsetNormalDir = vec2(0.0, 1.0); // Fallback
-          }
+            vec2 n0 = screenNormalFromDir(dirFromPrev);
+            vec2 n1 = screenNormalFromDir(dirToNext);
+            vec2 miterSum = n0 + n1;
+            if (length(miterSum) > 0.00001) {
+              offsetNormalDir = normalize(miterSum);
+            } else {
+              offsetNormalDir = n0; // Fallback to first normal
+            }
       }
 
       // Calculate final offset using unified thickness calculation
-      finalOffsetVector = calculateThicknessOffset(offsetNormalDir, desiredHalfPixelThickness, aSide, uGlobalScale);
+          finalOffsetVector = thicknessOffsetFromNormal(offsetNormalDir, desiredHalfPixelThickness, aSide);
   }
-
-  // Apply global transformation to the point first
-  vec2 p_globally_transformed = p_transformed * uGlobalScale + uGlobalOffset;
 
   // Then apply screen-space thickness offset (calculated to be independent of zoom)
   vec2 finalPos = p_globally_transformed + finalOffsetVector;
