@@ -1,3 +1,4 @@
+/* global require */
 const { chromium } = require("playwright");
 
 // Render a single line (horizontal or vertical) with a given transform and measure its pixel thickness.

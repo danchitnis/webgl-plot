@@ -1,5 +1,11 @@
 import { setupCanvasAndWebGL, WebglLineThick, clearCanvas, LineConfig } from "../src/webglplot";
 
+declare global {
+  interface Window {
+    plotLineThick: WebglLineThick;
+  }
+}
+
 const fpsElem = document.getElementById("fps");
 const statusElem = document.getElementById("status");
 
@@ -15,7 +21,7 @@ const gl = setupCanvasAndWebGL(canvas, {
 });
 
 const plotLine = new WebglLineThick(gl, 10);
-(window as any).plotLineThick = plotLine; // Expose for Playwright/debug reads
+window.plotLineThick = plotLine; // Expose for Playwright/debug reads
 
 let frameCount = 0;
 let lastTime = performance.now();

@@ -30,7 +30,7 @@ const createLines = (num) => {
   plotLine = new WebglLinePlot(gl, lines.length);
   
   // Initialize lines with WebglLinePlot
-  const lineConfigs = lines.map((line, index) => ({
+  const lineConfigs = lines.map(() => ({
     points: new Float32Array(numX * 2), // Will be updated in render loop
     color: [Math.random(), Math.random(), Math.random(), 1],
     thickness: 1.0,
