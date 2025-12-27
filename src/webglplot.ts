@@ -66,9 +66,6 @@ export {
   type DataBounds,
 } from "./LogAxisUtils";
 
-// Default export is WebGLHelpers for convenience
-export default WebGLHelpers;
-
 // Temporary backward compatibility stub for benchmark files  
 // @deprecated Use individual plotters with WebGL2RenderingContext directly
 export class WebglPlot {

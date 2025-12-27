@@ -22,5 +22,14 @@ export default defineConfig({
       },
     },
   },
-  plugins: [dts({ rollupTypes: true })],
+  plugins: [
+    dts({
+      // Roll up declarations into a single bundle (API Extractor)
+      rollupTypes: true,
+      insertTypesEntry: true,
+      // Restrict .d.ts emission to the library sources
+      include: ["src/**/*"],
+      exclude: ["benchmark/**/*"],
+    }),
+  ],
 });
