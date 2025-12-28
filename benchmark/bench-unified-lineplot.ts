@@ -75,6 +75,39 @@ const plotObjects = lineConfigs.map((config) => {
   return unifiedPlotter;
 });
 
+const baseThicknesses = lineConfigs.map((cfg) => cfg.thickness ?? 1.0);
+
+function applyThicknessRange(minT: number, maxT: number) {
+  const minThickness = Math.max(0.5, minT);
+  const maxThickness = Math.max(minThickness, maxT);
+  const count = lineConfigs.length;
+
+  lineConfigs.forEach((config, index) => {
+    const t = count > 1 ? index / (count - 1) : 0;
+    const base = baseThicknesses[index];
+    const target = minThickness + t * (maxThickness - minThickness);
+    config.thickness = Math.max(0.5, base * (target / baseThicknesses[index]));
+    plotObjects[index].initLines([config]);
+  });
+
+  const status = document.getElementById("thicknessStatus");
+  if (status) {
+    status.textContent = `Thickness range: ${minThickness} – ${maxThickness}`;
+  }
+}
+
+function randomizeThickness() {
+  lineConfigs.forEach((config, index) => {
+    const randomT = 0.5 + Math.random() * 8;
+    config.thickness = randomT;
+    plotObjects[index].initLines([config]);
+  });
+  const status = document.getElementById("thicknessStatus");
+  if (status) {
+    status.textContent = "Thickness range: randomized";
+  }
+}
+
 console.log(
   "UnifiedLinePlot instances created. Verifying effective thicknesses:"
 );
@@ -134,4 +167,25 @@ simplifiedRender();
 
 console.log(
   "Rendering loop started with multiple lines of varying thicknesses and types."
+);
+
+const minThicknessInput = document.getElementById("minThickness") as HTMLInputElement | null;
+const maxThicknessInput = document.getElementById("maxThickness") as HTMLInputElement | null;
+const applyBtn = document.getElementById("applyThickness");
+const randomBtn = document.getElementById("randomThickness");
+
+applyBtn?.addEventListener("click", () => {
+  const minVal = parseFloat(minThicknessInput?.value ?? "1");
+  const maxVal = parseFloat(maxThicknessInput?.value ?? "6");
+  applyThicknessRange(minVal, maxVal);
+});
+
+randomBtn?.addEventListener("click", () => {
+  randomizeThickness();
+});
+
+// Initialize status with default inputs
+applyThicknessRange(
+  parseFloat(minThicknessInput?.value ?? "1"),
+  parseFloat(maxThicknessInput?.value ?? "10")
 );

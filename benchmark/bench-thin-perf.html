@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Webgl line plotting framework - Thin Line Performance</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+  </head>
+
+  <body>
+    <div>
+      <h1>Thin Line Performance</h1>
+      <p>Animates multiple thin lines; adjust the line count to compare with the thick-line benchmark.</p>
+      <canvas class="canvas" id="my_canvas"></canvas>
+      <p id="fps">Current fps: --</p>
+      <p>Enter the number of lines to create, then press the button to rebuild.</p>
+      <button id="btClick" class="button">Click!</button>
+      <input type="number" id="inNum" name="lineCount" min="1" max="100000" value="5" />
+      <p>Open the console (F12) for logs</p>
+    </div>
+  </body>
+
+  <script type="module" src="./bench-thin-perf.ts"></script>
+</html>

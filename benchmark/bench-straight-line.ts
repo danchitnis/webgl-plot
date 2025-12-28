@@ -43,12 +43,7 @@ console.log("Line configuration:", straightLine);
 // Initialize the line with our configuration
 plotLine.initLines([straightLine]);
 
-plotLine.setLogAxis(false, true); // Enable log axis for both x and y
-
-const bounds = plotLine.getAllDataBounds();
-plotLine.transformToLogSpace(bounds);
-
-// Clear the canvas and draw the line
+// Render directly in linear space to match the demo description
 clearCanvas(gl);
 plotLine.draw();
 
