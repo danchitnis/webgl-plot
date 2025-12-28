@@ -98,6 +98,7 @@ clearCanvas(gl, [1, 1, 1, 1]); // Clear with white background
 Automatically chooses between thin and thick line rendering based on line thickness.
 
 **Important**: The plotter type is determined by the **first line's thickness** during `initLines()`:
+
 - `thickness ≤ 1.0` → Uses WebglLinePlot (all lines become thickness 1.0)
 - `thickness > 1.0` → Uses WebglLineThick (preserves individual thickness values)
 
@@ -153,30 +154,27 @@ plotter.draw();
 ```typescript
 // Scenario A: Thin first → All lines become thin (thickness 1.0)
 plotter.initLines([
-  {points: data1, thickness: 1.0, color: [1,0,0,1]}, // ← Determines WebglLinePlot
-  {points: data2, thickness: 5.0, color: [0,1,0,1]}  // Forced to 1.0!
+  { points: data1, thickness: 1.0, color: [1, 0, 0, 1] }, // ← Determines WebglLinePlot
+  { points: data2, thickness: 5.0, color: [0, 1, 0, 1] }, // Forced to 1.0!
 ]);
 console.log(plotter.getInternalPlotterType()); // "WebglLinePlot"
 
 // Scenario B: Thick first → All lines can be thick
 plotter.initLines([
-  {points: data1, thickness: 5.0, color: [1,0,0,1]}, // ← Determines WebglLineThick  
-  {points: data2, thickness: 1.0, color: [0,1,0,1]}  // Preserved as 1.0
+  { points: data1, thickness: 5.0, color: [1, 0, 0, 1] }, // ← Determines WebglLineThick
+  { points: data2, thickness: 1.0, color: [0, 1, 0, 1] }, // Preserved as 1.0
 ]);
 console.log(plotter.getInternalPlotterType()); // "WebglLineThick"
 
 // To change plotter type, you must re-initialize:
 // Current: thin plotter, want thick lines
-const currentConfigs = [
-  plotter.getLineConfig(0),
-  plotter.getLineConfig(1)
-];
+const currentConfigs = [plotter.getLineConfig(0), plotter.getLineConfig(1)];
 
 // Re-initialize with thick line first
 if (currentConfigs[0] && currentConfigs[1]) {
   plotter.initLines([
-    {...currentConfigs[0], thickness: 3.0}, // Now thick first
-    {...currentConfigs[1], thickness: 2.0}
+    { ...currentConfigs[0], thickness: 3.0 }, // Now thick first
+    { ...currentConfigs[1], thickness: 2.0 },
   ]); // Now uses WebglLineThick
 }
 ```
@@ -191,7 +189,7 @@ const plotterType = plotter.getInternalPlotterType();
 console.log(`Using: ${plotterType}`); // "WebglLinePlot" or "WebglLineThick"
 
 // Update line thickness with proper error handling
-if (plotterType === 'WebglLineThick') {
+if (plotterType === "WebglLineThick") {
   plotter.updateLineThickness(0, 5.0); // ✅ Works normally
 } else {
   // WebglLinePlot: logs warning and forces thickness to 1.0
@@ -200,29 +198,37 @@ if (plotterType === 'WebglLineThick') {
 }
 
 // Update line points (XY coordinate pairs) with error handling
-const newPoints = new Float32Array([0,0, 1,2, 2,1, 3,3]);
-if (plotterType === 'WebglLinePlot') {
+const newPoints = new Float32Array([0, 0, 1, 2, 2, 1, 3, 3]);
+if (plotterType === "WebglLinePlot") {
   plotter.updateLinePoints(0, newPoints); // ✅ Works for thin lines
 } else {
   // WebglLineThick: logs warning, points NOT updated
-  console.log("updateLinePoints not supported for thick lines, use initLines() instead");
-  
+  console.log(
+    "updateLinePoints not supported for thick lines, use initLines() instead"
+  );
+
   // Alternative: re-initialize the line with new points
   const currentConfig = plotter.getLineConfig(0);
-  if (currentConfig && 'color' in currentConfig && 'thickness' in currentConfig) {
-    plotter.initLines([{
-      points: newPoints,
-      color: currentConfig.color,
-      thickness: currentConfig.thickness,
-      enabled: currentConfig.enabled
-    }]);
+  if (
+    currentConfig &&
+    "color" in currentConfig &&
+    "thickness" in currentConfig
+  ) {
+    plotter.initLines([
+      {
+        points: newPoints,
+        color: currentConfig.color,
+        thickness: currentConfig.thickness,
+        enabled: currentConfig.enabled,
+      },
+    ]);
   }
 }
 
 // Get line configuration (return type varies by plotter)
 const config = plotter.getLineConfig(0);
 if (config) {
-  if ('points' in config) {
+  if ("points" in config) {
     // WebglLinePlot: full LineConfig with points data
     console.log("Full config available, points length:", config.points?.length);
     console.log("Color:", config.color);
@@ -298,12 +304,12 @@ thickPlotter.draw();
 High-performance scatter plots with color-coded points.
 
 ```typescript
-import { WebglScatterAcc } from "webgl-plot";
+import { WebglScatterAcc, ColorRGBA } from "webgl-plot";
 
 const scatterPlotter = new WebglScatterAcc(gl, 100000); // Max 100k points
 
-scatterPlotter.setSquareSize(0.01); // Point size
-scatterPlotter.setColor([1, 1, 0, 1]); // Yellow base color
+scatterPlotter.setSquareSize(0.01); // Point size in clip-space units
+scatterPlotter.setColor(new ColorRGBA(1, 1, 0, 1)); // Optional uniform color
 
 // Add scattered points
 const positions = new Float32Array([
@@ -324,7 +330,7 @@ const colors = new Uint8Array([
   0,
   0,
   255, // Blue
-]);
+]); // Uint8 per-point RGB values (0-255)
 
 scatterPlotter.addSquare(positions, colors);
 scatterPlotter.draw();
@@ -435,7 +441,12 @@ console.log("Line 0 config:", config);
 ## Multiple Plotters on Same Canvas
 
 ```typescript
-import { clearCanvas, UnifiedLinePlot, WebglScatterAcc } from "webgl-plot";
+import {
+  clearCanvas,
+  setupCanvasAndWebGL,
+  UnifiedLinePlot,
+  WebglScatterAcc,
+} from "webgl-plot";
 
 const canvas = document.getElementById("canvas");
 const gl = setupCanvasAndWebGL(canvas, { backgroundColor: [0, 0, 0, 1] });
@@ -469,12 +480,18 @@ render();
 
 ```typescript
 import React, { useEffect, useRef } from "react";
-import { setupCanvasAndWebGL, UnifiedLinePlot, clearCanvas } from "webgl-plot";
+import {
+  clearCanvas,
+  handleCanvasResize,
+  setupCanvasAndWebGL,
+  UnifiedLinePlot,
+} from "webgl-plot";
 
 const PlotComponent: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const glRef = useRef<WebGL2RenderingContext | null>(null);
   const plotterRef = useRef<UnifiedLinePlot | null>(null);
+  const animationRef = useRef<number>();
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -502,13 +519,16 @@ const PlotComponent: React.FC = () => {
       if (gl && plotter) {
         clearCanvas(gl);
         plotter.draw();
-        requestAnimationFrame(render);
+        animationRef.current = requestAnimationFrame(render);
       }
     };
-    render();
+    animationRef.current = requestAnimationFrame(render);
 
     // Cleanup
     return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       plotter?.cleanup();
     };
   }, []);
@@ -626,13 +646,13 @@ function generateData() {
 function render() {
   // Update data at 60fps
   const newData = generateData();
-  
+
   // Extract Y values only (every odd index from XY pairs)
   const yValues = new Float32Array(50);
   for (let i = 0; i < 50; i++) {
     yValues[i] = newData[i * 2 + 1]; // Get Y values from XY pairs
   }
-  
+
   plotter.updateLineY(0, yValues); // Update Y values only
 
   clearCanvas(gl);
@@ -685,28 +705,28 @@ const gl = createWebGL2Context(canvas, { antialias: false });
 // Issue: updateLinePoints not working
 // Solution: Check plotter type and use appropriate method
 const plotterType = plotter.getInternalPlotterType();
-if (plotterType === 'WebglLineThick') {
+if (plotterType === "WebglLineThick") {
   // Use initLines() instead of updateLinePoints() for thick lines
   const config = plotter.getLineConfig(0);
   if (config) {
-    plotter.initLines([{...config, points: newPoints}]);
+    plotter.initLines([{ ...config, points: newPoints }]);
   }
 }
 
 // Issue: Thickness not updating as expected
 // Solution: Check if plotter supports thickness changes
-if (plotterType === 'WebglLinePlot') {
+if (plotterType === "WebglLinePlot") {
   console.log("Thickness forced to 1.0 for thin line plotter");
   // To use thick lines, re-initialize with thick first line
-  plotter.initLines([{points: data, thickness: 2.0, color: [1,0,0,1]}]);
+  plotter.initLines([{ points: data, thickness: 2.0, color: [1, 0, 0, 1] }]);
 }
 
 // Issue: Wrong plotter type selected
 // Solution: Ensure first line has desired thickness
 // For thick lines capability:
 plotter.initLines([
-  {points: data1, thickness: 2.0, color: [1,0,0,1]}, // ← Must be first!
-  {points: data2, thickness: 1.0, color: [0,1,0,1]}
+  { points: data1, thickness: 2.0, color: [1, 0, 0, 1] }, // ← Must be first!
+  { points: data2, thickness: 1.0, color: [0, 1, 0, 1] },
 ]);
 ```
 
