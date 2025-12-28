@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Webgl line plotting framework - Line Roll Brownian Motion</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+  </head>
+
+  <body>
+    <div>
+      <h1>Streaming Line Plot Benchmark</h1>
+      <p>Minimal update loop that streams synthetic data into WebglLinePlot to stress GPU draw without extra CPU work.</p>
+      <canvas class="canvas" id="my_canvas"></canvas>
+      <p id="fps">FPS: --</p>
+
+      <div class="controls">
+        <label>
+          Lines
+          <input id="inNum" type="number" min="1" max="200" value="1" />
+        </label>
+
+        <button id="btClick" class="button">Apply</button>
+      </div>
+
+      <p>Open the console (F12) to see setup logs.</p>
+    </div>
+  </body>
+
+  <script type="module" src="./bench-line-roll.ts"></script>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Webgl line plotting framework - Line Roll Brownian Motion</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+  </head>
+
+  <body>
+    <div class="items">
+      <h1>Line Roll Brownian Motion</h1>
+      <p>Idle by default to avoid CPU/GPU use. Click start to stream Brownian motion into a rolling buffer.</p>
+
+      <canvas class="canvas" id="my_canvas"></canvas>
+      <p id="fps">FPS: --</p>
+
+      <div class="controls">
+        <label>
+          Lines
+          <input id="lineCount" type="number" min="1" max="256" value="8" />
+        </label>
+
+        <button id="applyLines" class="button">Apply Lines</button>
+        <button id="toggleRun" class="button">Start</button>
+      </div>
+
+      <p>Brownian steps are clamped to keep values inside the view; the loop pauses automatically when the tab is hidden.</p>
+    </div>
+  </body>
+
+  <script type="module" src="./bench-line-roll-brownian.ts"></script>
+</html>
