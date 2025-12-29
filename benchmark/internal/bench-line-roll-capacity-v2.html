@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Line Roll V2 Capacity</title>
+    <link rel="stylesheet" href="../style.css" type="text/css" />
+  </head>
+  <body>
+    <div class="items">
+      <h1>Line Roll V2 Capacity</h1>
+      <p id="meta">--</p>
+      <p id="fps">FPS: --</p>
+      <canvas class="canvas" id="my_canvas"></canvas>
+      <p>
+        Query params: <code>lines</code>, <code>points</code>, <code>buffer</code>.
+        This page is intended for automated benchmarking (Playwright).
+      </p>
+    </div>
+    <script type="module" src="./bench-line-roll-capacity-v2.ts"></script>
+  </body>
+</html>

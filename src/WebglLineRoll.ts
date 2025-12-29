@@ -13,10 +13,15 @@ export class WebglLineRoll {
   private lastDataX: number[];
   private lastDataY: number[];
   public numLines: number;
+  private filled: number;
   private ext: WEBGL_multi_draw | null;
   private colorBuffer: WebGLBuffer;
   private aColorLocation: number;
   private uShiftLocation: WebGLUniformLocation;
+  private uploadScratch: Float32Array[];
+  private bridgeScratch: Float32Array;
+  private multiFirsts: Int32Array;
+  private multiCounts: Int32Array;
 
   constructor(gl: WebGL2RenderingContext, rollBufferSize: number, numLines: number) {
     this.gl = gl;
@@ -27,6 +32,12 @@ export class WebglLineRoll {
     this.lastDataX = Array(numLines).fill(0);
     this.lastDataY = Array(numLines).fill(0);
     this.numLines = numLines;
+    this.filled = 0;
+    this.uploadScratch = Array.from({ length: numLines }, () => new Float32Array(0));
+    this.bridgeScratch = new Float32Array(4);
+    // Two segments per line (tail+bridge, head) for multi-draw.
+    this.multiFirsts = new Int32Array(numLines * 2);
+    this.multiCounts = new Int32Array(numLines * 2);
 
     this.ext = this.gl.getExtension("WEBGL_multi_draw");
 
@@ -43,7 +54,7 @@ export class WebglLineRoll {
             vec2 shiftedPosition = a_position - vec2(uShift, 0);
             gl_Position = vec4(shiftedPosition, 0, 1);
 
-            vColor = a_color/ vec3(255.0, 255.0, 255.0);
+            vColor = a_color;
         }`;
 
     const vertShader = this.gl.createShader(this.gl.VERTEX_SHADER);
@@ -122,7 +133,7 @@ export class WebglLineRoll {
       this.aColorLocation,
       3,
       this.gl.UNSIGNED_BYTE,
-      false,
+      true,
       0,
       0
     );
@@ -153,7 +164,6 @@ export class WebglLineRoll {
 
     if (this.dataIndex === this.rollBufferSize - 1) {
       for (let i = 0; i < this.numLines; i++) {
-        //????????????????
         this.lastDataX[i] = this.dataX;
         this.lastDataY[i] = ys[i];
       }
@@ -175,6 +185,9 @@ export class WebglLineRoll {
     }
 
     this.dataIndex = (this.dataIndex + 1) % this.rollBufferSize;
+    if (this.filled < this.rollBufferSize) {
+      this.filled++;
+    }
   }
 
   addPoints(ys: number[][]) {
@@ -184,59 +197,109 @@ export class WebglLineRoll {
     this.gl.uniform1f(this.uShiftLocation, this.shift);
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer);
 
-    let index = this.dataIndex;
-    let lastX = 0;
+    let lastGlobalX = this.dataX;
+    let nextDataIndex = this.dataIndex;
 
     for (let line = 0; line < ys.length; line++) {
-      index = this.dataIndex;
-      lastX = 0;
-
-      for (let i = 0; i < ys[line].length; i++) {
-        const x = this.dataX + (i * 2) / this.rollBufferSize;
-
-        if (index < this.rollBufferSize) {
-          this.gl.bufferSubData(
-            this.gl.ARRAY_BUFFER,
-            (index + line * bfsize) * 2 * 4,
-            new Float32Array([x, ys[line][i]])
-          );
-        }
-
-        if (index === this.rollBufferSize - 1) {
-          this.lastDataX[line] = x;
-          this.lastDataY[line] = ys[line][i];
-        }
-
-        if (index % this.rollBufferSize === 0 && this.lastDataX[line] !== 0) {
-          this.gl.bufferSubData(
-            this.gl.ARRAY_BUFFER,
-            (this.rollBufferSize + line * bfsize) * 2 * 4,
-            new Float32Array([
-              this.lastDataX[line],
-              this.lastDataY[line],
-              x,
-              ys[line][i],
-            ])
-          );
-        }
-
-        if (index >= this.rollBufferSize) {
-          const index2 = index % this.rollBufferSize;
-          this.gl.bufferSubData(
-            this.gl.ARRAY_BUFFER,
-            (index2 + line * bfsize) * 2 * 4,
-            new Float32Array([x, ys[line][i]])
-          );
-        }
-
-        index++;
-        lastX = x;
+      const samples = ys[line];
+      const sampleCount = samples.length;
+      if (sampleCount === 0) {
+        continue;
       }
+
+      // Ensure scratch buffer is large enough; reuse to avoid allocations per frame.
+      if (this.uploadScratch[line].length < sampleCount * 2) {
+        this.uploadScratch[line] = new Float32Array(sampleCount * 2);
+      }
+
+      const scratch = this.uploadScratch[line];
+      const baseOffset = line * bfsize;
+      const startIndex = this.dataIndex;
+
+      // Populate scratch with interleaved [x,y] pairs for this line.
+      for (let i = 0; i < sampleCount; i++) {
+        const x = this.dataX + (i * 2) / this.rollBufferSize;
+        const y = samples[i];
+        scratch[i * 2] = x;
+        scratch[i * 2 + 1] = y;
+      }
+
+      const endIndex = startIndex + sampleCount;
+      const needsWrap = endIndex > this.rollBufferSize;
+
+      if (!needsWrap) {
+        // Single contiguous upload
+        this.gl.bufferSubData(
+          this.gl.ARRAY_BUFFER,
+          (startIndex + baseOffset) * 2 * 4,
+          scratch.subarray(0, sampleCount * 2)
+        );
+
+        // If we're writing at the start of the ring (i.e., after a wrap), refresh the bridge.
+        // This avoids a long straight chord when drawing the wrapped strip.
+        if (startIndex === 0 && (this.lastDataX[line] !== 0 || this.lastDataY[line] !== 0)) {
+          this.bridgeScratch[0] = this.lastDataX[line];
+          this.bridgeScratch[1] = this.lastDataY[line];
+          this.bridgeScratch[2] = scratch[0];
+          this.bridgeScratch[3] = scratch[1];
+          this.gl.bufferSubData(
+            this.gl.ARRAY_BUFFER,
+            (this.rollBufferSize + baseOffset) * 2 * 4,
+            this.bridgeScratch
+          );
+        }
+      } else {
+        const fit = this.rollBufferSize - startIndex;
+        const remain = sampleCount - fit;
+        // First segment to end of buffer
+        this.gl.bufferSubData(
+          this.gl.ARRAY_BUFFER,
+          (startIndex + baseOffset) * 2 * 4,
+          scratch.subarray(0, fit * 2)
+        );
+        // Wrap segment to start of buffer
+        this.gl.bufferSubData(
+          this.gl.ARRAY_BUFFER,
+          baseOffset * 2 * 4,
+          scratch.subarray(fit * 2, sampleCount * 2)
+        );
+
+        // Write the two bridging points into the extra slot to keep continuity across wrap.
+        // Bridge must connect the last point of the tail segment to the first point of the wrapped segment.
+        // Using previous-frame last/first-sample can create a long straight chord across the plot.
+        if (fit > 0 && remain > 0) {
+          const tailLast = (fit - 1) * 2;
+          const headFirst = fit * 2;
+          this.bridgeScratch[0] = scratch[tailLast];
+          this.bridgeScratch[1] = scratch[tailLast + 1];
+          this.bridgeScratch[2] = scratch[headFirst];
+          this.bridgeScratch[3] = scratch[headFirst + 1];
+          this.gl.bufferSubData(
+            this.gl.ARRAY_BUFFER,
+            (this.rollBufferSize + baseOffset) * 2 * 4,
+            this.bridgeScratch
+          );
+        }
+      }
+
+      // Track last sample for continuity and next frame positioning
+      const lastSampleX = this.dataX + ((sampleCount - 1) * 2) / this.rollBufferSize;
+      const lastSampleY = samples[sampleCount - 1];
+      this.lastDataX[line] = lastSampleX;
+      this.lastDataY[line] = lastSampleY;
+
+      nextDataIndex = endIndex % this.rollBufferSize;
+      lastGlobalX = lastSampleX;
     }
 
-    this.shift += (ys[0].length * 2) / this.rollBufferSize;
-    this.dataX = lastX + 2 / this.rollBufferSize;
-    this.dataIndex = index % this.rollBufferSize;
+    // Advance shift/dataX/index once per batch (all lines share the same progression)
+    const advanceCount = ys[0]?.length ?? 0;
+    this.shift += advanceCount * (2 / this.rollBufferSize);
+    this.dataX = lastGlobalX + 2 / this.rollBufferSize;
+    this.dataIndex = nextDataIndex;
+    if (this.filled < this.rollBufferSize) {
+      this.filled = Math.min(this.rollBufferSize, this.filled + advanceCount);
+    }
 
     this.gl.enableVertexAttribArray(this.aPositionLocation);
   }
@@ -246,13 +309,32 @@ export class WebglLineRoll {
     this.gl.useProgram(this.program);
 
     for (let i = 0; i < this.numLines; i++) {
-      this.gl.drawArrays(this.gl.LINE_STRIP, i * bfsize, this.dataIndex);
-      this.gl.drawArrays(
-        this.gl.LINE_STRIP,
-        i * bfsize + this.dataIndex,
-        this.rollBufferSize - this.dataIndex
-      );
-      this.gl.drawArrays(this.gl.LINE_STRIP, i * bfsize + this.rollBufferSize, 2);
+      const base = i * bfsize;
+      // Until the ring is filled, only draw the initialized prefix.
+      // This avoids long straight chords formed by uninitialized (0,0) vertices.
+      if (this.filled < this.rollBufferSize) {
+        if (this.filled > 1) {
+          this.gl.drawArrays(this.gl.LINE_STRIP, base, this.filled);
+        }
+        continue;
+      }
+
+      // If dataIndex is 0, the ring hasn't wrapped for drawing purposes; don't include the bridge.
+      if (this.dataIndex === 0) {
+        this.gl.drawArrays(this.gl.LINE_STRIP, base, this.rollBufferSize);
+        continue;
+      }
+
+      const tailCount = this.rollBufferSize - this.dataIndex + 2; // tail plus 2-point bridge
+      const headCount = this.dataIndex; // head segment
+
+      // Draw tail (from write head to end, plus bridge segment)
+      this.gl.drawArrays(this.gl.LINE_STRIP, base + this.dataIndex, tailCount);
+
+      // Draw head (start to head)
+      if (headCount > 0) {
+        this.gl.drawArrays(this.gl.LINE_STRIP, base, headCount);
+      }
     }
   }
 
@@ -260,27 +342,38 @@ export class WebglLineRoll {
     const bfsize = this.rollBufferSize + 2;
     this.gl.useProgram(this.program);
 
-    const firsts = [];
-    const counts = [];
+    // Until the ring is filled, drawing without wrap/bridge is both correct and faster.
+    if (this.filled < this.rollBufferSize) {
+      for (let i = 0; i < this.numLines; i++) {
+        const base = i * bfsize;
+        if (this.filled > 1) {
+          this.gl.drawArrays(this.gl.LINE_STRIP, base, this.filled);
+        }
+      }
+      return;
+    }
 
+    // Two segments per line: tail(+bridge), head
+    const headCount = this.dataIndex;
+    const tailCount = this.dataIndex === 0 ? this.rollBufferSize : (this.rollBufferSize - this.dataIndex + 2);
     for (let i = 0; i < this.numLines; i++) {
-      firsts.push(i * bfsize);
-      counts.push(this.dataIndex);
-      firsts.push(i * bfsize + this.dataIndex);
-      counts.push(this.rollBufferSize - this.dataIndex);
-      firsts.push(i * bfsize + this.rollBufferSize);
-      counts.push(2);
+      const base = i * bfsize;
+      const o = i * 2;
+      this.multiFirsts[o] = base + this.dataIndex;
+      this.multiCounts[o] = tailCount;
+      this.multiFirsts[o + 1] = base;
+      this.multiCounts[o + 1] = headCount;
     }
     if (!this.ext) {
       throw new Error("Multi draw extension not available");
     }
     this.ext.multiDrawArraysWEBGL(
       this.gl.LINE_STRIP,
-      firsts,
+      this.multiFirsts,
       0,
-      counts,
+      this.multiCounts,
       0,
-      counts.length
+      this.numLines * 2
     );
   }
 
