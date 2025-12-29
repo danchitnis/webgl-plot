@@ -67,7 +67,7 @@ async function findMaxLinesForTarget(
   let lo = 1;
   let hi = 1;
   while (hi < maxLinesCap) {
-    const url = `/internal/bench-line-roll-capacity-v2.html?lines=${hi}&points=${points}&buffer=${buffer}`;
+    const url = `/benchmarks/bench-line-roll-capacity-v2.html?lines=${hi}&points=${points}&buffer=${buffer}`;
     const fps = await measureFps(page, url);
     samples.push({ lines: hi, fps: fps.average });
 
@@ -91,7 +91,7 @@ async function findMaxLinesForTarget(
   let right = hi;
   while (right - left > 1) {
     const mid = Math.floor((left + right) / 2);
-    const url = `/internal/bench-line-roll-capacity-v2.html?lines=${mid}&points=${points}&buffer=${buffer}`;
+    const url = `/benchmarks/bench-line-roll-capacity-v2.html?lines=${mid}&points=${points}&buffer=${buffer}`;
     const fps = await measureFps(page, url);
     samples.push({ lines: mid, fps: fps.average });
 
@@ -109,7 +109,7 @@ test('LineRoll v2 capacity benchmark (hardware dependent)', async ({ page }, tes
   test.setTimeout(10 * 60 * 1000);
 
   // Load once to read info.
-  await page.goto('/internal/bench-line-roll-capacity-v2.html?lines=1&points=1&buffer=2048');
+  await page.goto('/benchmarks/bench-line-roll-capacity-v2.html?lines=1&points=1&buffer=2048');
   const info = await getWebGLInfo(page);
   console.log('WebGL info:', info);
 

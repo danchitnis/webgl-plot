@@ -35,8 +35,8 @@ async function measureFps(page, url: string): Promise<FpsSnapshot> {
 test('Line roll v2 vs v1 performance (sequential)', async ({ page }) => {
   for (const scenario of SCENARIOS) {
     const query = `lines=${scenario.lines}&points=${scenario.points}${scenario.buffer ? `&buffer=${scenario.buffer}` : ''}`;
-    const v1Url = `/internal/bench-line-roll-v1.html?${query}`;
-    const v2Url = `/internal/bench-line-roll-v2.html?${query}`;
+    const v1Url = `/benchmarks/bench-line-roll-v1.html?${query}`;
+    const v2Url = `/benchmarks/bench-line-roll-v2.html?${query}`;
 
     const v1 = await measureFps(page, v1Url);
     const v2 = await measureFps(page, v2Url);

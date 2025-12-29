@@ -38,9 +38,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit && eslint",
-    "test:html": "vite --force -c benchmark/vite.config.mts --port 5175",
-    "build:test": "vite build -c benchmark/vite.config.mts",
-    "test:thick:playwright": "node benchmark/check-thick-line-playwright.js",
+    "test:html": "vite --force -c demos/vite.config.mts --port 5175 --strictPort",
+    "build:test": "vite build -c demos/vite.config.mts",
+    "test:thick:playwright": "node demos/check-thick-line-playwright.js",
     "test:pw": "playwright test --config=playwright.config.ts",
     "doc": "typedoc"
   },

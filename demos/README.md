@@ -10,7 +10,7 @@ The line width is 2000 data points and the number of lines is increase until the
 
 | Implementation | Max lines | Max GPU Util | Update rate | Code                                                                                         |
 | -------------- | --------- | ------------ | ----------- | -------------------------------------------------------------------------------------------- |
-| Javascript     | 800       | 20%          | 96 Mpts/s   | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
+| Javascript     | 800       | 20%          | 96 Mpts/s   | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/demos/bench2.js) |
 | Python         | 350       | 65%          | 42 Mpts/s   | [pyglplot](https://github.com/danchitnis/pyglplot/blob/main/test/benchmark.py)               |
 | C++            | 3000      | 60%          | 360 Mpts/s  | [cpp-plot](https://github.com/danchitnis/cpp-plot/blob/main/src/line.cpp)                    |
 
@@ -18,9 +18,9 @@ The line width is 2000 data points and the number of lines is increase until the
 
 | Implementation | Max lines | Max buffer | Max GPU Util | Code                                                                                         |
 | -------------- | --------- | ---------- | ------------ | -------------------------------------------------------------------------------------------- |
-| Javascript     | 7.5k      | 2k         | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
-| Javascript     | 2.5k      | 10k        | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
-| Javascript     | 0.2k      | 100k       | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
+| Javascript     | 7.5k      | 2k         | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/demos/bench2.js) |
+| Javascript     | 2.5k      | 10k        | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/demos/bench2.js) |
+| Javascript     | 0.2k      | 100k       | 65%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/demos/bench2.js) |
 | Python         | 1.5k      | 2k         | 12%          | [pyglplot](https://github.com/danchitnis/pyglplot/blob/main/test/testRoll.py)                |
 | Python         | 1k        | 10k        | 25%          | [pyglplot](https://github.com/danchitnis/pyglplot/blob/main/test/testRoll.py)                |
 | Python         | 0.3k      | 100k       | 40%          | [pyglplot](https://github.com/danchitnis/pyglplot/blob/main/test/testRoll.py)                |
@@ -32,7 +32,7 @@ The line width is 2000 data points and the number of lines is increase until the
 
 | Implementation | Max Square | Max GPU Util | Code                                                                                         |
 | -------------- | ---------- | ------------ | -------------------------------------------------------------------------------------------- |
-| Javascript     | 6M         | 30%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/benchmark/bench2.js) |
+| Javascript     | 6M         | 30%          | [webgl-plot](https://github.com/danchitnis/webgl-plot/blob/webglplot-v2/demos/bench2.js) |
 | Python         | 30M        | 98%          | [pyglplot]()                                                                                 |
 | C++            | 30M        | 98%          | [cpp-plot](https://github.com/danchitnis/cpp-plot/blob/main/src/scatter.cpp)                 |
 

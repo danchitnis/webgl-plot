@@ -2,8 +2,8 @@ import { defineConfig } from "vite";
 import path from "path";
 
 export default defineConfig({
-  root: "./benchmark",
-  publicDir: "./public",
+  root: "./demos",
+  publicDir: false,
   build: {
     outDir: "../dist-benchmark",
     emptyOutDir: true,

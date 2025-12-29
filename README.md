@@ -165,8 +165,8 @@ Notice that this method is only recommended for test and small codes.
 
 ## Benchmark
 
-[Native Line](https://danchitnis.github.io/webgl-plot/benchmark/bench1.html) and
-[Thick Line](https://danchitnis.github.io/webgl-plot/benchmark/bench-thick.html).
+[Native Line](https://danchitnis.github.io/webgl-plot/demos/bench1.html) and
+[Thick Line](https://danchitnis.github.io/webgl-plot/demos/bench-thick.html).
 
 ## Internal test
 

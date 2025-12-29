@@ -12,7 +12,7 @@ export default defineConfig([
   {
     files: [
       "src/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
-      "benchmark/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
+      "demos/**/*.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
     plugins: { js },
     extends: ["js/recommended"],
@@ -24,6 +24,6 @@ export default defineConfig([
   // TypeScript configs
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
-    files: ["src/**/*.{ts,tsx}", "benchmark/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}", "demos/**/*.{ts,tsx}"],
   })),
 ]);

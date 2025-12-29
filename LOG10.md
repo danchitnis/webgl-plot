@@ -405,8 +405,8 @@ function preprocessForLogY(data: Float32Array): Float32Array {
 
 ## 🔗 See Also
 
-- **Interactive demo**: `/benchmark/bench-log-axis.html`
-- **Coordinate space demo**: `/benchmark/bench-coordinate-space.html` - Shows view preservation when toggling between coordinate spaces
+- **Interactive demo**: `/demos/bench-log-axis.html`
+- **Coordinate space demo**: `/demos/bench-coordinate-space.html` - Shows view preservation when toggling between coordinate spaces
 - **API reference**: Check JSDoc comments in source files
 - **Test smart filtering**: Open browser console when running benchmarks
 - **Coordinate transformation utilities**: `transformBoundsToLogSpace()` and `transformBoundsToLinearSpace()`

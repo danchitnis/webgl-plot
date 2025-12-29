@@ -29,7 +29,7 @@ export default defineConfig({
       insertTypesEntry: true,
       // Restrict .d.ts emission to the library sources
       include: ["src/**/*"],
-      exclude: ["benchmark/**/*"],
+      exclude: ["demos/**/*"],
     }),
   ],
 });

@@ -21,7 +21,7 @@ type WaveStats = { min: number; max: number };
 type VertexStats = { minY: number; maxY: number; firstYs: number[] };
 
 test('LineRoll v2 integrity (single line, no wrap chord)', async ({ page }, testInfo) => {
-  await page.goto('/internal/bench-line-roll-integrity-v2.html');
+  await page.goto('/benchmarks/bench-line-roll-integrity-v2.html');
   const canvas = page.locator('canvas');
   await expect(canvas).toBeVisible();
 

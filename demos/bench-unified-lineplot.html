@@ -30,7 +30,7 @@
     The tsconfig.json and vite/tsc compilation process determine the exact output format.
     For this project, direct .ts execution in browser might be handled by vite during dev,
     but for a static HTML, it should point to the compiled .js file.
-    Let's assume the compilation process (e.g. `npx tsc ./benchmark/*.ts`) generates
+    Let's assume the compilation process (e.g. `npx tsc ./demos/**/*.ts`) generates
     `./bench-unified-lineplot.js` which is an ES module.
   -->
   <script type="module" src="./bench-unified-lineplot.js"></script>
