@@ -190,7 +190,7 @@ export class WebglLineRoll {
     }
   }
 
-  addPoints(ys: number[][]) {
+  addPoints(ys: ReadonlyArray<ArrayLike<number>>) {
     const bfsize = this.rollBufferSize + 2;
 
     this.gl.useProgram(this.program);

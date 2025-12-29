@@ -99,7 +99,7 @@ function step() {
 		fillFromTable(waveTable[i], phaseAdvance, payload[i]);
 	}
 
-	roll.addPoints(payload as unknown as number[][]);
+	roll.addPoints(payload);
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	roll.draw();
 

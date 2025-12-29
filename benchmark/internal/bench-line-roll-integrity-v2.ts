@@ -73,7 +73,7 @@ function fillWave(out: Float32Array) {
 function frame() {
 	frameCount++;
 	fillWave(payload[0]);
-	roll.addPoints(payload as unknown as number[][]);
+	roll.addPoints(payload);
 	gl.clear(gl.COLOR_BUFFER_BIT);
 	roll.draw();
 	requestAnimationFrame(frame);

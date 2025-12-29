@@ -1,4 +1,4 @@
-import { setupCanvasAndWebGL, clearCanvas, WebglLineRoll, ColorRGBA } from "../dist/webglplot.mjs";
+import { setupCanvasAndWebGL, clearCanvas, WebglLineRoll, ColorRGBA } from "@lib/webglplot";
 
 const canvas = document.getElementById("my_canvas") as HTMLCanvasElement | null;
 const fpsElem = document.getElementById("fps");
@@ -9,6 +9,12 @@ const lineInput = document.getElementById("lineCount") as HTMLInputElement | nul
 if (!canvas || !fpsElem || !toggleBtn || !applyBtn || !lineInput) {
   throw new Error("Required DOM elements are missing");
 }
+
+// Bind non-null, specific element types for use inside callbacks/closures.
+const fpsEl: HTMLElement = fpsElem;
+const toggleEl: HTMLButtonElement = toggleBtn;
+const applyEl: HTMLButtonElement = applyBtn;
+const lineEl: HTMLInputElement = lineInput;
 
 const gl = setupCanvasAndWebGL(canvas, { backgroundColor: [0, 0, 0, 1] });
 if (!gl) {
@@ -23,8 +29,8 @@ const CLAMP = 0.92;
 const MIN_LINES = 1;
 const MAX_LINES = 256;
 
-let lineCount = clampLines(parseInt(lineInput.value || "8", 10));
-lineInput.value = String(lineCount);
+let lineCount = clampLines(parseInt(lineEl.value || "8", 10));
+lineEl.value = String(lineCount);
 
 let roll = createRoll(lineCount);
 let yState = new Float32Array(lineCount);
@@ -92,7 +98,7 @@ function primeRoll() {
 }
 
 primeRoll();
-fpsElem.textContent = "FPS: paused";
+fpsEl.textContent = "FPS: paused";
 
 function stepBrownian(): Float32Array[] {
   for (let line = 0; line < lineCount; line++) {
@@ -117,7 +123,7 @@ function renderFrame() {
   frameCounter++;
   const now = performance.now();
   if (now - lastFpsTick >= 1000) {
-    fpsElem.textContent = `FPS: ${frameCounter.toFixed(0)}`;
+    fpsEl.textContent = `FPS: ${frameCounter.toFixed(0)}`;
     frameCounter = 0;
     lastFpsTick = now;
   }
@@ -136,7 +142,7 @@ function start() {
     return;
   }
   running = true;
-  toggleBtn.textContent = "Pause";
+  toggleEl.textContent = "Pause";
   frameHandle = requestAnimationFrame(loop);
 }
 
@@ -144,12 +150,12 @@ function stop(updateLabel = true) {
   running = false;
   cancelAnimationFrame(frameHandle);
   if (updateLabel) {
-    toggleBtn.textContent = "Start";
-    fpsElem.textContent = "FPS: paused";
+    toggleEl.textContent = "Start";
+    fpsEl.textContent = "FPS: paused";
   }
 }
 
-toggleBtn.addEventListener("click", () => {
+toggleEl.addEventListener("click", () => {
   if (running) {
     stop(true);
     resumeOnFocus = false;
@@ -159,9 +165,9 @@ toggleBtn.addEventListener("click", () => {
   }
 });
 
-applyBtn.addEventListener("click", () => {
-  const requested = clampLines(parseInt(lineInput.value || `${lineCount}`, 10));
-  lineInput.value = String(requested);
+applyEl.addEventListener("click", () => {
+  const requested = clampLines(parseInt(lineEl.value || `${lineCount}`, 10));
+  lineEl.value = String(requested);
 
   const wasRunning = running;
   stop(false);
@@ -176,7 +182,7 @@ applyBtn.addEventListener("click", () => {
     resumeOnFocus = true;
     start();
   } else {
-    fpsElem.textContent = "FPS: paused";
+    fpsEl.textContent = "FPS: paused";
   }
 });
 
