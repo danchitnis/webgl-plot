@@ -55,6 +55,11 @@
   },
   "homepage": "https://github.com/danchitnis/webgl-plot",
   "dependencies": {
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.4",
     "playwright": "^1.57.0"
   }
 }

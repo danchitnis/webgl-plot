@@ -8,12 +8,17 @@
   </head>
 
   <body>
-    <div>
+    <div class="items">
       <h1>45-Degree Line Demo</h1>
       <p>This demo shows a 45-degree line with 100 points ranging from 0.1 to 1.0 using WebGL thick line rendering.</p>
       <canvas class="canvas" id="myCanvas"></canvas>
-      <p>A diagonal thick line with 100 data points going from bottom-left to top-right.</p>
-      <p>Open the console (F12) for logs</p>
+      <div class="code-panel">
+        <div class="code-panel-header">
+          <strong>TypeScript</strong>
+          <span id="runStatus" class="run-status">Ready</span>
+        </div>
+        <div id="tsEditor" class="code-editor" aria-label="TypeScript editor"></div>
+      </div>
     </div>
   </body>
 
