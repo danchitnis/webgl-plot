@@ -24,6 +24,6 @@ export default defineConfig([
   // TypeScript configs
   ...tseslint.configs.recommended.map((config) => ({
     ...config,
-    files: ["src/**/*.{ts,tsx}", "demos/**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx,mts,cts}", "demos/**/*.{ts,tsx,mts,cts}"],
   })),
 ]);

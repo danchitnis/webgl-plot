@@ -147,6 +147,7 @@ plotter.updateMultipleLinesTransform(
 **Important:** There are two distinct workflows for scaling - choose the right one!
 
 #### Option A: Simple Auto-Scaling (No Coordinate Conversion)
+
 Use `autoScale()` when you want to fit data in the **current** coordinate space:
 
 ```typescript
@@ -156,12 +157,14 @@ plotter.autoScale(); // ✅ Auto-scales in log Y space directly - NO conversion 
 ```
 
 **Key points:**
+
 - ✅ `autoScale()` works in whatever coordinate space is currently active
-- ✅ No need to call `transformToLogSpace()` or `transformToLinearSpace()` 
+- ✅ No need to call `transformToLogSpace()` or `transformToLinearSpace()`
 - ✅ Simpler workflow for basic auto-scaling needs
 - ⚠️ **WARNING:** Don't combine `autoScale()` with coordinate transforms!
 
 #### Option B: Coordinate Transformation (Manual Control)
+
 Use `getAllDataBounds()` → `transform*()` when you need coordinate space conversion:
 
 ```typescript
@@ -174,6 +177,7 @@ if (bounds) {
 ```
 
 **Choose this when:**
+
 - You need to preserve current zoom/pan state during coordinate changes
 - You want explicit control over coordinate space conversion
 - You're switching between coordinate systems
@@ -189,7 +193,7 @@ const bounds = plotter.autoScale();
 // Result: { minX: 1e-9, maxX: 0.01, minY: 1.2, maxY: 1.7, coordinateSpace: {x: "linear", y: "linear"} }
 
 // Log X mode: Returns log10(x) values, linear Y values
-plotter.setLogAxis(true, false);  
+plotter.setLogAxis(true, false);
 const bounds = plotter.autoScale();
 // Result: { minX: -9, maxX: -2, minY: 1.2, maxY: 1.7, coordinateSpace: {x: "log", y: "linear"} }
 
@@ -200,7 +204,7 @@ const bounds = plotter.autoScale();
 
 // Full log mode: Returns log10 values for both axes
 plotter.setLogAxis(true, true);
-const bounds = plotter.autoScale();  
+const bounds = plotter.autoScale();
 // Result: { minX: -9, maxX: -2, minY: 0.08, maxY: 0.23, coordinateSpace: {x: "log", y: "log"} }
 ```
 

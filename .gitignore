@@ -15,6 +15,7 @@ docs
 .DS_Store
 
 dist
-dist-benchmark
+dist-demos
 
 test-results
+.vercel

@@ -42,7 +42,7 @@ test('LineRoll v2 integrity (single line, no wrap chord)', async ({ page }, test
   console.log(`Vertex Y stats: [${vtx.minY.toFixed(3)}, ${vtx.maxY.toFixed(3)}], firstYs=${vtx.firstYs.map(v => v.toFixed(3)).join(',')}`);
   console.log(
     `Integrity analysis: r2=${analysis.r2.toFixed(4)} varY=${analysis.varY.toFixed(2)} samples=${analysis.sampleCount} ` +
-      `bgMid=${analysis.bgLumMid} bgCorner=${analysis.bgLumCorner} clear=${analysis.clearColor.map(v => v.toFixed(2)).join(',')} darkPixels=${analysis.darkPixelCount}`
+    `bgMid=${analysis.bgLumMid} bgCorner=${analysis.bgLumCorner} clear=${analysis.clearColor.map(v => v.toFixed(2)).join(',')} darkPixels=${analysis.darkPixelCount}`
   );
 
   // If an unintended long straight chord is present, the per-column "darkest pixel" path

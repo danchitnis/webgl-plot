@@ -30,8 +30,15 @@
     "typedoc-plugin-markdown": "^4.9.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.1",
+    "vercel": "^50.1.3",
     "vite": "^7.3.0",
-    "vite-plugin-dts": "^4.5.4"
+    "vite-plugin-dts": "^4.5.4",
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.38.4",
+    "playwright": "^1.57.0"
   },
   "scripts": {
     "dev": "vite",
@@ -39,7 +46,7 @@
     "preview": "vite preview",
     "check": "tsc --noEmit && eslint",
     "test:html": "vite --force -c demos/vite.config.mts --port 5175 --strictPort",
-    "build:test": "vite build -c demos/vite.config.mts",
+    "build:demos": "vite build -c demos/vite.config.mts",
     "test:thick:playwright": "node demos/check-thick-line-playwright.js",
     "test:pw": "playwright test --config=playwright.config.ts",
     "doc": "typedoc"
@@ -54,12 +61,5 @@
     "url": "https://github.com/danchitnis/webgl-plot/issues"
   },
   "homepage": "https://github.com/danchitnis/webgl-plot",
-  "dependencies": {
-    "@codemirror/commands": "^6.8.1",
-    "@codemirror/language": "^6.11.3",
-    "@codemirror/lang-javascript": "^6.2.4",
-    "@codemirror/state": "^6.5.2",
-    "@codemirror/view": "^6.38.4",
-    "playwright": "^1.57.0"
-  }
+  "dependencies": {}
 }
