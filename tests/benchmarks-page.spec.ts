@@ -7,6 +7,9 @@ type BenchmarkLink = {
 
 const WAIT_AFTER_LOAD_MS = 500;
 
+// Run headed to ensure GPU rendering path.
+test.use({ headless: false });
+
 test.describe.serial('WebGL Plot benchmarks', () => {
   test('all benchmark pages load without runtime errors', async ({ page }) => {
     const errorLog: string[] = [];

@@ -66,7 +66,12 @@ async function renderAndMeasure(page: import('@playwright/test').Page, params: M
     }, { orientation, scaleX, scaleY, thickness });
 }
 
+// Run headed to ensure GPU rendering path.
+test.use({ headless: false });
+
 test.describe('Thick line thickness invariance', () => {
+
+
     test.beforeEach(async ({ page }: { page: import('@playwright/test').Page }) => {
         await page.goto('/bench-thick-improvements.html');
         await page.waitForSelector('#my_canvas');
@@ -87,5 +92,6 @@ test.describe('Thick line thickness invariance', () => {
         expect(zoomXV).toBe(baselineV);
         expect(zoomYH).toBe(baselineH);
         expect(zoomYV).toBe(baselineV);
+        await page.waitForTimeout(3000);
     });
 });
